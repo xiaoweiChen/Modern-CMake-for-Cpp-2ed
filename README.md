@@ -37,6 +37,8 @@ To Zoe – I couldn’t have written this book without you.
 
 * github翻译地址：https://github.com/xiaoweiChen/Modern-CMake-for-Cpp-2ed
 
+* 第一版译文地址：https://github.com/xiaoweiChen/Modern-CMake-for-Cpp
+
 * 译文的LaTeX 环境配置：https://www.cnblogs.com/1625--H/p/11524968.html
 
   * 禁用拼写检查：https://blog.csdn.net/weixin_39278265/article/details/87931348

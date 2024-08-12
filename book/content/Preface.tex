@@ -1,0 +1,115 @@
+
+
+
+Creating top-notch software is no easy task. Developers researching this subject online often struggle to determine which advice is current and which methods have been superseded by newer, better practices. Moreover, most resources explain the process chaotically, lacking proper background, context, and structure.
+
+Modern CMake for C++ provides an end-to-end guide that offers a simpler experience by treating the building of C++ solutions comprehensively. It not only teaches you how to use CMake in your projects but also highlights what makes them maintainable, elegant, and clean. The guide walks you through automating complex tasks common in many projects, including building, testing, and packaging.
+
+The book instructs you on organizing source directories, building targets, and creating packages. As you progress, you will learn to compile and link executables and libraries, understand these processes in detail, and optimize each step for the best results. Additionally, you will discover how to incorporate external dependencies into your project, such as third-party libraries, testing frameworks, program analysis tools, and documentation generators. Finally, you’ll learn how to export, install, and package your solution for both internal and external use.
+
+After completing this book, you’ll be able to use CMake confidently on a professional level.
+
+\myChapterNoFile{}{适读人群}
+
+After you’ve learned C++, you’ll quickly discover that proficiency with the language alone isn’t enough to prepare you for delivering projects at the highest standards. This book fills that gap: it is addressed to anyone aspiring to become a better software developer or even a professional build engineer! Read it if you want to learn modern CMake from scratch or elevate and refresh your current CMake skills. It will help you understand how to make top-notch C++ projects and transition from other build environments.
+
+\myChapterNoFile{}{关于本书}
+
+Chapter 1, First Steps with CMake, covers the installation of CMake, the use of its command line interface, and introduces the fundamental building blocks necessary for a CMake project.
+
+Chapter 2, The CMake Language, cover the essential concepts of the CMake language, including command invocations, arguments, variables, control structures, and comments.
+
+Chapter 3, Using CMake in Popular IDEs, emphasizes the importance of Integrated Development Environments (IDEs), guides you through selecting an IDE, and provides setup instructions for Clion, Visual Studio Code, and Visual Studio IDE.
+
+Chapter 4, Setting up Your First CMake Project, will teach you how to configure a basic CMake project in its top-level file, structure the file tree, and prepare the toolchain necessary for development.
+
+Chapter 5, Working with Targets, explores the concept of logical build targets, understand their properties and different types, and learn how to define custom commands for CMake projects.
+
+Chapter 6, Using Generator Expressions, explains the purpose and syntax of generator expressions, including how to use them for conditional expansion, queries, and transformations.
+
+Chapter 7, Compiling C++ Sources with CMake, delves into the compilation process, configure the preprocessor and optimizer, and discover techniques to reduce build time and improve debugging.
+
+Chapter 8, Linking Executables and Libraries, understands the linking mechanism, different types of libraries, the One Definition Rule, the order of linking, and how to prepare your project for testing.
+
+Chapter 9, Managing Dependencies in CMake, will teach you to manage third-party libraries, add CMake support for those that lack it, and fetch external dependencies from the internet.
+
+Chapter 10, Using the C++20 Modules, introduces C++20 modules, shows how to enable their support in CMake, and configure the toolchain accordingly.
+
+Chapter 11, Testing Frameworks, will help you understand the importance of automated testing, leverage built-in testing support in CMake, and get started with unit testing using popular frameworks.
+
+Chapter 12, Program Analysis Tools, will show you how to automatically format source code and detect software errors during both build time and runtime.
+
+Chapter 13, Generating Documentation, presents how to use Doxygen for automating documentation creation from source code and add styling to enhance your documentation’s appearance.
+
+Chapter 14, Installing and Packaging, prepares your project for release with and without installation, create reusable packages, and designate individual components for packaging.
+
+Chapter 15, Creating Your Professional Project, applies all the knowledge acquired throughout the book to develop a comprehensive, professional-grade project.
+
+Chapter 16, Writing CMake Presets, encapsulates high-level project configurations into workflows using CMake preset files, making project setup and management more efficient.
+
+Appendix - Miscellaneous Commands, serves as a reference for various CMake commands related to strings, lists, files, and mathematical operations.
+
+\myChapterNoFile{}{To get the most out of this book}
+
+Basic familiarity with C++ and Unix-like systems is assumed throughout the book. Although Unix knowledge isn’t a strict requirement, it will prove helpful in fully understanding the examples given in this book.
+
+This book targets CMake 3.26, but most of the techniques described should work from CMake 3.15 (features that were added after are usually highlighted). Some chapters have been updated to CMake 3.28 to cover the latest features.
+
+Preparation of the environment to run examples is covered in Chapters 1-3, but we specifically recommend using the Docker image provided with this book if you’re familiar with this tool.
+
+\myChapterNoFile{}{Download the example code files}
+
+The code bundle for the book is hosted on GitHub at \url{https://github.com/PacktPublishing/ Modern-CMake-for-Cpp-2E}. We also have other code bundles from our rich catalog of books and videos available at \url{https://github.com/PacktPublishing/}. Check them out!
+
+
+\myChapterNoFile{}{Download the color images}
+
+We also provide a PDF file that has color images of the screenshots/diagrams used in this book.
+You can download it here: \url{https://packt.link/gbp/9781805121800}.
+
+\myChapterNoFile{}{Conventions used}
+
+There are a number of text conventions used throughout this book.
+
+CodeInText: Indicates code words in text, database table names, folder names, filenames, file extensions, pathnames, dummy URLs, user input, and Twitter handles. For example: “Mount the downloaded WebStorm-10*.dmg disk image file as another disk in your system.”
+
+A block of code is set as follows:
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26)
+project(Hello)
+add_executable(Hello hello.cpp)
+\end{cmake}
+
+When we wish to draw your attention to a particular part of a code block, the relevant lines or items are set in bold:
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26)
+project(Hello)
+add_executable(Hello hello.cpp)
+add_subdirectory(api) # bold
+\end{cmake}
+
+Any command-line input or output is written as follows:
+
+\begin{shell}
+cmake --build <dir> --parallel [<number-of-jobs>]
+cmake --build <dir> -j [<number-of-jobs>]
+\end{shell}
+
+Bold: Indicates a new term, an important word, or words that you see on the screen. For example: “Select System info from the Administration panel.”
+
+\begin{myNotic}{Note}
+Warnings or important notes appear like this.
+\end{myNotic}
+
+
+\begin{myTip}{Tip}
+Tips and tricks appear like this.
+\end{myTip}
+
+
+
+
+
+

@@ -1,0 +1,144 @@
+CMake is a cross-platform, open-source software written in C++. That means you can, of course, compile it yourself; however, the most likely scenario is that you won’t have to. This is because precompiled binaries are available for you to download from the official web page at \url{https://cmake.org/download/}.
+
+Unix-based systems provide ready-to-install packages directly from the command line.
+
+\begin{myNotic}{Note}
+Remember that CMake doesn’t come with compilers. If your system doesn’t have them installed yet, you’ll need to provide them before using CMake. Make sure to add the paths to their executables to the PATH environment variable so that CMake can find them.
+
+To avoid facing tooling and dependency problems while learning from this book, I recommend practicing by following the first installation method: Docker. In a real-world scenario, you will of course want to use a native version, unless you’re working in a virtualized environment to begin with.
+\end{myNotic}
+
+Let’s go through some different environments in which CMake can be used.
+
+\mySubsubsection{1.3.1}{Docker}
+
+Docker (\url{https://www.docker.com/}) is a cross-platform tool that provides OS-level virtualization, allowing applications to be shipped in well-defined packages called containers. These are self-sufficient bundles that contain a piece of software with all of the libraries, dependencies, and tools required to run it. Docker executes its containers in lightweight environments that are isolated one from another.
+
+This concept makes it extremely convenient to share whole toolchains that are necessary for a given process, configured and ready to go. I can’t stress enough how easy things become when you don’t need to worry about minuscule environmental differences.
+
+The Docker platform has a public repository of container images, \url{https://registry.hub.docker.com/}, that provides millions of ready-to-use images.
+
+For your convenience, I have published two Docker repositories:
+
+\begin{itemize}
+\item
+swidzinski/cmake2:base: An Ubuntu-based image that contains the curated tools and dependencies that are necessary to build with CMake
+
+\item
+swidzinski/cmake2:examples: An image based on the preceding toolchain with all of the projects and examples from this book
+\end{itemize}
+
+The first option is for readers who simply want a clean-slate image ready to build their own projects, and the second option is for hands-on practice with examples as we go through the chapters.
+
+You can install Docker by following the instructions from its official documentation (please refer to docs.docker.com/get-docker). Then, execute the following commands in your terminal to download the image and start the container:
+
+\begin{shell}
+$ docker pull swidzinski/cmake2:examples
+$ docker run -it swidzinski/cmake2:examples
+root@b55e271a85b2:root@b55e271a85b2:#
+\end{shell}
+
+Note that examples are available in the directories matching this format:
+
+\begin{shell}
+devuser/examples/examples/ch<N>/<M>-<title>
+\end{shell}
+
+Here, <N> and <M> are zero-padded chapter and example numbers, respectively (like 01, 08, and 12).
+
+\mySubsubsection{1.3.2}{Windows}
+
+Installing in Windows is straightforward – simply download the version for 32 or 64 bits from the official website. You can also pick a portable ZIP or MSI package for Windows Installer, which will add the CMake bin directory to the PATH environment variable (Figure 1.2) so that you can use it in any directory without any such errors:
+
+\textit{cmake} is not recognized as an internal or external command, operable program, or batch file.
+
+If you select the ZIP package, you will have to do it manually. The MSI installer comes with a convenient GUI:
+
+\myGraphic{0.5}{content/chapter1/images/2.png}{Figure 1.2: The installation wizard can set up the PATH environment variable for you}
+
+As I mentioned earlier, this is open-source software, so it is possible to build CMake yourself. However, on Windows, you will have to get a binary copy of CMake on your system first. This scenario is used by CMake contributors to generate newer versions.
+
+The Windows platform is no different from others, and it also requires a build tool that can finalize the build process started by CMake. A popular choice here is the Visual Studio IDE, which comes bundled with a C++ compiler. The Community edition is available for free from Microsoft’s website: \url{https://visualstudio.microsoft.com/downloads/}.
+
+
+\mySubsubsection{1.3.3}{Linux}
+
+Installing CMake on Linux follows the same process as with any other popular package: call your package manager from the command line. Package repositories are usually kept up to date with fairly recent versions of CMake, but usually not the latest. If you’re fine with this and using a distribution like Debian or Ubuntu, it is simplest to just install the appropriate package:
+
+\begin{shell}
+$ sudo apt-get install cmake
+\end{shell}
+
+For a Red Hat distribution, use the following command:
+
+\begin{shell}
+$ yum install cmake
+\end{shell}
+
+\begin{myTip}{Tip}
+Note that when installing a package, your package manager will fetch the latest available version in the repository configured for your OS. In many cases, package repositories don’t provide the latest version but, rather, a stable one that has been proven over time to work reliably. Pick according to your needs, but be aware that older versions won’t have all the features described in this book.
+\end{myTip}
+
+To get the latest version, reference the download section of the official CMake website. If you know the current version number, you can use one of the following commands.
+The command for Linux x86\_64 is:
+
+\begin{shell}
+$ VER=3.26.0 && wget https://github.com/Kitware/CMake/releases/download/
+v$VER/cmake-$VER-linux-x86_64.sh && chmod +x cmake-$VER-linux-x86_64.sh &&
+./cmake-$VER-linux-x86_64.sh
+\end{shell}
+
+The command for Linux AArch64 is:
+
+\begin{shell}
+$ VER=3.26.0 && wget https://github.com/Kitware/CMake/releases/download/
+v$VER/cmake-$VER-Linux-aarch64.sh && chmod +x cmake-$VER-Linux-aarch64.sh
+&& ./cmake-$VER-Linux-aarch64.sh
+\end{shell}
+
+Alternatively, check out the Building from the source section to learn how to compile CMake on your platform yourself.
+
+\mySubsubsection{1.3.4}{macOS}
+
+This platform is also strongly supported by CMake developers. The most popular choice of installation is through MacPorts with the following command:
+
+\begin{shell}
+$ sudo port install cmake
+\end{shell}
+
+Do note that at the time of writing, the latest version available in MacPorts was 3.24.4. To get the latest version, install the cmake-devel package:
+
+\begin{shell}
+$ sudo port install cmake-devel
+\end{shell}
+
+Alternatively, you can use the Homebrew package manager:
+
+\begin{shell}
+$ brew install cmake
+\end{shell}
+
+macOS package managers will cover all necessary steps, but be mindful that you might not get the latest version unless you’re building from the source.
+
+\mySubsubsection{1.3.5}{Building from the source}
+
+If you’re using another platform, or just want to experience the latest builds that haven’t been promoted to a release (or adopted by your favorite package repository), download the source from the official website and compile it yourself:
+
+\begin{shell}
+$ wget https://github.com/Kitware/CMake/releases/
+download/v3.26.0/cmake-3.26.0.tar.gz
+$ tar xzf cmake-3.26.0.tar.gz
+$ cd cmake-3.26.0
+$ ./bootstrap
+$ make
+$ make install
+\end{shell}
+
+Building from the source is relatively slow and requires more steps. However, there is no other way to have the freedom of picking any version of CMake. This is especially useful when packages that are available in repositories of your operating system are stale: the older the version of the system, the fewer updates it gets.
+
+Now that we have installed CMake, let’s learn how to use it!
+
+
+
+
+
