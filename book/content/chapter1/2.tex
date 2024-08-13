@@ -123,7 +123,7 @@ Building
 
 Let’s explore them in some detail.
 
-\mySubsubsection{1.2.3}{The configuration stage}
+\mySamllsection{The configuration stage}
 
 This stage is about reading project details stored in a directory, called the source tree, and preparing an output directory or build tree for the generation stage.
 
@@ -133,7 +133,7 @@ Next, the CMakeLists.txt project configuration file is parsed and executed (yes,
 
 During this process, CMake stores collected information in the build tree, such as system details, project configurations, logs, and temp files, which are used for the next step. Specifically, a CMakeCache.txt file is created to store more stable information (such as paths to compilers and other tools), which saves time when the whole build sequence is executed again.
 
-\mySubsubsection{1.2.4}{The generation stage}
+\mySamllsection{The generation stage}
 
 After reading the project configuration, CMake will generate a buildsystem for the exact environment it is working in. Buildsystems are simply cut-to-size configuration files for other build tools (for example, Makefiles for GNU Make or Ninja and IDE project files for Visual Studio). During this stage, CMake can still apply some final touches to the build configuration by evaluating generator expressions.
 
@@ -141,7 +141,7 @@ After reading the project configuration, CMake will generate a buildsystem for t
 The generation stage is executed automatically after the configuration stage. For this reason, this book and other resources sometimes refer to both of these stages interchangeably when mentioning the “configuration” or “generation” of a buildsystem. To explicitly run just the configuration stage, you can use the cmake-gui utility
 \end{myTip}
 
-\mySubsubsection{1.2.5}{The building stage}
+\mySamllsection{The building stage}
 
 To produce the final artifacts specified in our project (like executables and libraries), CMake has to run the appropriate build tool. This can be invoked directly, through an IDE, or using the appropriate CMake command. In turn, these build tools will execute steps to produce target artifacts with compilers, linkers, static and dynamic analysis tools, test frameworks, reporting tools, and anything else you can think of.
 

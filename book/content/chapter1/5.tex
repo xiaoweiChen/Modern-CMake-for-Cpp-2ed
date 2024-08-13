@@ -1,0 +1,276 @@
+Quite a lot of files and directories make up CMake projects. Let’s get a general idea of what each one does so we can start tinkering with them. There are several general categories:
+
+\begin{itemize}
+\item
+Of course, we’ll have project files that we, as developers, prepare and change as our project grows.
+
+\item
+There will be files that CMake generates for itself, and even though they will contain CMake language commands, they aren’t meant for developers to edit. Any manual changes made there will be overwritten by CMake.
+
+\item
+Some files are meant for advanced users (as in: not project developers) to customize how CMake builds the project to their individual needs.
+
+\item
+Finally, there are some temporary files that provide valuable information in specific contexts.
+\end{itemize}
+
+This section will also suggest which files you can put in the ignore file of your Version Control System (VCS).
+
+
+\mySubsubsection{1.5.1}{The source tree}
+
+This is the directory where your project will live (it is also called the project root). It contains all of the C++ sources and CMake project files.
+
+Here are the most important takeaways from this directory:
+
+\begin{itemize}
+\item
+It requires a CMakeLists.txt configuration file.
+
+\item
+The path to this directory is given by the user with a -S argument of the cmake command when generating a buildsystem.
+
+\item
+Avoid hardcoding any absolute paths to the source tree in your CMake code – users of your software will store the project in another path.
+\end{itemize}
+
+It’s a good idea to initialize a repository in this directory, perhaps using a VCS like Git.
+
+\mySubsubsection{1.5.2}{The build tree}
+
+CMake creates this directory in a path specified by the user. It will store the buildsystem and everything that gets created during the build: the artifacts of the project, the transient configuration, the cache, the build logs, and the output of your native build tool (like GNU Make). Alternative names for this directory include build root and binary tree.
+
+Key things to remember:
+
+\begin{itemize}
+\item
+Your build configuration (buildsystem) and build artifacts will be created here (such as binary files, executables, and libraries, along with object files and archives used for final linking).
+
+\item
+CMake recommends that this directory be placed outside the source tree directory (a practice known as out-of-source builds). This way, we can prevent the pollution of our project (in-source builds).
+
+\item
+It is specified with -B to the cmake command when generating a buildsystem.
+
+\item
+This directory isn’t meant as a final destination for generated files. Rather, it’s recommended that your projects include an installation stage that copies the final artifacts where they should be in the system and removes all temporary files used for building.
+\end{itemize}
+
+Don’t add this directory to your VCS – every user picks one for themselves. If you have a good reason to do an in-source build, make sure to add this directory to the VCS ignore file (like .gitignore).
+
+
+\mySubsubsection{1.5.3}{Listfiles}
+
+Files that contain the CMake language are called listfiles and can be included one in another by calling include() and find\_package(), or indirectly with add\_subdirectory(). CMake doesn’t enforce any naming rules for these files but, by convention, they have a .cmake extension.
+
+\mySamllsection{Project file}
+
+CMake projects are configured with a CMakeLists.txt listfile (notice that due to historical reasons, this file has an unconventional extension). This file is required at the top of the source tree of every project and is the first to be executed in the configuration stage.
+
+A top-level CMakeLists.txt should contain at least two commands:
+
+\begin{itemize}
+\item
+cmake\_minimum\_required(VERSION <x.xx>): Sets an expected version of CMake and tells CMake how to handle legacy behaviors with policies
+
+\item
+project(<name> <OPTIONS>): Names the project (the provided name will be stored in the PROJECT\_NAME variable) and specifies the options to configure it (more on this in Chapter 2, The CMake Language)
+\end{itemize}
+
+As your software grows, you might want to partition it into smaller units that can be configured and reasoned about separately. CMake supports this through the notion of subdirectories with their own CMakeLists.txtfiles. Your project structure might look similar to the following example:
+
+\begin{shell}
+myProject/CMakeLists.txt
+myProject/api/CMakeLists.txt
+myProject/api/api.h
+myProject/api/api.cpp
+\end{shell}
+
+A very simple top-level CMakeLists.txt file can then be used to bring it all together:
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26)
+project(app)
+message("Top level CMakeLists.txt")
+add_subdirectory(api)
+\end{cmake}
+
+The main aspects of the project are covered in the top-level file: managing the dependencies, stating the requirements, and detecting the environment. We also have an add\_subdirectory(api) command to include another CMakeListst.txt file from the api subdirectory to perform steps that are specific to the API part of our application.
+
+\mySamllsection{Cache file}
+
+Cache variables will be generated from the listfiles and stored in CMakeCache.txt when the configure stage is run for the first time. This file resides in the root of the build tree and has a fairly simple format (some lines removed for brevity):
+
+\begin{shell}
+# This is the CMakeCache file.
+# For build in directory: /root/build tree
+# It was generated by CMake: /usr/local/bin/cmake
+# The syntax for the file is as follows:
+# KEY:TYPE=VALUE
+# KEY is the name of a variable in the cache.
+# TYPE is a hint to GUIs for the type of VALUE, DO NOT EDIT
+  #TYPE!.
+# VALUE is the current value for the KEY.
+########################
+# EXTERNAL cache entries
+########################
+
+# Flags used by the CXX compiler during DEBUG builds.
+CMAKE_CXX_FLAGS_DEBUG:STRING=/MDd /Zi /Ob0 /Od /RTC1
+
+# ... more variables here ...
+########################
+# INTERNAL cache entries
+########################
+
+# Minor version of cmake used to create the current loaded cache
+CMAKE_CACHE_MINOR_VERSION:INTERNAL=19
+# ... more variables here ...
+\end{shell}
+
+As you can see from the header comments, this format is pretty self-explanatory. Cache entries in the EXTERNAL section are meant for users to modify, while the INTERNAL section is managed by CMake.
+
+Here are a couple of key takeaways to bear in mind:
+
+\begin{itemize}
+\item
+You can manage this file manually, by calling cmake (see Options for caching in the Mastering the command line section of this chapter), or through ccmake or cmake-gui
+
+\item
+You can reset the project to its default configuration by deleting this file; it will be regenerated from the listfiles.
+\end{itemize}
+
+Cache variables can be read and written from the listfiles. Sometimes, variable reference evaluation is a bit complicated; we will cover that in more detail in Chapter 2, The CMake Language.
+
+\mySamllsection{Package definition file}
+
+A big part of the CMake ecosystem is the external packages that projects can depend on. They provide libraries and tools in a seamless, cross-platform way. Package authors that want to provide CMake support will ship it with a CMake package configuration file.
+
+We’ll learn how to write those files in Chapter 14, Installing and Packaging. Meanwhile, here’s a few interesting details to bear in mind:
+
+\begin{itemize}
+\item
+Config-files (original spelling) contain information regarding how to use the library binaries, headers, and helper tools. Sometimes, they expose CMake macros and functions that can be used in your project.
+
+\item
+Config-files are named <PackageName>-config.cmake or <PackageName>Config.cmake.
+
+\item
+Use the find\_package() command to include packages.
+\end{itemize}
+
+If a specific version of the package is required, CMake will check this against the associated <PackageName>-config-version.cmake or <PackageName>ConfigVersion.cmake.
+
+If a vendor doesn’t provide a config file for the package, sometimes, the configuration is bundled with the CMake itself or can be provided in the project with Find-module (original spelling).
+
+\mySamllsection{Generated file}
+
+Many files are generated in the build tree by the cmake executable in the generation stage. As such, they shouldn’t be edited manually. CMake uses them as a configuration for the cmake install action, CTest, and CPack.
+
+Files that you may encounter are:
+
+\begin{itemize}
+\item
+cmake\_install.cmake
+
+\item
+CTestTestfile.cmake
+
+\item
+CPackConfig.cmake
+\end{itemize}
+
+If you’re implementing an in-source build, it’s probably a good idea to add them to the VCS ignore file.
+
+\mySubsubsection{1.5.4}{JSON and YAML files}
+
+Other formats used by CMake are JavaScript Object Notation (JSON) and Yet Another Markup Language (YAML). These files are introduced as an interface to communicate with external tools (like IDEs) or to provide configuration that can be easily generated and parsed.
+
+\mySamllsection{Preset file}
+
+The advanced configuration of the projects can become a relatively busy task when we need to be specific about things such as cache variables, chosen generators, the path of the build tree, and more – especially when we have more than one way of building our project. This is where the presets come in – instead of manually configuring these values through the command line, we can just provide a file that stores all the details and ship it with the project. Since CMake 3.25, presets also allow us to configure workflows, which tie stages (configure, build, test, and package) into a named list of steps to execute.
+
+As mentioned in the Mastering the command line section of this chapter, users can choose presets through the GUI or use the command -{}-list-presets and select a preset for the buildsystem with the -{}-preset=<preset> option.
+
+Presets are stored in two files:
+
+\begin{itemize}
+\item
+CMakePresets.json: This is meant for project authors to provide official presets.
+
+\item
+CMakeUserPresets.json: This is dedicated to users who want to customize the project configuration to their liking (you can add it to your VCS ignore file).
+\end{itemize}
+
+Presets are not required in projects and only become useful in advanced scenarios. See Chapter 16, Writing CMake Presets, for details.
+
+\mySamllsection{File-based API}
+
+CMake 3.14 introduced an API that allows external tools to query the buildsystem information: paths to generated files, cache entries, toolchains, and such. We only mention this very advanced topic to avoid confusion if you come across a file-based API phrase in the documentation. The name suggests how it works: a JSON file with a query has to be placed in a special path inside the build tree. CMake will read this file during the buildsystem generation and write a response to another file, so it can be parsed by external applications.
+
+The file-based API was introduced to replace a deprecated mechanism called server mode (or cmake-server), which was finally removed in CMake 3.26.
+
+\mySamllsection{Configure log}
+
+Since version 3.26, CMake will provide a structured log file for really advanced debugging of the configure stage at:
+
+\begin{shell}
+<build tree>/CMakeFiles/CMakeConfigureLog.yaml
+\end{shell}
+
+It’s one of these features that you don’t normally need to pay attention to – until you do.
+
+\mySubsubsection{1.5.5}{Ignoring files in Git}
+
+There are many VCSs; one of the most popular out there is Git. Whenever we start a new project, it is good to make sure that we only add the necessary files to the repository. Project hygiene is easier to maintain if we specify unwanted files in the .gitignore file. For example, we might exclude files that are generated, user-specific, or temporary.
+
+Git will automatically skip them when forming new commits. Here’s the file that I use in my projects:
+
+\filename{ch01/01-hello/�gitignore}
+
+\begin{shell}
+CMakeUserPresets.json
+# If in-source builds are used, exclude their output like so:
+build_debug/
+build_release/
+
+# Generated and user files
+**/CMakeCache.txt
+**/CMakeUserPresets.json
+**/CTestTestfile.cmake
+**/CPackConfig.cmake
+**/cmake_install.cmake
+**/install_manifest.txt
+**/compile_commands.json
+\end{shell}
+
+Now you hold a map to the sea of project files. Some files are very important and you will use them all the time – others, not so much. While it might seem like a waste to learn about them, it can be invaluable to know where not to look for answers. In any case, one last question for this chapter remains: what other self-contained units can you create with CMake?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

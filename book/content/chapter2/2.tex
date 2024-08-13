@@ -1,0 +1,180 @@
+Composing CMake code is very much like writing in any other imperative language: lines are executed from top to bottom and from left to right, occasionally stepping into an included file or a called function. The starting point of execution is determined by the mode (see the Mastering the command line section in Chapter 1, First Steps with CMake), either from the root file of the source tree (CMakeLists.txt) or a .cmake script file provided as an argument to cmake.
+
+Since CMake scripts offer extensive support for the CMake language, except for project-related features, we will utilize them to practice CMake syntax in this chapter. Once we become proficient in composing simple listfiles, we can advance to creating actual project files, which we will cover in Chapter 4, Setting Up Your First CMake Project.
+
+As a reminder, scripts can be run with the following command: cmake -P script.cmake.
+
+\begin{myNotic}{Note}
+CMake supports 7-bit ASCII text files for portability across all platforms. You can use both \verb|\|n or \verb|\|r\verb|\|n line endings. CMake versions above 3.2 support UTF-8 and UTF-16 with optional byte-order markers (BOMs).
+\end{myNotic}
+
+Everything in a CMake listfile is either a comment or a command invocation.
+
+
+\mySubsubsection{2.1.1}{Comments}
+
+Just like in C++, there are two kinds of comments: single-line comments and bracket (multiline) comments. But unlike in C++, bracket comments can be nested. Single-line comments start with a hash sign, \#:
+
+\begin{cmake}
+# they can be placed on an empty line
+message("Hi"); # or after a command like here.
+\end{cmake}
+
+Multiline bracket comments get their name from their symbol – they start with \# followed by opening square bracket [, any number of equal signs = (which can also include 0), and another square bracket [. To close a bracket comment, use the same number of equal signs and reverse the brackets ]:
+
+\begin{cmake}
+#[=[
+bracket comment
+  #[[
+    nested bracket comment
+  #]]
+#]=]
+\end{cmake}
+
+You can deactivate a multiline comment swiftly by adding another \# to the initial line of the bracket comment, as demonstrated in the following:
+
+\begin{cmake}
+##[=[ this is a single-line comment now
+no longer commented
+  #[[
+    still, a nested comment
+  #]]
+#]=] this is a single-line comment now
+\end{cmake}
+
+Knowing how to use comments is definitely useful, but it raises another question: when should we do it? Since writing listfiles is essentially programming, it is a good idea to bring our best coding practices to them as well.
+
+Code that follows such practices is often called clean code – a term used over the years by software development gurus like Robert C. Martin, Martin Fowler, and many other authors.
+
+There is often a lot of controversy surrounding which practices are considered beneficial or detrimental, and as you might expect, comments have not been exempt from these debates. Everything should be judged on a case-by-case basis, but generally agreed-upon guidelines say that good comments provide at least one of the following:
+
+\begin{itemize}
+\item
+Information: They can untangle complexities such as regex patterns or formatting strings.
+
+\item
+Intent: They can explain the intent of the code when it is not obvious from the implementation or interface.
+
+\item
+Clarification: They can explain concepts that can’t be easily refactored or changed.
+
+\item
+Warnings of consequences: They can provide warnings, especially around code that can break other things.
+
+\item
+Amplification: They can underline the importance of an idea that is hard to express in code.
+
+\item
+Legal clauses: They can add this necessary evil, which is usually not the domain of a programmer.
+\end{itemize}
+
+It’s best to avoid comments by applying better naming, refactoring or correcting your code. Omit comments that are:
+
+\begin{itemize}
+\item
+Mandated: These are added for completeness but they are not really important.
+
+\item
+Redundant: These repeat what is already clearly written in the code.
+
+\item
+Misleading: These could be outdated or incorrect if they don’t follow code changes.
+
+\item
+Journal: These note what has been changed and when (use Version Control Systems (VCS) for this instead).
+
+\item
+Dividers: These mark sections.
+\end{itemize}
+
+If you can, avoid adding comments, adopt better naming practices, and refactor or correct your code. Crafting elegant code is a challenging task but it enhances the reader’s experience. Since we spend more time reading code than composing it, we should always strive to write code that is easy to read, instead of just trying to finish it quickly. I recommend checking out the Further reading section at the end of this chapter for some good references on clean code. If you’re interested in comments, you’ll find a link to my YouTube video Which comments in your code ARE GOOD? touching on this subject in depth.
+
+\mySubsubsection{2.1.2}{Comments invocations}
+
+Time for some action! Invoking commands is the bread and butter of CMake listfiles. In order to run a command, you must specify its name followed by parentheses, in which you can enclose a list of command arguments separated by whitespace.
+
+\myGraphic{0.5}{content/chapter2/images/1.png}{Figure 2.1: An example of a command}
+
+Command names aren’t case-sensitive, but there is a convention in the CMake community to use snake\_case (that is, lowercase words joined with underscores). You can also define your own commands, which we’ll cover in the Understanding control structures in CMake section of this chapter.
+
+One significant difference between CMake and C++ is that command invocations in CMake are not expressions. This means that you cannot pass another command as an argument to a called command because everything inside the parentheses is treated as an argument for that specific command.
+
+CMake commands are also not followed with semicolons. This is because each line of source code can only contain one command.
+
+A command can be optionally followed by a comment:
+
+\begin{cmake}
+command(argument1 "argument2" argument3) # comment
+command2() #[[ multiline comment
+\end{cmake}
+
+But not the other way around:
+
+\begin{cmake}
+#[[ bracket
+]] command()
+\end{cmake}
+
+As we said earlier, everything in a CMake listfile is either a comment or a command invocation. CMake syntax really is that simple, and for the most part, it’s a good thing. While there are some constraints (for instance, you can’t increment a counter variable using an expression), for the most part, these limitations are mostly acceptable because CMake is not intended to be a general-purpose language.
+
+CMake provides commands to manipulate variables, direct the flow of execution, modify files, and much more. To make things easier, we will be introducing the relevant commands as we progress through different examples. These commands can be categorized into two groups:
+
+\begin{itemize}
+\item
+Scripting commands: These are always available and they change the state of the command processor and access variables, and affect other commands and the environment.
+
+\item
+Project commands: These are available in projects and they manipulate the project state and build targets.
+\end{itemize}
+
+Virtually every command relies on other elements of the language in order to function: variables, conditional statements, and, most importantly, command-line arguments. Now, let’s explore how we can utilize them.
+
+\mySubsubsection{2.1.3}{Comments arguments}
+
+\mySamllsection{Bracket arguments}
+
+
+\mySamllsection{Quoted arguments}
+
+
+
+\mySamllsection{Unquoted arguments}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
