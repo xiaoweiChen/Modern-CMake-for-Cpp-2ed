@@ -1,0 +1,202 @@
+
+CMake offers many scripting commands that allow you to work with variables and the environment. Some of them have been extensively covered in the Appendix: for example, list(), string(), and file(). Others, such as find\_file(), find\_package(), and find\_path(), fit better in chapters that talk about their respective subjects. In this section, we will provide a brief overview of the common commands that are useful in most situations:
+
+\begin{itemize}
+\item
+message()
+
+\item
+include()
+
+\item
+include\_guard()
+
+\item
+file()
+
+\item
+execute\_process()
+\end{itemize}
+
+Let’s get to it.
+
+\mySubsubsection{2.6.1}{The message() command}
+
+We already know and love our trusty message() command, which prints text to standard output. However, there’s a lot more to it than meets the eye. By providing a MODE argument, you can customize the behavior of the command like so: message(<MODE> "text to print").
+
+The recognized modes are as follows:
+
+\begin{itemize}
+\item
+FATAL\_ERROR: This stops processing and generation.
+
+\item
+SEND\_ERROR: This continues processing but skips generation.
+
+\item
+WARNING: This continues processing.
+
+\item
+AUTHOR\_WARNING: A CMake warning. This continues processing.
+
+\item
+DEPRECATION: This works accordingly if either of the CMAKE\_ERROR\_DEPRECATED or CMAKE\_WARN\_DEPRECATED variables are enabled.
+
+\item
+NOTICE or omitted mode (default): This prints a message to stderr to attract the user’s attention.
+
+\item
+STATUS: This continues processing and is recommended for main messages to users.
+
+\item
+VERBOSE: This continues processing and should be used for more detailed information that usually isn’t very necessary.
+
+\item
+DEBUG: This continues processing and should contain any fine details that might be helpful when there’s an issue with a project.
+
+\item
+TRACE: This continues processing and is recommended to print messages during project development. Usually, these sorts of messages would be removed before publishing the project.
+\end{itemize}
+
+Picking the right mode is extra work, but it can save debugging time by coloring the output text based on the severity (since 3.21) or even stop the execution after declaring an irrecoverable error:
+
+\filename{ch02/10-useful/message\_error.cmake}
+
+\begin{cmake}
+message(FATAL_ERROR "Stop processing")
+message("This won't be printed.")
+\end{cmake}
+
+Messages will be printed depending on the current log level (which is STATUS by default). We discussed how to change this in the previous chapter in the Options for debugging and tracing section.
+
+In Chapter 1, First Steps with CMake, I mentioned debugging with CMAKE\_MESSAGE\_CONTEXT, and now it’s time to delve into it. In the meantime, we have gained insights into three crucial pieces of this subject: lists, scopes, and functions.
+
+In complex debugging scenarios, it can be extremely useful to indicate in which context the message is occurring. Consider the following output, where messages printed in the foo function have the appropriate prefix:
+
+\begin{shell}
+$ cmake -P message_context.cmake --log-context
+[top] Before `foo`
+[top.foo] foo message
+[top] After `foo`
+\end{shell}
+
+Here’s how this works:
+
+\filename{ch02/10-useful/message\_context.cmake}
+
+\begin{cmake}
+function(foo)
+    list(APPEND CMAKE_MESSAGE_CONTEXT "foo")
+    message("foo message")
+endfunction()
+
+list(APPEND CMAKE_MESSAGE_CONTEXT "top")
+message("Before `foo`")
+foo()
+message("After `foo`")
+\end{cmake}
+
+Let’s break this down:
+
+\begin{enumerate}
+\item
+First, we append the top to the context-tracking variable CMAKE\_MESSAGE\_CONTEXT, then we print the initial Before `foo` message, and the matching prefix [top] will be added to the output.
+
+\item
+Next, upon entering the foo() function, we append a new context to the list named foo after the function it belongs to and output another message, which appears with the extended [top.foo] prefix in the output.
+
+\item
+Finally, after function execution has completed, we print the After `foo` message. The message is printed with the original [foo] scope. Why? Because of the variable scope rules: the changed CMAKE\_MESSAGE\_CONTEXT variable only lives until the end of the function scope, and is then restored to the original unchanged version.
+\end{enumerate}
+
+Another cool trick with message() is to add indentation to the CMAKE\_MESSAGE\_INDENT list (in exactly the same way as with CMAKE\_MESSAGE\_CONTEXT):
+
+\begin{cmake}
+list(APPEND CMAKE_MESSAGE_INDENT " ")
+message("Before `foo`")
+foo()
+message("After `foo`")
+\end{cmake}
+
+The output from our scripts can then look a bit simpler:
+
+\begin{shell}
+Before `foo`
+    foo message
+After `foo`
+\end{shell}
+
+Since CMake doesn’t offer any real debugger with breakpoints or other tools, the ability to produce clean log messages comes in very handy when things don’t go exactly as planned.
+
+\mySubsubsection{2.6.2}{The include() command}
+
+Partitioning code into different files to keep things ordered and, well, separate, is quite useful. Then, we can reference them from our parent listfile by calling include(), like so:
+
+\begin{shell}
+include(<file|module> [OPTIONAL] [RESULT_VARIABLE <var>])
+\end{shell}
+
+If we provide a filename (a path with a .cmake extension), CMake will try to open and execute it.
+
+Note that no nested, separate variable scope will be created, so any changes to variables made in that file will affect the calling scope.
+
+CMake will raise an error if a file doesn’t exist unless we specify that it is optional with the OPTIONAL keyword. When we need to know whether include() was successful, we can provide a RESULT\_VARIABLE keyword with the name of the variable. It will be filled with a full path to the included file on success or not found (NOTFOUND) on failure.
+
+When running in script mode, any relative paths will be resolved from the current working directory. To force searching in relation to the script itself, provide an absolute path:
+
+\begin{cmake}
+include("${CMAKE_CURRENT_LIST_DIR}/<filename>.cmake")
+\end{cmake}
+
+If we don’t provide a path but do provide the name of a module (without .cmake or otherwise), CMake will try to find a module and include it. CMake will search for a file with the name of <module>.cmake in CMAKE\_MODULE\_PATH and then in the CMake module directory.
+
+As CMake walks the source tree and includes different listfiles, the following variables are set: CMAKE\_CURRENT\_LIST\_DIR, CMAKE\_CURRENT\_LIST\_FILE, CMAKE\_PARENT\_LIST\_FILE, and CMAKE\_CURRENT\_LIST\_LINE.
+
+\mySubsubsection{2.6.3}{The include\_guard() command}
+
+When we include files that have side effects, we might want to restrict them so that they’re only included once. This is where include\_guard([DIRECTORY|GLOBAL]) comes in.
+
+Put include\_guard() at the top of the included file. When CMake encounters it for the first time, it will make a note of this fact in the current scope. If the file gets included again (maybe because we don’t control all the files in our project), it won’t be processed any further.
+
+If we want to protect against inclusion in unrelated function scopes that won’t share variables with each other, we should provide DIRECTORY or GLOBAL arguments. As the names suggest, the DIRECTORY keyword will apply the protection within the current directory and below it, and the GLOBAL keyword applies the protection to the whole build.
+
+
+\mySubsubsection{2.6.4}{The file() command}
+
+To give you an idea of what you can do with CMake scripts, let’s take a quick look at the most useful variants of the file manipulation command:
+
+\begin{shell}
+file(READ <filename> <out-var> [...])
+file({WRITE | APPEND} <filename> <content>...)
+file(DOWNLOAD <url> [<file>] [...])
+\end{shell}
+
+In short, the file() command will let you read, write, and transfer files and work with the filesystem, file locks, paths, and archives, all in a system-independent manner. Please see the Appendix for more details.
+
+\mySubsubsection{2.6.5}{The execute\_process() command}
+
+Every now and then, you’ll need to resort to using tools available in the system (after all, CMake is primarily a buildsystem generator). CMake offers a command for this purpose: you can use execute\_process() to run other processes and collect their output. This command is a great fit for scripts and it can also be used in projects, but it only works during the configuration stage.
+
+Here’s the general form of the command:
+
+\begin{shell}
+execute_process(COMMAND <cmd1> [<arguments>]... [OPTIONS])
+\end{shell}
+
+CMake will use the API of the operating system to create a child process (so, shell operators such as \&\&, ||, and > won’t work). However, you can still chain commands and pass the output of one to another simply by providing the COMMAND <cmd> <arguments> arguments more than once.
+
+Optionally, you may use a TIMEOUT <seconds> argument to terminate the process if it hasn’t finished the task within the required limit, and you can set the WORKING\_DIRECTORY <directory> as you need.
+
+The exit codes of all tasks can be collected in a list by providing RESULTS\_VARIABLE <variable> arguments. If you’re only interested in the result of the last executed command, use the singular form: RESULT\_VARIABLE <variable>.
+
+To collect the output, CMake provides two arguments: OUTPUT\_VARIABLE and ERROR\_VARIABLE (which are used in a similar fashion). If you would like to merge both stdout and stderr, use the same variable for both arguments.
+
+Remember that when writing projects for other users, you should make sure that the command you’re planning to use is available on the platforms you claim to support.
+
+
+
+
+
+
+
+

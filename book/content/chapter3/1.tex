@@ -1,0 +1,102 @@
+In this section, we will discuss IDEs and how they can significantly enhance development speed and code quality. Let’s begin by explaining what an IDE is for those new to this topic.
+
+Why and how do you choose an IDE? An IDE, or integrated development environment, is a comprehensive tool that combines various specialized tools to simplify the software development process. The journey of creating a professional project involves numerous steps: designing, coding, building, testing, packaging, releasing, and maintaining. Each step comprises many smaller tasks, and the complexity can be overwhelming. IDEs offer a solution by providing a platform with a set of tools that are curated and configured by the IDE creators. This integration allows you to use these tools seamlessly without having to set them up individually for each project.
+
+IDEs are mainly centered around the code editor, compiler, and debugger. They are designed to provide sufficient integration, enabling you to edit code, compile it immediately, and run it with a debugger attached. IDEs can include build toolchains or allow developers to choose their preferred compilers and debuggers. Editors are usually a core part of the software but can often be greatly extended with plugins, like code highlighting, formatting, and more.
+
+More advanced IDEs offer very sophisticated features like Hot Reload debugging (available in Visual Studio 2022; read on to learn more). This feature lets you run your code in a debugger, edit it, and continue execution without restarting the program. You will also find refactoring tools to rename symbols or extract code into a separate function, and static analysis to identify errors before compilation. Additionally, IDEs provide tools to work with Git and other version control systems, which are invaluable for resolving conflicts, among other benefits.
+
+I’m sure you can see now how beneficial it can be to learn how to use an IDE early and standardize this usage in your organization. Let’s find out why choosing an IDE that is right for you is important.
+
+\mySubsubsection{3.1.1}{Choosing an IDE}
+
+There are plenty of code editors that are on the verge of being recognized by the community as fully featured IDEs. It’s always recommended to research the space a bit before committing to a specific choice, especially because of the pace of current software release cycles and rapid changes in the space.
+
+In my few years of corporate experience, it’s quite uncommon for an IDE to offer a feature compelling enough to make someone switch from one IDE to another. Force of habit is really second nature to a developer, and it shouldn’t be ignored. Remember that as soon as you feel comfortable in an IDE, it’s likely going to be your tool of choice for the considerable future. This is why you still see developers using Vim (a console-based text editor released in 1991), extended with a bunch of plugins to make it as powerful as more modern, GUI-based IDEs. No pressure then.
+
+There are varied reasons why programmers choose one IDE over another; some of them are really important (speed, reliability, comprehensiveness, completeness), while others… not so much. I’d like to share my subjective perspective on this choice, which I hope you’ll find useful too.
+
+\mySamllsection{Choose a comprehensive IDE}
+
+If you’re just starting out, you might think about using a simple text editor and running a few commands to build your code. This approach is definitely workable, especially when you’re trying to understand the basics (I encourage you to use the actual commands to monitor your progress throughout this book). It also helps you grasp what a beginner might experience without an IDE.
+
+On the other hand, IDEs are created for a purpose. They streamline numerous processes that developers handle during a project’s lifecycle, which can be extremely valuable. Although it might seem overwhelming initially, choose a comprehensive IDE that includes all the necessary features. Ensure it’s as complete as possible, but be mindful of the cost, as IDEs can be expensive for small businesses or individual developers. It’s a balance between the time spent on manual management and the cost of the features provided by the IDE.
+
+Regardless of the cost, always select an IDE with strong community support to assist you if you encounter issues. Explore community forums and popular Q\&A sites like StackOverflow.com to check if users get their questions answered. Additionally, choose an IDE that is actively developed by a reputable company. You don’t want to waste your time on something that hasn’t been updated in a while and might get deprecated or abandoned in the near future. For example, not so long ago, Atom, an editor created by GitHub, was sunset after 7 years of releases.
+
+\mySamllsection{Choose an IDE that is widely supported in your organization}
+
+Counterintuitively, this might not align with every developer’s preference. You may already be comfortable with a different tool from your university, previous job, or a personal project. Such a habit, as mentioned earlier, can tempt you to ignore your company’s recommendations and stick with what you know. Resist this. Such a choice becomes increasingly challenging over time.
+
+From my experiences at Ericsson, Amazon, and Cisco, only once did the effort to configure and maintain a non-standard IDE prove worthwhile. That was because I managed to get enough organizational support to address issues collectively.
+Your primary goal should be writing code, not struggling with an unsupported IDE. Learning the recommended software may require effort, but it’s less than what’s needed to go against the norm (and yes, Vim lost this battle; it’s time to move on).
+
+\mySamllsection{Don’t pick an IDE based on the target OS and platform}
+
+You might think that if you’re developing software for Linux, you need to use a Linux machine and a Linux-based IDE. However, C++ is a portable language, which means it should compile and run the same way on any platform, provided you’ve written it correctly. Of course, you might encounter issues with libraries, as not all of them are installed by default, and some may be specific to your platform.
+
+Adhering strictly to the target platform isn’t always necessary and can sometimes be counterproductive. For instance, if you’re targeting an older or Long-Term Support (LTS) version of an OS, you might not be able to use the latest toolchain versions. If you wish to develop on a different platform than your target, you can.
+
+In that case, consider cross-compilation or remote development. Cross-compilation involves using a specialized toolchain that allows a compiler running on one platform (like Windows) to produce artifacts for another platform (like Linux). This approach is widely used in the industry and is supported by CMake. Alternatively, I recommend remote development, where you send your code to the target machine and build it there using the local toolchain. This method is supported by many IDEs and offers several benefits, which we’ll explore in the next section.
+
+\mySamllsection{Pick an IDE with remote development support}
+
+While it shouldn’t be your primary criterion, considering remote development support in an IDE is beneficial after meeting other requirements. Over time, even seasoned developers encounter projects requiring a different target platform than their usual OS due to changing teams, projects, or even companies.
+
+If your preferred IDE supports remote development, you can continue using it, leveraging the ability to compile and debug code on a different OS and view results in the IDE’s GUI. The main advantage of remote development over cross-compilation is its integrated debugger support, offering a cleaner process without needing CMake project-level configuration. Additionally, companies often provide powerful remote machines, allowing developers to use less expensive, lightweight local devices.
+
+Sure, there’s an argument to be made that cross-compilation offers greater control over the development environment, allowing temporary changes for testing. It doesn’t necessitate bandwidth for code transfers, supporting low-end internet connections, or offline work. However, considering most software development involves internet access for information, this might be a less critical advantage. Using virtualized environments like Docker enables running a local production copy and setting up remote development connections, offering security, customizability, and the ability to build and deploy containers.
+
+The considerations mentioned here are slightly tilted toward working in big corporations, where things move slower, and it’s difficult to make highly impactful changes. These suggestions don’t negate the possibility of having a perfectly complete experience with CMake if you decide to prioritize other aspects of IDEs, as needed by your use case.
+
+\mySubsubsection{3.1.2}{Installing toolchains}
+
+As we discussed earlier, an IDE integrates all the necessary tools to streamline software development. A key part of this process is building binaries, sometimes in the background or on the fly, to provide additional information to developers. Toolchains are collections of tools like compilers, linkers, archivers, optimizers, debuggers, and implementations of the standard C++ library. They may also include other handy utilities like bash, make, gawk, grep, and so on, which are used to build programs.
+
+Some IDEs come with toolchains or toolchain downloaders, while others do not. It’s best to just run an installed IDE and check if you’re able to compile a basic test program. CMake typically does this by default during the configuration stage, which most IDEs execute as part of the initialization of new projects. If this process fails, you might be prompted by the IDE or the OS’s package manager to install the necessary tools. Just follow along, as this flow is usually well prepared.
+
+If you’re not prompted, or if you’d like to use a specific toolchain, here are some options based on your platform:
+
+\begin{itemize}
+\item
+GNU GCC (\url{https://gcc.gnu.org/}) for Linux, Windows (via MinGW or Cygwin), macOS, and many others. GCC is one of the most popular and widely used C++ compilers, supporting a wide range of platforms and architectures.
+
+\item
+Clang/LLVM (\url{https://clang.llvm.org/}) for Linux, Windows, macOS, and many others.
+Clang is a compiler frontend for the C, C++, and Objective-C programming languages, utilizing LLVM as its backend.
+
+\item
+Microsoft Visual Studio/MSVC (\url{https://visualstudio.microsoft.com/}) for Windows primarily, with cross-platform support via Visual Studio Code and CMake. MSVC is the C++ compiler provided by Microsoft, typically used within the Visual Studio IDE.
+
+\item
+MinGW-w64 (\url{http://mingw-w64.org/}) for Windows. MinGW-w64 is an advancement of the original MinGW project, aimed at providing better support for 64-bit Windows and new APIs.
+
+\item
+Apple Clang (\url{https://developer.apple.com/xcode/cpp/}) for macOS, iOS, iPadOS, watchOS, and tvOS. Apple’s version of Clang, optimized for Apple’s hardware and software ecosystem, is integrated with Xcode.
+
+\item
+Cygwin (\url{https://www.cygwin.com/}) for Windows. Cygwin provides a POSIX-compatible environment on Windows, allowing the use of GCC and other GNU tools.
+\end{itemize}
+
+If you’re looking to start quickly without delving deeply into the specifics of each toolchain, you can follow my personal preference: if there’s no toolchain provided by the IDE, go with MinGW on Windows, Clang/LLVM on Linux, and Apple Clang on macOS. Each of these is well suited to its primary platform and typically offers the best experience.
+
+\mySubsubsection{3.1.3}{Using this book’s examples with IDEs}
+
+This book comes with an extensive collection of examples of CMake projects, available in the official GitHub repository here: \url{https://github.com/PacktPublishing/Modern-CMake-for-Cpp-2E}.
+
+Naturally, as we explore the subject of IDEs, a question arises: how do we use this repository with all the IDEs presented here? Well, we need to recognize that the book teaching you how to create professional projects isn’t a professional project itself. It’s a collection of such projects with varied levels of completion, reasonably simplified where possible. Unfortunately (or, maybe fortunately?), IDEs aren’t built to load tens of projects and conveniently manage them. They generally focus their features on loading one actively edited project.
+
+This puts us in a somewhat awkward position: it’s really difficult to navigate the example set with IDEs. Upon using an IDE to load the example set, by selecting the example directory to open it, most IDEs will detect multiple CMakeLists.txt files and ask you to pick one. After doing so, the usual initialization process will occur, temporary files will be written, and essentially, the CMake configuration and generation stages will be run to get the project into a state where it can be built. As you might guess, this only works for the example whose CMakeLists.txt file was selected. Most IDEs do offer ways to switch between different directories (or projects) in the workspace, but it might not be as straightforward as we’d like it to be.
+
+If you’re struggling with this, there are two options: either don’t use the IDE to build examples (and go with console commands instead) or load an example into a fresh project every time. I would recommend the first option if you’re keen on practicing the commands, as they may come in handy in the future and will give you a better understanding of what is going on behind the scenes. This is usually a good choice for build engineers, as this knowledge will be used often. On the other hand, if you’re working on a single project, mostly as a developer focusing on the business side of the code, perhaps going with the IDEs early on is the best. In any case, choosing one doesn’t prevent you from going with the other from time to time.
+
+With this out of the way, let’s focus on reviewing today’s top IDEs and seeing which one might be the best for you. All of them will serve you well, regardless of whether you work in a corporation or not.
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,557 @@
+The CMake language wouldn’t be complete without control structures! Like everything else, they are provided in the form of a command, and they come in three categories: conditional blocks, loops, and command definitions. Control structures are executed in scripts and during buildsystem generation for projects.
+
+\mySubsubsection{2.5.1}{Conditional blocks}
+
+The only conditional block supported in CMake is the humble if() command. All conditional blocks have to be closed with an endif() command, and they may have any number of elseif() commands and one optional else() command in this order:
+
+\begin{shell}
+if(<condition>)
+    <commands>
+elseif(<condition>) # optional block, can be repeated
+    <commands>
+else() # optional block
+    <commands>
+endif()
+\end{shell}
+
+As in many other imperative languages, the if()-endif() block controls which sets of commands will be executed:
+
+\begin{itemize}
+\item
+If the <condition> expression specified in the if() command is met, the first section will be executed.
+
+\item
+Otherwise, CMake will execute commands in the section belonging to the first elseif() command in this block that has met its condition.
+
+\item
+If there are no such commands, CMake will check whether the else() command is provided and execute any commands in that section of the code.
+
+\item
+If none of the preceding conditions are met, the execution continues after the endif() command.
+\end{itemize}
+
+Note that no local variable scope is created in any of the conditional blocks.
+
+The provided <condition> expression is evaluated according to a very simple syntax – let’s learn more about it.
+
+\mySamllsection{The syntax for conditional commands}
+
+The same syntax is valid for if(), elseif(), and while() commands.
+
+\noindent
+\textbf{Logical operators}
+
+The if() conditions support the NOT, AND, and OR logical operators:
+
+\begin{itemize}
+\item
+NOT <condition>
+
+\item
+<condition> AND <condition>
+
+\item
+<condition> OR <condition>
+\end{itemize}
+
+Also, the nesting of conditions is possible with matching pairs of parentheses (()). As in all decent languages, the CMake language respects the order of evaluation and starts from the innermost parenthesis:
+
+\begin{shell}
+(<condition>) AND (<condition> OR (<condition>))
+\end{shell}
+
+\noindent
+\textbf{The evaluation of a string and a variable}
+
+For legacy reasons (because the variable reference (\$\{\}) syntax wasn’t always around), CMake will try to evaluate unquoted arguments as if they are variable references. In other words, using a plain variable name (for example, QUX) inside a condition is equal to writing \$\{QUX\}. Here’s an example for you to consider, and a gotcha:
+
+\begin{cmake}
+set(BAZ FALSE)
+set(QUX "BAZ")
+if(${QUX})
+\end{cmake}
+
+The if() condition works in a bit of a convoluted way here – first, it will evaluate \$\{QUX\} to BAZ, which is a recognized variable, and this in turn is evaluated to a string containing five characters spelling FALSE. Strings are considered Boolean true only if they equal any of the following constants (these comparisons are case-insensitive): ON, Y, YES, TRUE, or a non-zero number.
+
+This brings us to the conclusion that the condition in the preceding example will evaluate to Boolean false.
+
+However, here’s another catch – what would be the evaluation of a condition with an unquoted argument with the name of a variable containing a value such as BAR? Consider the following code example:
+
+\begin{cmake}
+set(FOO BAR)
+if(FOO)
+\end{cmake}
+
+According to what we have said so far, it would be false, as the BAR string doesn’t meet the criteria to evaluate to a Boolean true value. That’s unfortunately not the case, because CMake makes an exception when it comes to unquoted variable references. Unlike quoted arguments, FOO won’t be evaluated to BAR to produce an if("BAR") statement (which would be false). Instead, CMake will only evaluate if(FOO) to false if it is any of the following constants (these comparisons are case-insensitive):
+
+\begin{itemize}
+\item
+OFF, NO, FALSE, N, IGNORE, or NOTFOUND
+
+\item
+A string ending with -NOTFOUND
+
+\item
+An empty string
+
+\item
+Zero
+\end{itemize}
+
+So, simply asking for an undefined variable will be evaluated to false:
+
+\begin{cmake}
+if (CORGE)
+\end{cmake}
+
+When a variable is defined beforehand, the scenario changes and the condition evaluates to true:
+
+\begin{cmake}
+set(CORGE "A VALUE")
+if (CORGE)
+\end{cmake}
+
+\begin{myNotic}{Note}
+If you think that the recursive evaluation of unquoted if() arguments is confusing, wrap variable references in quoted arguments: if("\$\{CORGE\}"). This will result in argument evaluation before the provided argument is passed into the if() command, and the behavior will be consistent with the evaluation of strings.
+\end{myNotic}
+
+In other words, CMake assumes that the user passing a variable name to the if() command is asking whether the variable is defined with a value that does not evaluate to Boolean false. To explicitly check whether the variable is defined or not (and ignore its value), we can use the following:
+
+\begin{cmake}
+if(DEFINED <name>)
+if(DEFINED CACHE{<name>})
+if(DEFINED ENV{<name>})
+\end{cmake}
+
+\noindent
+\textbf{Comparing values}
+
+Comparison operations are supported with the following operators:
+
+EQUAL, LESS, LESS\_EQUAL, GREATER, and GREATER\_EQUAL
+
+The usual comparison operators found in other languages do not work in CMake: ==, >, <, !=, and so on.
+
+They can be used to compare numeric values, like so:
+
+\begin{cmake}
+if (1 LESS 2)
+\end{cmake}
+
+You can compare software versions following the major[.minor[.patch[.tweak]]] format by adding a VERSION\_ prefix to any of the operators:
+
+\begin{cmake}
+if (1.3.4 VERSION_LESS_EQUAL 1.4)
+\end{cmake}
+
+Omitted components are treated as zeros, and non-integer version components truncate the compared string at that point.
+
+For lexicographic string comparisons, we need to prepend an operator with the STR prefix (note the lack of an underscore):
+
+\begin{cmake}
+if ("A" STREQUAL "${B}")
+\end{cmake}
+
+We often need more advanced mechanisms than simple equality comparisons. Fortunately, CMake also supports POSIX regex matching (the CMake documentation hints at an Extended Regular Expression (ERE) flavor, but no support for specific regex character classes is mentioned). We can use the MATCHES operator as follows:
+
+\begin{shell}
+<VARIABLE|STRING> MATCHES <regex>
+\end{shell}
+
+Any matched groups are captured in CMAKE\_MATCH\_<n> variables.
+
+\noindent
+\textbf{Simple checks}
+
+We already mentioned one simple check, DEFINED, but there are others that simply return true if a condition is met.
+
+We can check the following:
+
+\begin{itemize}
+\item
+Whether a value is in a list: <VARIABLE|STRING> IN\_LIST <VARIABLE>
+
+\item
+Whether a command is available for invocation in this version of CMake: COMMAND <command-name>
+
+\item
+Whether a CMake policy exists: POLICY <policy-id> (this is covered in Chapter 4, Setting Up Your First CMake Project )
+
+\item
+Whether a CTest test was added with add\_test(): TEST <test-name>
+
+\item
+Whether a build target is defined: TARGET <target-name>
+\end{itemize}
+
+We’ll explore build targets in Chapter 5, Working with Targets, but for now, let’s just say that targets are logical units of a build process in a project created with add\_executable(), add\_library(), or add\_custom\_target() commands.
+
+\noindent
+\textbf{Examining the filesystem}
+
+CMake provides many ways of working with files. We rarely need to manipulate them directly, and normally, we’d rather use a high-level approach. For reference, this book will provide a short list of the file-related commands in the Appendix. But most often, only the following operators will be needed (behavior is well-defined only for absolute paths):
+
+\begin{itemize}
+\item
+EXISTS <path-to-file-or-directory>: Checks if a file or directory exists.
+
+\item
+This resolves symbolic links (it returns true if the target of the symbolic link exists).
+
+\item
+<file1> IS\_NEWER\_THAN <file2>: Checks which file is newer.
+
+This returns true if file1 is newer than (or equal to) file2 or if one of the two files doesn’t exist.
+
+\item
+IS\_DIRECTORY path-to-directory: Checks if a path is a directory.
+
+\item
+IS\_SYMLINK file-name: Checks if a path is a symbolic link.
+
+\item
+IS\_ABSOLUTE path: Checks if a path is absolute.
+\end{itemize}
+
+Additionally, since 3.24 CMake supports a simple path comparison check, that will collapse multiple path separators but won’t do any other normalization:
+
+\begin{cmake}
+if ("/a////b/c" PATH_EQUAL "/a/b/c") # returns true
+\end{cmake}
+
+For more advanced path manipulation, refer to the documentation on the cmake\_path() command.
+
+This completes the syntax for conditional commands; the next control structure we’ll discuss is a loop.
+
+\mySubsubsection{2.5.2}{Loops}
+
+Loops in CMake are fairly straightforward – we can use either a while() loop or a foreach() loop to repeatedly execute the same set of commands. Both of these commands support loop control mechanisms:
+
+\begin{itemize}
+\item
+The break() loop stops the execution of the remaining block and breaks from the enclosing loop.
+
+\item
+The continue() loop stops the execution of the current iteration and starts at the top of the next one.
+\end{itemize}
+
+Note that no local variable scope is created in any of the loop blocks.
+
+\mySamllsection{while()}
+
+The loop block is opened with a while() command and closed with an endwhile() command. Any enclosed commands will be executed as long as the <condition> expression provided in while() is true. The syntax for phrasing the condition is the same as for the if() command:
+
+\begin{shell}
+while(<condition>)
+    <commands>
+endwhile()
+\end{shell}
+
+You probably guessed that – with some additional variables – the while loop can replace a for loop. Actually, it’s way easier to use a foreach() loop for that – let’s take a look.
+
+\mySamllsection{foreach() loops}
+
+There are several variations of the foreach() block, which execute the enclosed commands for each value in the given list. Like other blocks, it has opening and closing commands: foreach() and endforeach().
+
+The simplest form of foreach() is meant to provide a C++-style for loop:
+
+\begin{shell}
+foreach(<loop_var> RANGE <max>)
+    <commands>
+endforeach()
+\end{shell}
+
+CMake will iterate from 0 to <max> (inclusive). If we need more control, we can use the second variant, providing <min>, <max>, and, optionally, <step>. All arguments must be non-negative integers, and <min> has to be smaller than <max>:
+
+\begin{shell}
+foreach(<loop_var> RANGE <min> <max> [<step>])
+\end{shell}
+
+However, foreach() shows its true colors when it is working with lists:
+
+\begin{shell}
+foreach(<loop_variable> IN [LISTS <lists>] [ITEMS <items>])
+\end{shell}
+
+CMake will retrieve elements from one or more specified <lists> list variables, as well as a list of <items> values defined in-line, and put them in <loop variable>. Then, it will execute all commands for each item in the list. You can choose to provide only lists, only values, or both:
+
+\filename{ch02/06-loops/foreach.cmake}
+
+\begin{cmake}
+set(MyList 1 2 3)
+foreach(VAR IN LISTS MyList ITEMS e f)
+    message(${VAR})
+endforeach()
+\end{cmake}
+
+The preceding code will print the following:
+
+\begin{shell}
+1
+2
+3
+e
+f
+\end{shell}
+
+Or, we can use a short version (skipping the IN keyword) for the same result:
+
+\begin{cmake}
+foreach(VAR 1 2 3 e f)
+\end{cmake}
+
+Since version 3.17, foreach() has learned how to zip lists (ZIP\_LISTS):
+
+\begin{shell}
+foreach(<loop_var>... IN ZIP_LISTS <lists>)
+\end{shell}
+
+The process of zipping lists involves iterating through multiple lists and operating on corresponding items that have the same index. Let’s look at an example:
+
+\filename{ch02/06-loops/foreach.cmake}
+
+\begin{cmake}
+set(L1 "one;two;three;four")
+set(L2 "1;2;3;4;5")
+foreach(num IN ZIP_LISTS L1 L2)
+    message("word=${num_0}, num=${num_1}")
+endforeach()
+\end{cmake}
+
+CMake will create a num\_<N> variable for each list provided, which it will fill with items from each list.
+
+You can pass multiple variable names (one for every list) and each list will use a separate variable to store its items:
+
+\begin{cmake}
+foreach(word num IN ZIP_LISTS L1 L2)
+    message("word=${word}, num=${num}")
+\end{cmake}
+
+Both examples on ZIP\_LISTS will produce the same output:
+
+\begin{shell}
+word=one, num=1
+word=two, num=2
+word=three, num=3
+word=four, num=4
+\end{shell}
+
+In the event that the item counts between lists vary, variables for the shorter lists will be empty.
+
+It is worth noting that, as of version 3.21, the loop variables in foreach() are restricted to the local scope of the loop. This concludes our discussion on loops.
+
+\mySubsubsection{2.5.3}{Command definitions}
+
+There are two ways to define your own command: you can use the macro() command or the function() command. The easiest way to explain the differences between these commands is by comparing them to C-style preprocessor macros and actual C++ functions:
+
+A macro() command works more like a find-and-replace instruction than an actual subroutine call such as function(). Contrary to functions, macros don’t create a separate entry on a call stack.
+This means that calling return() in a macro will return to the calling statement one level higher than it would for a function (possibly terminating the execution if we’re already in the top scope).
+
+The function() command creates a local scope for its variables, unlike the macro() command, which works in the variable scope of the caller. This may lead to confusing results. Let’s talk about these details in the next section.
+
+Both methods of defining commands allow the defining of named arguments that can be referred to in the local scope of the defined command. Moreover, CMake offers the following variables for accessing call-related values:
+
+\begin{itemize}
+\item
+\$\{ARGC\}: The count of arguments
+
+\item
+\$\{ARGV\}: All arguments as list
+
+\item
+\$\{ARGV<index>\}: The value of an argument at a specific index (starting from 0), regardless of whether this argument was expected or not
+
+\item
+\$\{ARGN\}: A list of anonymous arguments that were passed by a caller after the last expected argument
+\end{itemize}
+
+Accessing a numeric argument with an index outside of the ARGC bounds is an undefined behavior. To handle advanced scenarios (usually with an unknown number of arguments), you may be interested to read about cmake\_parse\_arguments() in the official documentation. If you decide to define a command with named arguments, every call has to pass all of them or it will be invalid.
+
+\mySamllsection{Macros}
+
+Defining a macro is similar to any other block:
+
+\begin{shell}
+macro(<name> [<argument>…])
+    <commands>
+endmacro()
+\end{shell}
+
+After this declaration, we may execute our macro by calling its name (function calls are case- insensitive).
+
+As we know, macros don’t create a separate entry on a call stack or a variable scope. The following example highlights some of the problems relating to this behavior in macros:
+
+\filename{ch02/08-definitions/macro.cmake}
+
+\begin{cmake}
+macro(MyMacro myVar)
+    set(myVar "new value")
+    message("argument: ${myVar}")
+endmacro()
+set(myVar "first value")
+message("myVar is now: ${myVar}")
+MyMacro("called value")
+message("myVar is now: ${myVar}")
+\end{cmake}
+
+Here’s the output from this script:
+
+\begin{shell}
+$ cmake -P ch02/08-definitions/macro.cmake
+myVar is now: first value
+argument: called value
+myVar is now: new value
+\end{shell}
+
+What happened? Despite explicitly setting myVar to new value, it didn’t affect the output for message("argument: \$\{myVar\}")! This is because arguments passed to macros aren’t treated as real variables but rather, as constant find-and-replace instructions.
+
+On the other hand, the myVar variable in the global scope was changed from first value to new value. This behavior is a side effect and is considered a bad practice, as it’s impossible to tell which global variables will be changed by a macro without reading it. It is advisable to utilize functions whenever possible, as they are likely to prevent many issues.
+
+\mySamllsection{Functions}
+
+To declare a command as a function, follow this syntax:
+
+\begin{shell}
+function(<name> [<argument>...])
+    <commands>
+endfunction()
+\end{shell}
+
+A function requires a name and optionally accepts a list of names of expected arguments. As mentioned before, functions create their own variable scopes. You can call set(), providing one of the named arguments of the function, and any change will be local to the function (unless PARENT\_SCOPE is specified, as we discussed in the How to correctly use variable scopes in CMake section).
+
+Functions follow the rules of the call stack, enabling returning to the calling scope with the return() command. Starting from CMake 3.25, the return() command allows an optional PROPAGATE keyword followed by a list of variable names. Its purpose is similar to the one in the block() command – it transfers the values of the specified variables from the local scope to the scope of the call.
+
+CMake sets the following variables for each function (these have been available since version 3.17):
+
+\begin{itemize}
+\item
+CMAKE\_CURRENT\_FUNCTION
+
+\item
+CMAKE\_CURRENT\_FUNCTION\_LIST\_DIR
+
+\item
+CMAKE\_CURRENT\_FUNCTION\_LIST\_FILE
+
+\item
+CMAKE\_CURRENT\_FUNCTION\_LIST\_LINE
+\end{itemize}
+
+Let’s take a look at these function variables in practice:
+
+\filename{ch02/08-definitions/function.cmake}
+
+\begin{cmake}
+function(MyFunction FirstArg)
+    message("Function: ${CMAKE_CURRENT_FUNCTION}")
+    message("File: ${CMAKE_CURRENT_FUNCTION_LIST_FILE}")
+    message("FirstArg: ${FirstArg}")
+    set(FirstArg "new value")
+    message("FirstArg again: ${FirstArg}")
+    message("ARGV0: ${ARGV0} ARGV1: ${ARGV1} ARGC: ${ARGC}")
+endfunction()
+set(FirstArg "first value")
+MyFunction("Value1" "Value2")
+message("FirstArg in global scope: ${FirstArg}")
+\end{cmake}
+
+Running this script with cmake -P function.cmake prints the following output:
+
+\begin{shell}
+Function: MyFunction
+File: /root/examples/ch02/08-definitions/function.cmake
+FirstArg: Value1
+FirstArg again: new value
+ARGV0: Value1 ARGV1: Value2 ARGC: 2
+FirstArg in global scope: first value
+\end{shell}
+
+As you can see, the general syntax and concept of the functions are very similar to macros but less susceptible to implicit errors.
+
+\mySamllsection{The procedural paradigm in CMake}
+
+Let us suppose that we want to write CMake code similar to how we write a program in C++. We’ll make a CMakeLists.txt listfile that will call three defined commands that may call defined commands of their own. Figure 2.3 illustrates that:
+
+\myGraphic{0.5}{content/chapter2/images/3.png}{Figure 2.3: A procedural call graph}
+
+In CMake, writing in a procedural style can be problematic since you must provide command definitions before calling them. The CMake parser will not have it any other way. Your code could look something like this:
+
+\begin{cmake}
+cmake_minimum_required(...)
+project(Procedural)
+
+# Definitions
+function(pull_shared_protobuf)
+function(setup_first_target)
+function(calculate_version)
+function(setup_second_target)
+function(setup_tests)
+
+# Calls
+setup_first_target()
+setup_second_target()
+setup_tests()
+\end{cmake}
+
+What a nightmare! Everything is reversed! It will be very difficult to understand because the code with the lowest level of abstraction is at the beginning of the file. A correctly structured piece of code lists the most general steps in the first subroutine, after which it provides the slightly more detailed subroutines, and keeps the most detailed steps at the very end of the file.
+
+There are solutions to this problem, such as moving command definitions to other files and partitioning scopes across directories (scoped directories will be explained in detail in Chapter 4, Setting Up Your First CMake Project ). But there is also a simple and elegant approach – declaring an entry-point macro at the top of the file and calling it at the very end of the file:
+
+\begin{cmake}
+macro(main)
+    first_step()
+    second_step()
+    third_step()
+endmacro()
+
+function(first_step)
+function(second_step)
+function(third_step)
+
+main()
+\end{cmake}
+
+With this approach, our code is written with a gradually narrowing scope, and because we’re not actually calling the main() macro until the very end, CMake won’t complain about the execution of undefined commands.
+
+Why use a macro over a function in this case? It’s good to have unrestricted access to global variables, and since we’re not passing any arguments to main(), we don’t need to worry about the usual caveats.
+
+You’ll find a simple example of this concept in the ch02/09-procedural/CMakeLists.txt listfile in the GitHub repository for this book.
+
+\mySamllsection{A word on naming conventions}
+
+Naming is famously hard in software development, but nevertheless, it’s very important to maintain a solution that is easy to read and understand. When it comes to CMake scripts and projects, we should follow the rules of the clean code approach, as we would with any software development solution:
+
+\begin{itemize}
+\item
+Follow a consistent naming style (snake\_case is an accepted standard in the CMake community).
+
+\item
+Use short but meaningful names (for example, avoid func(), f(), and similar).
+
+\item
+Avoid puns and cleverness in your naming.
+
+\item
+Use pronounceable, searchable names that don’t require mental mapping.
+\end{itemize}
+
+Now that we know how to properly invoke the commands with the correct syntax, let’s explore which commands will be the most beneficial to us to begin with.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

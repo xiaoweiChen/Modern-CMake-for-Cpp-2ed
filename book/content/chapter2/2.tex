@@ -131,14 +131,185 @@ Virtually every command relies on other elements of the language in order to fun
 
 \mySubsubsection{2.1.3}{Comments arguments}
 
+A number of commands in CMake necessitate whitespace-separated arguments to configure their behavior. As demonstrated in Figure 2.1, the quotation marks used around the arguments can be quite peculiar. While certain arguments require quotes, others do not. What’s the reasoning behind this distinction?
+
+Under the hood, the only data type recognized by CMake is a string. This is why every command expects zero or more strings for its arguments. CMake will evaluate every argument to a static string and then pass them into the command. Evaluating means string interpolation, or substituting parts of a string with another value. This can mean replacing the escape sequences, expanding the variable references (also called variable interpolation), and unpacking lists.
+
+Depending on the context, we might want to enable such evaluation as needed. For that reason, CMake offers three types of arguments:
+
+\begin{itemize}
+\item
+Bracket arguments
+
+\item
+Quoted arguments
+
+\item
+Unquoted arguments
+\end{itemize}
+
+Every argument type in CMake has its own peculiarities and provides a distinct level of evaluation.
+
 \mySamllsection{Bracket arguments}
 
+Bracket arguments aren’t evaluated because they are used to pass multiline strings, verbatim, as a single argument to commands. This means that such an argument will include whitespace in the form of tabs and newlines.
+
+Bracket arguments are formatted identically to comments. They are initiated with [=[ and concluded with ]=], and the number of equal signs in both the opening and closing tokens must match (omitting equal signs is permissible as long as they match). The only difference from the comments is that bracket arguments cannot be nested.
+
+Here’s an example of the use of such an argument with the message() command, which prints all passed arguments to the screen:
+
+\filename{ch02/01-arguments/bracket�cmake}
+
+\begin{cmake}
+message([[multiline
+    bracket
+    argument
+]])
+message([==[
+    because we used two equal-signs "=="
+    this command receives only a single argument
+    even if it includes two square brackets in a row
+    { "petsArray" = [["mouse","cat"],["dog"]] }
+]==])
+\end{cmake}
+
+In the preceding example, we can see different forms of bracket arguments. Note how putting closing tags on a separate line in the first call introduces an empty line in the output:
+
+\begin{shell}
+$ cmake -P ch02/01-arguments/bracket.cmake
+multiline
+bracket
+argument
+  because we used two equal-signs "=="
+  following is still a single argument:
+  { "petsArray" = [["mouse","cat"],["dog"]] }
+\end{shell}
+
+The second form is useful when we’re passing text that contains double brackets (]]) (highlighted in the code snippet), as they won’t be interpreted as marking the end of the argument.
+
+These kinds of bracket arguments have limited use – typically, they contain lengthier blocks of text with messages that are displayed to the user. In most cases, we’ll need something more dynamic, such as quoted arguments.
 
 \mySamllsection{Quoted arguments}
 
+Quoted arguments resemble a regular C++ string – these arguments group together multiple characters, including whitespace, and they will expand escape sequences. Like C++ strings, they are opened and closed with a double quote character, ", so to include a quote character within the output string, you have to escape it with a backslash, \verb|\|". Other well-known escape sequences are supported as well: \verb|\\| denotes a literal backslash, \verb|\|t is a tab character, \verb|\|n is a newline, and \verb|\|r is a carriage return.
 
+This is where the similarities with C++ strings end. Quoted arguments can span multiple lines, and they will interpolate variable references. Think of them as having a built-in sprintf function from C or a std::format function from C++20. To insert a variable reference to your argument, wrap the name of the variable in a token like so: \$\{name\}. We’ll talk more about variable references in the Working with variables section of this chapter.
+
+Can you guess how many lines will be in the output of the following script?
+
+\filename{ch02/01-arguments/quoted.cmake}
+
+\begin{cmake}
+message("1. escape sequence: \" \n in a quoted argument")
+message("2. multi...
+  line")
+message("3. and a variable reference: ${CMAKE_VERSION}")
+\end{cmake}
+
+Let’s see it in action:
+
+\begin{shell}
+$ cmake -P ch02/01-arguments/quoted.cmake
+1. escape sequence: "
+in a quoted argument
+2. multi...
+line
+3. and a variable reference: 3.26.0
+\end{shell}
+
+That’s right – we have one escaped quote character, one newline escape sequence, and a literal newline. We also accessed a built-in CMAKE\_VERSION variable, which we can see interpolated on the last line. Let’s take a look at how CMake treats arguments without quotes.
 
 \mySamllsection{Unquoted arguments}
+
+In the programming world, we have gotten used to the fact that strings must be delimited in one form or another, for example, by using single quotes, double quotes, or a backslash. CMake deviates from this convention and introduces unquoted arguments. We might argue that dropping delimiters makes the code easier to read. Is that true? I’ll let you form your own opinion.
+
+Unquoted arguments evaluate both escape sequences and variable references. However, be careful with semicolons (;) as, in CMake, semicolons are treated as list delimiters. If an argument contains a semicolon, CMake will split it into multiple arguments. If you need to use them, escape every semicolon with a backslash,  \verb|\|;. We’ll talk more about semicolons in the Using lists section of this chapter.
+
+You may find that these arguments are the most perplexing to work with, so here’s an illustration to help clarify how these arguments are partitioned:
+
+\myGraphic{0.5}{content/chapter2/images/2.png}{Figure 2.2: Escape sequences cause separate tokens to be interpreted as a single argument}
+
+It’s always worth being careful with unquoted arguments. Some CMake commands require a specific number of arguments and ignore any overhead. If your arguments become accidentally separated, you’ll get hard-to-debug errors.
+
+Unquoted arguments cannot contain unescaped *quotes (“), hashes (\#), and backslashes (\verb|\|).
+And if that’s not enough to remember, parentheses, (), are allowed only if they form correct, matching pairs. That is, you’ll start with an opening parenthesis and close it before closing the command argument list.
+
+Here are some examples that demonstrate the rules we have discussed:
+
+\filename{ch02/01-arguments/unquoted�cmake}
+
+\begin{cmake}
+message(a\ single\ argument)
+message(two arguments)
+message(three;separated;arguments)
+message(${CMAKE_VERSION})  # a variable reference
+message(()()())            # matching parentheses
+\end{cmake}
+
+What will be the output of the preceding? Let’s have a look:
+
+\begin{shell}
+$ cmake -P ch02/01-arguments/unquoted.cmake
+a single argument
+twoarguments
+threeseparatedarguments
+3.16.3
+()()()
+\end{shell}
+
+Even a simple command such as message() is very particular about separated unquoted arguments. The space in a single argument was correctly printed when it was explicitly escaped.
+However, twoarguments and threeseparatearguments were glued together, since message() doesn’t add any spaces on its own.
+
+Given all these complexities, when is it beneficial to use unquoted arguments? Some CMake commands allow optional arguments that are preceded by a keyword to signify that an optional argument will be provided. In such instances, using an unquoted argument for the keyword can make the code more legible. For example:
+
+\begin{cmake}
+project(myProject VERSION 1.2.3)
+\end{cmake}
+
+In this command, the VERSION keyword and the following argument 1.2.3 are optional. As you can see, both are left unquoted for readability. Note that keywords are case-sensitive.
+
+Now that we understand how to deal with the complexities and quirks of CMake arguments, we are ready to tackle the next interesting subject – working with all kinds of variables in CMake.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

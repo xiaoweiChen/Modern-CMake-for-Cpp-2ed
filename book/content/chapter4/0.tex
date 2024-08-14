@@ -1,0 +1,65 @@
+We have now gathered enough information to start talking about the core function of CMake: building projects. In CMake, a project contains all the source files and the configuration necessary to manage the process of bringing our solutions to life. Configuration starts by performing all the checks: verifying if the target platform is supported, ensuring the presence of all essential dependencies and tools, and confirming the compatibility of the provided compiler with the required features.
+
+Once the preliminary checks are completed, CMake proceeds to generate a buildsystem tailored to the selected build tool. Then, the buildsystem is executed, which means compiling the source files and linking them together with their respective dependencies to create the output artifacts.
+
+The resulting artifacts can be distributed to consumers in different ways. They can be shared directly with users as binary packages, allowing them to install them on their systems using package managers. Alternatively, they can be distributed as single-executable installers. Additionally, end-users have the option to create the artifacts themselves by accessing projects shared in an open-source repository. In this scenario, users can utilize CMake to compile the projects on their own machines and subsequently install them.
+
+Leveraging CMake projects to their fullest extent can significantly enhance the development experience and the overall quality of the generated code. By harnessing the power of CMake, numerous mundane tasks can be automated, such as executing tests after the build and running code coverage checkers, formatters, validators, linters, and other tools. This automation not only saves time but also ensures consistency and promotes code quality throughout the development process.
+
+To unlock the power of CMake projects, we’ll make a few key decisions first: how to correctly configure the project as a whole and how to partition it and set up the source tree so that all files are neatly organized in the right directories. By establishing a coherent structure and organization from the beginning, the CMake project can be effectively managed and scaled as it evolves.
+
+Next up, we’ll take a look at the project’s build environment. We’ll find out things like the architecture we’re working with, the tools at our disposal, the features they support, and the language standard we’re using. To make sure everything is in sync, we’ll compile a test C++ file and see if our chosen compiler meets the standard requirements we’ve set for our project. It’s all about ensuring a smooth fit between our project, the tools we’re using, and the standards we’ve chosen.
+
+In this chapter, we’re going to cover the following main topics:
+
+\begin{itemize}
+\item
+Understanding the basic directives and commands
+
+\item
+Partitioning your project
+
+\item
+Thinking about the project structure
+
+\item
+Scoping the environment
+
+\item
+Configuring the toolchain
+
+\item
+Disabling in-source builds
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

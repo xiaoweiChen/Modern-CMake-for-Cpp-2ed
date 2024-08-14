@@ -1,0 +1,77 @@
+CLion is a paid, cross-platform IDE available for Windows, macOS, and Linux, developed by JetBrains. That’s right – this piece of software is subscription-based; starting from \$99.00 (early 2024), you can get a one-year license for individual use. Bigger organizations pay more, and startups pay less. If you’re a student or release an open-source project, you can get a free license. On top of that, there’s a 30-day trial to test the software. This is the only IDE in this listing that doesn’t offer a “community” or stripped-down version available free of charge. Regardless, this is a solid piece of software that is developed by a reputable company, and it very well might be worth the cost.
+
+Figure 3.1 shows how the IDE looks in light mode (dark mode is the default option):
+
+\myGraphic{1.0}{content/chapter3/images/1.png}{Figure 3.1: The main window of the CLion IDE}
+
+As you can see, this is a fully featured IDE, ready for anything and everything you might throw at it. Let’s talk about how it stands out.
+
+\mySubsubsection{3.2.1}{Why you might like it}
+
+Unlike the alternatives, C and C++ are the first and only languages supported by CLion. Many features of this IDE are specifically designed to support this environment and align with the C/ C++ mindset. This is very visible when we compare features from other IDEs: code analysis, code navigation, integrated debugger, and refactoring tools can be found in competing software like the Visual Studio IDE. However, they are not as deeply and robustly oriented toward C/C++. This, of course, is a very difficult thing to measure objectively.
+
+Regardless, CMake is fully integrated into CLion out of the box and is the primary choice for the project format in this IDE. However, alternatives like Autotools and Makefile projects are in early support and can be used to eventually migrate toward CMake. It’s worth noting that CLion natively supports CMake’s CTest with many unit-testing frameworks and has dedicated flows to generate code, run tests, and collect and present results. You can use Google Test, Catch, Boost.Test, and doctest.
+
+A feature I especially like is the ability to work with Docker to develop C++ programs in containers – more on that later. Meanwhile, let’s see how to start with CLion.
+
+\mySubsubsection{3.2.2}{Take your first steps}
+
+After downloading CLion from the official website (\url{https://www.jetbrains.com/clion}), you can proceed with the usual installation process on the platform you’re using. CLion comes with an adequate visual installer on Windows (Figure 3.2) and macOS (Figure 3.3).
+
+\myGraphic{1.0}{content/chapter3/images/2.png}{Figure 3.2: CLion Setup for Windows}
+
+\myGraphic{1.0}{content/chapter3/images/3.png}{Figure 3.3: CLion Setup for macOS}
+
+On Linux, you’ll need to unpack the downloaded archive and run the installation script:
+
+\begin{shell}
+tar -xzf CLion-<version>.tar.gz
+./CLion-<version>/bin/CLion.sh
+\end{shell}
+
+These instructions may be outdated, so make sure to confirm with the CLion website.
+
+On the first run, you’ll be asked to provide a license code or to start a 30-day free trial. Selecting the second option will allow you to experiment with the IDE and determine if it’s right for you. Next, you’ll be able to create a new project and select the targeted C++ version. Immediately after, CLion will detect the available compilers and CMake versions and attempt to build a test project to confirm everything is set up correctly. On some platforms (like macOS), you may get an automatic prompt to install developer tools as needed. On others, you may need to set them up yourself and ensure they’re available in the PATH environment variable.
+
+Next, ensure your toolchain is configured according to your needs. Toolchains are configured per project, so go ahead and create a default CMake project. Then, navigate to your Settings/Preferences (Ctrl/Command + Alt + S) and select Build, Execution, Deployment > CMake. On this tab, you can configure the build profile (Figure 3.3). It may be useful to add a Release profile to build optimized artifacts without the debugging symbols. To add one, simply press the plus icon above the profile list. CLion will create a default Release profile for you. You can switch between profiles using the dropdown at the top of the main window.
+
+Now, you can simply press F9 to compile and run the program with the debugger attached. Follow up by reading the official documentation of CLion, as there are plenty of useful features to explore. I’d like to introduce you to one of my favorites: the debugger.
+
+\mySubsubsection{3.2.3}{Advanced feature: Debugger on steroids}
+
+The debugging capabilities of CLion are truly cutting-edge and especially designed for C++. I was very pleased to discover one of the latest additions, CMake debugging, which includes many standard debugging features: stepping through code, breakpoints, watches, inlined value exploration, and more. The ability to explore variables in different scopes (cache, ENV, and the current scope) is extremely convenient when things don’t quite work as expected.
+
+For C++ debugging, you will get many standard features provided by the GNU Project Debugger (GDB), such as assembly view, breakpoints, step through, watchpoints, and so on, but there are also some major enhancements. In CLion, you’ll find a parallel stack view, which enables you to see all the threads in a graph-like diagram with all the current stack frames for each thread.
+There’s an advanced memory view feature to see the layout of the running program in RAM and modify the memory on the fly. CLion provides multiple other tools to help you understand what’s happening: register view, code disassembly, debugger console, core dump debugging, debugging of arbitrary executables, and many more.
+
+To top it off, CLion has a very well-executed Evaluate Expression feature, which works wonders and even allows you to modify objects during program execution. Just right-click on a line of code and select this feature from the menu.
+
+That’s all on CLion; it’s time to take a look at another IDE.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

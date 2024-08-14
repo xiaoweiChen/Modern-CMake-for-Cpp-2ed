@@ -1,0 +1,90 @@
+
+The Visual Studio (VS) IDE is an IDE available for Windows developed by Microsoft. VS was available for macOS but is being deprecated in August 2024. It’s important to distinguish it from VS Code, the other IDE by Microsoft.
+
+VS comes in a few flavors: Community, Professional, and Enterprise. The Community version is free, allowing up to five users in a company. More mature companies will need to pay licensing fees, which start from \$45 per user monthly. Figure 3.5 shows what VS Community looks like:
+
+\myGraphic{1.0}{content/chapter3/images/5.png}{Figure 3.5: The main window of VS 2022}
+
+Like the other IDEs discussed in this chapter, you can enable dark mode if you prefer. Let’s move on to the noteworthy features of this IDE.
+
+\mySubsubsection{3.4.1}{Why you might like it}
+
+This IDE shares many features with VS Code, offering an experience of a similar flavor but in a much more refined form. The suite is full of features, many of which utilize GUIs, wizards, and visual elements. Most of these features are available straight out of the box, rather than through extensions (although there is still a large and extensive package marketplace for additional functionality). In other words, it’s like VSC but much more advanced.
+
+Depending on the version, your testing tools will cover a wide range of tests: unit testing, performance testing, load testing, manual testing, Test Explorer, test coverage, IntelliTest, and code profiling. The profiler, in particular, is quite a valuable tool, and it’s available in the Community edition.
+
+If you’re designing Windows desktop applications, VS provides visual editors and a large collection of components. There’s extensive support for the Universal Windows Platform (UWP), which is the UI standard for Windows-based applications introduced in Windows 10. This support allows for a sleek, modern design, heavily optimized for adaptive controls that scale well on different screens.
+
+Another thing worth mentioning is that even though VS is a Windows-only IDE, you can develop projects targeted for Linux and mobile platforms (Android and iOS). There’s also support for game developers using Windows-native libraries and Unreal Engine.
+
+Ready to see for yourself how it works? Here’s how to start.
+
+\mySubsubsection{3.4.2}{Take your first steps}
+
+This IDE is only available for Windows, and it follows a standard installation process. Start by downloading the installer from \url{https://visualstudio.microsoft.com/free-developeroffers/}. After running the installer, you’ll be asked to pick the version (Community, Professional, or Enterprise) and select the workloads you want:
+
+\myGraphic{1.0}{content/chapter3/images/6.png}{Figure 3.6: Installer window for the VS IDE}
+
+Workloads are simply feature sets that allow VS to support the specific language, environment, or format of the program. Some workloads include Python, Node.js, or .NET. We’re of course interested in the ones related to C++ (Figure 3.6); there’s extensive support available for different use cases:
+
+\begin{itemize}
+\item
+Desktop development with C++
+
+\item
+Universal Windows Platform development
+
+\item
+Game development with C++
+
+\item
+Mobile development with C++
+
+\item
+Linux development with C++
+\end{itemize}
+
+Pick the ones that fit your desired application and press Install. Don’t worry about installing all options just in case – you can always modify your selection later by running the installer again. If you decide to configure the workload components more precisely, ensure to keep the C++ CMake tools for Windows or C++ CMake tools for Linux option enabled to get access to CMake support.
+
+After installation, you can start the IDE and select Create a new project on the start window. You’ll be presented with multiple templates based on the workloads you installed previously. To work with CMake, choose the CMake Project template. Other options don’t necessarily use it. Upon creating your project, you can start it by pressing the green play button at the top of the window; the code will compile, and you’ll see the basic program executed with the following output:
+
+\begin{cmake}
+Hello CMake.
+\end{cmake}
+
+Now, you’re ready to work with CMake in Visual Studio.
+
+\mySubsubsection{3.4.3}{Advanced feature: Hot Reload debugging}
+
+While running Visual Studio might be more resource-intensive and take more time to start, it offers numerous unmatched features. One significant game-changer is Hot Reload. Here’s how it works: open a C++ project, start it with a debugger attached, make a change in a code file, press the Hot Reload button (or Alt + F10), and your changes will immediately be reflected in the running application while maintaining the state.
+
+To ensure Hot Reload support is enabled, set these two options in the Project > Properties > C/C++ > General menu:
+
+\begin{itemize}
+\item
+Debug Information Format must be set to \textbf{Program Database for Edit and Continue /ZI}
+
+\item
+Enable Incremental Linking must be set to \textbf{Yes /INCREMENTAL}
+\end{itemize}
+
+The behind-the-scenes mechanics of Hot Reload might seem like sorcery, but it’s an incredibly useful feature to have. There are some limitations, such as changes to global/static data, object layouts, or “time-traveling” changes (like altering the constructor of an already constructed object).
+
+You can find more about Hot Reload in the official documentation here: \url{https://learn.microsoft.com/en-us/visualstudio/debugger/hot-reload}.
+
+This concludes our discovery of the three main IDEs. The initial learning curve might look steep, but I promise that the effort put in to learn any of these platforms will pay off very quickly when you move on to more advanced tasks.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
