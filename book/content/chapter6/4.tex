@@ -1,0 +1,105 @@
+
+
+Determining whether an expression should be expanded is supported with Boolean logic in generator expressions. While this is a great feature, its syntax can be inconsistent and difficult to read due to legacy reasons. It’s available in two forms. The first form supports both happy and sad paths:
+
+\begin{shell}
+$<IF:condition,true_string,false_string>
+\end{shell}
+
+The IF expression relies on nesting to be useful: you can replace any of the arguments with another expression and produce quite complex evaluations (you can even nest one IF condition in another). This form requires exactly three arguments, so we can’t omit anything. Our best option to skip a value in case of an unmet condition is the following:
+
+\begin{shell}
+$<IF:condition,true_string,>
+\end{shell}
+
+There’s a shorthand version that allows you to skip the IF keyword and the comma:
+
+\begin{shell}
+$<condition:true_string>
+\end{shell}
+
+As you can see, it breaks the convention of providing the EXPRESSION name as the first token. I assume that the intention here was to shorten the expression and avoid typing those precious few characters, but the outcome can be really hard to rationalize. Here’s one example from the CMake documentation:
+
+\begin{shell}
+$<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CXX_COMPILER_ID:AppleClang,Clang>>:COMPILING_CXX_WITH_CLANG>
+\end{shell}
+
+This expression returns COMPILING\_CXX\_WITH\_CLANG only for C++ code compiled with one of the Clang compilers. (it returns an empty string in all other cases). I wish the syntax was aligned with conditions for the regular IF command, but sadly that’s not the case. Now, you can recognize the second form if you see it somewhere, but you should avoid it in your own projects for the sake of readability.
+
+\mySubsubsection{6.4.1.}{Evaluating to Boolean}
+
+Generator expressions are evaluated to one of two types – Boolean or string. Boolean is represented by 1 (true) and 0 (false). There are no dedicated numerical types; everything that isn’t a Boolean is just a string.
+
+It’s important to remember that nested expressions passed as conditions in conditional expressions are explicitly required to evaluate to Boolean.
+
+Boolean types can be converted to strings implicitly, but you’ll need to use an explicit BOOL operator (explained ahead) to do the opposite.
+
+There are three categories of expressions that get evaluated to Boolean: logical operators, comparison expressions, and queries. Let’s take a quick look at these types.
+
+\mySamllsection{Logical operators}
+
+There are four logical operators:
+
+\begin{itemize}
+\item
+\$<NOT:arg>: This negates the Boolean argument.
+
+\item
+\$<AND:arg1,arg2,arg3...>: This returns true if all the arguments are true.
+
+\item
+\$<OR:arg1,arg2,arg3...>: This returns true if any of the arguments is true.
+
+\item
+\$<BOOL:string\_arg>: This converts arguments from a string to a Boolean type.
+\end{itemize}
+
+String conversion with \$<BOOL>will evaluate to Boolean true (1) if none of these conditions are met:
+
+\begin{itemize}
+\item
+The string is empty.
+
+\item
+The string is a case-insensitive equivalent of 0, FALSE, OFF, N, NO, IGNORE, or NOTFOUND.
+
+\item
+The string ends in the -NOTFOUND suffix (case-sensitive).
+\end{itemize}
+
+\mySamllsection{Comparisons}
+
+Comparisons will evaluate to 1 if their condition is met and 0 otherwise. Here are a few of the most common operations that you might find useful:
+
+\begin{itemize}
+\item
+\$<STREQUAL:arg1,arg2>: This compares strings in a case-sensitive fashion.
+
+\item
+\$<EQUAL:arg1,arg2>: This converts a string to a number and compares equality.
+
+\item
+\$<IN\_LIST:arg,list>: This checks whether the arg element is in the list list (case sensitive).
+
+\item
+\$<VERSION\_EQUAL:v1,v2>, \$<VERSION\_LESS:v1,v2>, \$<VERSION\_GREATER:v1,v2>, \$<VERSION\_LESS\_EQUAL:v1,v2>, and \$<VERSION\_GREATER\_EQUAL:v1,v2> compare versions in a component-wise fashion.
+
+\item
+\$<PATH\_EQUAL:path1,path2>: This compares the lexical representations of two paths without any normalization (since CMake 3.24).
+\end{itemize}
+
+\mySamllsection{Queries}
+
+Queries simply return the Boolean value directly from a variable, or as a result of an operation.
+
+One of the simplest queries is:
+
+\begin{shell}
+$<TARGET_EXISTS:arg>
+\end{shell}
+
+As you might guess, it returns true if the target was defined in the configuration stage.
+
+Now, you know how to apply conditional expansion, use logical operators, comparison, and basic queries to evaluate to Boolean. That is useful on its own, but generator expressions have much more to offer, especially in the context of queries: they can be used in the IF conditional expansion, or on their own as arguments to commands. It’s time to introduce them in an appropriate context.
+
+

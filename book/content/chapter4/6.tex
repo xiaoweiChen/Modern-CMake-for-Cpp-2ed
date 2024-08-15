@@ -1,0 +1,165 @@
+For CMake projects, a toolchain consists of all the tools used in building and running the application – for example, the working environment, the generator, the CMake executable itself, and the compilers.
+
+Imagine what a less-experienced user feels when your build stops with some mysterious compilation and syntax errors. They must dig into the source code and try to understand what happened.
+
+After an hour of debugging, they discover that the correct solution is to update their compiler.
+
+Could we provide a better experience for users and check if all the required functions are present in the compiler before starting the build? Sure! There are ways to specify these requirements. If the toolchain doesn’t support all of the required features, CMake will stop early and show a clear message of what happened, asking the user to step in.
+
+\mySubsubsection{4.6.1.}{Setting the C++ standard}
+
+One of the initial steps we may consider is specifying the required C++ standard that the compiler should support for building our project. For new projects, it is recommended to set a minimum of C++14, but preferably C++17 or C++20. Starting from CMake 3.20, it is possible to set the required standard to C++23 if the compiler supports it. Additionally, since CMake 3.25, there is an option to set the standard to C++26, although this is currently a placeholder.
+
+\begin{myNotic}{Note}
+It has been over 10 years since the official release of C++11, and it is no longer considered to be the modern C++ standard. It’s not recommended to start projects with this version unless your target environment is very old.
+\end{myNotic}
+
+Another reason to stick to old standards is if you are building legacy targets that are too hard to upgrade. However, the C++ committee works very hard to keep C++ backward compatible, and in most cases, you won’t have any problems bumping the standard to a higher version.
+
+CMake supports setting the standard on a target-by-target basis (this is useful if parts of your codebase are really old), but it’s better to converge to a single standard across the project. This can be done by setting the CMAKE\_CXX\_STANDARD variable to one of the following values: 98, 11, 14, 17, 20, 23, or 26, like so:
+
+\begin{cmake}
+set(CMAKE_CXX_STANDARD 23)
+\end{cmake}
+
+This will be a default value for all subsequently defined targets (so it’s best to set it close to the top of the root listfile). You can override it on a per-target basis if needed, like so:
+
+\begin{shell}
+set_property(TARGET <target> PROPERTY CXX_STANDARD <version>)
+\end{shell}
+
+Or:
+
+\begin{shell}
+set_target_properties(<targets> PROPERTIES CXX_STANDARD <version>)
+\end{shell}
+
+The second version allows us to specify multiple targets if that’s needed.
+
+\mySubsubsection{4.6.2.}{Insisting on standard support}
+
+The CXX\_STANDARD property mentioned in the previous section won’t stop CMake from continuing with the build, even if the compiler isn’t supporting the desired version – it’s treated as a preference. CMake doesn’t know if our code actually uses the brand-new features that aren’t available in the previous compilers, and it will try to work with what it has available.
+
+If we know for certain that this won’t be successful, we can set another variable (which is overridable per target in the same manner as the previous one) to explicitly require the standard we target:
+
+\begin{cmake}
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+\end{cmake}
+
+In this case, if the compiler present in the system doesn’t support the required standard, the user will see the following message and the build will stop:
+
+\begin{shell}
+Target "Standard" requires the language dialect "CXX23" (with compiler extensions), but CMake does not know the compile flags to use to enable it.
+\end{shell}
+
+Asking for C++23 might be a bit excessive, even for a modern environment. But C++20 should be fine on up-to-date systems, as it has been generally supported in GCC/Clang/MSVC since 2021/2022.
+
+\mySubsubsection{4.6.3.}{Vendor-specific extensions}
+
+Depending on the policy you implement in your organization, you might be interested in allowing or disabling vendor-specific extensions. What are these? Well, let’s just say that the C++ standard is moving a bit slow for the needs of some compiler producers, so they decided to add their own enhancements to the language – extensions, if you like. For example, C++ Technical Report 1 (TR1) was a library extension that introduced regular expressions, smart pointers, hash tables, and random number generators before they became commonplace. To support such plugins released by the GNU project, CMake will substitute the compiler flag responsible for standard (-std=c++14) with -std=gnu++14.
+
+On the one hand, this may be desired, as it allows for some convenient functionality. On the other hand, your code will lose portability as it will fail to build if you switch to a different compiler (or if your users do!). This is also a per-target property for which there is a default variable, CMAKE\_CXX\_EXTENSIONS. CMake is more liberal here, and allows the extensions unless we specifically tell it not to:
+
+\begin{cmake}
+set(CMAKE_CXX_EXTENSIONS OFF)
+\end{cmake}
+
+I recommend doing so, if possible, as this option will insist on having vendor-agnostic code. Such code won’t impose any unnecessary requirements on the users. Similarly to previous options, you can use set\_property() to change this value on a per-target basis.
+
+\mySubsubsection{4.6.4.}{Interprocedural optimization}
+
+Usually, compilers optimize the code on the level of a single translation unit, which means that your .cpp file will be preprocessed, compiled, and then optimized. The intermediary files generated during these operations are then passed to the linker to create a single binary. However, modern compilers have the capability of performing interprocedural optimization at link time, also known as link-time optimization. This allows all compilation units to be optimized as a unified module, which in principle will achieve better results (sometimes at the cost of slower builds and more memory consumption).
+
+If your compiler supports interprocedural optimization, it may be a good idea to use it. We’ll follow the same method. The variable responsible for this setting is called CMAKE\_INTERPROCEDURAL\_OPTIMIZATION. But before we set it, we need to make sure it is supported to avoid errors:
+
+\begin{cmake}
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ${ipo_supported})
+\end{cmake}
+
+As you can see, we had to include a built-in module to get access to the check\_ipo\_supported() command. This code will fail gracefully, and fall back to default behavior if the optimization is not supported.
+
+\mySubsubsection{4.6.5.}{Checking for supported compiler features}
+
+As we discussed earlier, if our build is to fail, it’s best if it fails early, so we can provide a clear feedback message to the user and shorten the wait. Sometimes we’re specifically interested in which C++ features are supported (and which aren’t). CMake will question the compiler during the configuration stage and store a list of the available features in the CMAKE\_CXX\_COMPILE\_FEATURES variable. We may write a very specific check and ask if a certain feature is available:
+
+\filename{ch04/07-features/CMakeLists.txt}
+
+\begin{cmake}
+list(FIND CMAKE_CXX_COMPILE_FEATURES cxx_variable_templates result)
+if(result EQUAL -1)
+    message(FATAL_ERROR "Variable templates are required for compilation.")
+endif()
+\end{cmake}
+
+As you may guess, writing one for every feature we use is a daunting task. Even the authors of CMake recommend only checking if certain high-level meta-features are present: cxx\_std\_98, cxx\_std\_11, cxx\_std\_14, cxx\_std\_17, cxx\_std\_20, cxx\_std\_23, and cxx\_std\_26. Each meta-feature indicates that the compiler supports a specific C++ standard. If you wish, you can use them exactly as we did in the previous example.
+
+A full list of features known to CMake can be found in the documentation: \url{https://cmake.org/cmake/help/latest/prop_gbl/CMAKE_CXX_KNOWN_FEATURES.html}.
+
+\mySubsubsection{4.6.6.}{Compiling a test file}
+
+One particularly interesting scenario occurred to me when I was compiling an application with GCC 4.7.x. I had manually confirmed in the compiler’s reference that all of the C++11 features we were using were supported. However, the solution still didn’t work correctly. The code silently ignored the call to the standard <regex> header. As it turned out, this specific compiler had a bug, and the regex library wasn’t implemented.
+
+No single check can protect you from such rare bugs (and you shouldn’t need to check for them!), but there’s a chance you may want to use some cutting-edge experimental feature of the latest standard, and you’re not sure which compilers support it. You can test if your project is going to work by creating a test file that uses those specially required features in a small sample that can be quickly compiled and executed.
+
+CMake provides two configure-time commands, try\_compile() and try\_run(), to verify that everything you need is supported on the target platform.
+
+The try\_run() command gives you more freedom, as you can ensure that the code is not only compiling but that it is also executing correctly (you could potentially test if regex is working). Of course, this won’t work for cross-compilation scenarios (as the host won’t be able to run an executable built for a different target). Just remember that the aim of this check is to provide a quick piece of feedback to the user if the compilation is working, so it’s not meant to run any unit tests or anything complex – keep the file as basic as possible. For example, something like this:
+
+\filename{ch04/08-test\_run/main.cpp}
+
+\begin{cpp}
+#include <iostream>
+int main()
+{
+    std::cout << "Quick check if things work." << std::endl;
+}
+\end{cpp}
+
+Calling try\_run() isn’t very complicated at all. We start by setting the required standard, after which we call try\_run() and print the collected information to the user:
+
+\filename{ch04/08-test\_run/CMakeLists.txt}
+
+\begin{cmake}
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+try_run(run_result compile_result
+        ${CMAKE_BINARY_DIR}/test_output
+        ${CMAKE_SOURCE_DIR}/main.cpp
+        RUN_OUTPUT_VARIABLE output)
+message("run_result: ${run_result}")
+message("compile_result: ${compile_result}")
+message("output:\n" ${output})
+\end{cmake}
+
+This command may seem overwhelming at first, but only a few arguments are actually required to compile and run a very basic test file. I additionally used the optional RUN\_OUTPUT\_VARIABLE keyword to collect the output from stdout.
+
+The next step is to extend our basic test file by using some of the more modern C++ features that we’re going to use throughout the actual project – perhaps by adding a variadic template to see if the compiler on the target machine can digest it.
+
+Finally, we can check in the conditional blocks if the collected output is meeting our expectations and message(SEND\_ERROR <error>) is printed when something isn’t right. Remember that SEND\_ERROR keyword will allow CMake to continue through the configuration stage but will prevent the generation of the buildsystem. This is useful to show all the encountered errors before aborting the build. We now know how to ensure the compilation can complete in full. Let’s move on to the next subject, disabling in-source builds.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,504 @@
+If you have ever used GNU Make, you have already seen the concept of a target. Essentially, it’s a recipe that a buildsystem follows to compile a set of files into another file. It can be a .cpp implementation file compiled into a .o object file or a group of .o files packaged into a .a static library. There are numerous combinations and possibilities when it comes to targets and their transformations within a buildsystem.
+
+CMake, however, allows you to save time and skip defining the intermediate steps of those recipes; it works on a higher level of abstraction. It understands how most languages build an executable directly from their source files. So, you don’t need to write explicit commands to compile your C++ object files (as you would using GNU Make). All that’s required is an add\_executable() command with the name of the executable target followed by a list of the source files:
+
+\begin{cmake}
+add_executable(app1 a.cpp b.cpp c.cpp)
+\end{cmake}
+
+We have used this command in the previous chapters, and we already know how executable targets are used in practice – during the generation step, CMake will create a buildsystem and fill it with appropriate recipes to compile each of the source files and link them together into a single binary executable.
+
+In CMake, we can create a target using these three commands:
+
+\begin{itemize}
+\item
+add\_executable()
+
+\item
+add\_library()
+
+\item
+add\_custom\_target()
+\end{itemize}
+
+Before building executables or libraries, CMake performs a check to determine whether the generated output is older than the source files. This mechanism helps CMake avoid recreating artifacts that are already up to date. By comparing timestamps, CMake efficiently identifies which targets need to be rebuilt, reducing unnecessary recompilation.
+
+All commands defining targets require the name of the target to be provided as a first argument, so it can be later referenced in other commands that do things with targets, like target\_link\_libraries(), target\_sources(), or target\_include\_directories(). We’ll learn about those commands later, but for now, let’s take a closer look at what kind of targets we can define.
+
+\mySubsubsection{5.2.1.}{Defining executable targets}
+
+The command to define an executable target, add\_executable(), is self-explanatory (we leaned on this fact and used it already in previous chapters). The formal structure looks like this:
+
+\begin{shell}
+add_executable(<name> [WIN32] [MACOSX_BUNDLE]
+                [EXCLUDE_FROM_ALL]
+                [source1] [source2 ...])
+\end{shell}
+
+If we’re compiling for Windows, by adding the optional argument, the WIN32 keyword, we’ll produce an executable that won’t show the default console window (where we usually see the output streamed to std::cout). Instead, the application will be expected to generate its own GUI.
+
+The next optional argument, MACOSX\_BUNDLE, is quite similar in a way; it makes the applications produced for macOS/iOS launchable from the Finder as GUI apps.
+
+The EXCLUDE\_FROM\_ALL keyword, when used, will prevent the executable target from being built in a regular, default build. Such a target will have to be explicitly mentioned in the build command:
+
+\begin{shell}
+cmake --build -t <target>
+\end{shell}
+
+Finally, we’re expected to provide the list of sources that will be compiled into the target. The following extensions are supported:
+
+\begin{itemize}
+\item
+For C: c, m
+
+\item
+For C++: C, M, c++, cc, cpp, cxx, m, mm, mpp, CPP, ixx, cppm, ccm, cxxm, c++m
+\end{itemize}
+
+Note that we’re not adding any header files to the sources list. That can be done either implicitly, by providing a path to the directory where those files are with the target\_include\_directories() command, or by using a FILE\_SET feature of the target\_sources() command (added in CMake 3.23). This is an important topic for executables, but since it’s complex and orthogonally related to targets, we’ll dive into its details in Chapter 7, Compiling C++ Sources with CMake.
+
+\mySubsubsection{5.2.2.}{Defining library targets}
+
+Defining the libraries is very similar to defining executables, but, of course, it doesn’t require keywords that define how GUI aspects will be handled. Here’s the signature of the command:
+
+\begin{shell}
+add_library(<name> [STATIC | SHARED | MODULE]
+            [EXCLUDE_FROM_ALL]
+            [<source>...])
+\end{shell}
+
+Rules regarding the name, exclusion from all, and sources match the executable targets exactly. The only difference is in the STATIC, SHARED, and MODULE keywords. If you have any experience with libraries, you’ll know that these define what sort of artifact CMake will generate: statically linked libraries, shared (dynamic libraries), or modules. Again, it is quite a vast subject, which will be covered in depth in Chapter 8, Linking Executables and Libraries.
+
+\mySubsubsection{5.2.3.}{Custom targets}
+
+Custom targets are a bit different than executables or libraries. They extend the build functionality beyond what CMake provides out of the box by executing explicitly given command lines; for example, they can be used to:
+
+\begin{itemize}
+\item
+Calculate the checksums of other binaries.
+
+\item
+Run the code sanitizer and collect the results.
+
+\item
+Send a compilation report to the metrics pipeline.
+\end{itemize}
+
+As you can guess from this list, custom targets are only useful in quite advanced projects, so we’ll just cover the basics to move on to more important topics.
+
+To define a custom target, use the following syntax (some options have been removed for brevity):
+
+\begin{shell}
+add_custom_target(Name [ALL] [COMMAND command2 [args2...] ...])
+\end{shell}
+
+Custom targets have certain drawbacks to consider. Since they involve shell commands, they can be system specific, potentially limiting portability. Additionally, custom targets may not provide a straightforward means for CMake to determine the specific artifacts or byproducts being generated, if any.
+
+Custom targets also don’t apply the staleness check like executables and libraries (they don’t verify whether the sources are newer than the binaries), because by default they’re not added to the dependency graph (so the ALL keyword works in opposite to EXCLUDE\_FROM\_ALL). Let’s find out what that dependency graph is about.
+
+\mySubsubsection{5.2.4.}{Dependency graph}
+
+Mature applications are often built from many components, specifically, internal libraries. Partitioning the project is useful from a structural perspective. When related things are packaged together in a single logical entity, they can be linked with other targets: another library or an executable. This is especially convenient when multiple targets are using the same library. Take a look at Figure 5.1, which describes an exemplary dependency graph:
+
+\myGraphic{0.7}{content/chapter5/images/1.png}{Figure 5.1: Order of building dependencies in the BankApp project}
+
+In this project, we have two libraries, two executables, and a custom target. Our use case here is to provide a banking application with a nice GUI for users (GuiApp) and a command-line version to be used as part of an automated script (TerminalApp). Both executables depend on the same Calculations library, but only one of them needs the Drawing library. To guarantee that our app’s binaries were downloaded from a genuine source, we’ll also calculate a checksum, and distribute it through separate secure channels. CMake is pretty flexible when it comes to writing listfiles for such a solution:
+
+\mySamllsection{ch05/01-targets/CMakeLists.txt}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26)
+project(BankApp CXX)
+
+add_executable(terminal_app terminal_app.cpp)
+add_executable(gui_app gui_app.cpp)
+target_link_libraries(terminal_app calculations)
+target_link_libraries(gui_app calculations drawing)
+
+add_library(calculations calculations.cpp)
+add_library(drawing drawing.cpp)
+
+add_custom_target(checksum ALL
+    COMMAND sh -c "cksum terminal_app>terminal.ck"
+    COMMAND sh -c "cksum gui_app>gui.ck"
+    BYPRODUCTS terminal.ck gui.ck
+    COMMENT "Checking the sums..."
+)
+\end{cmake}
+
+We link our libraries with executables by using the target\_link\_libraries() command. Without it, the building of executables would fail because of undefined symbols. Have you noticed that we invoked this command before declaring any of the libraries? When CMake configures the project, it collects information about targets and their properties – their names, dependencies, source files, and other details.
+
+After parsing all the files, CMake will attempt to build a dependency graph. Like with all valid dependency graphs, they’re Directed Acyclic Graph (DAGs). This means that there is a clear direction of which target depends on which, and such dependencies cannot form cycles.
+
+When we execute cmake in build mode, the generated buildsystem will check what top-level targets we have defined and recursively build their dependencies. Let’s consider our example from Figure 5.1:
+
+\begin{enumerate}
+\item
+Start from the top and build both libraries in group 1.
+
+\item
+When the Calculations and Drawing libraries are complete, build group 2 – GuiApp and TerminalApp.
+
+\item
+Build a checksum target; run specified command lines to generate checksums (cksum is a Unix checksum tool, which means that this example won’t build on other platforms).
+\end{enumerate}
+
+There’s a slight issue, though – the preceding solution doesn’t guarantee that a checksum target will be built after the executables. CMake doesn’t know that a checksum depends on the executable binaries being present, so it’s free to start building it first. To resolve this problem, we can put the add\_dependencies() command at the end of the file:
+
+\begin{cmake}
+add_dependencies(checksum terminal_app gui_app)
+\end{cmake}
+
+This will ensure that CMake understands the relationship between the checksum target and the executables.
+
+That’s great, but what’s the difference between target\_link\_libraries() and add\_dependencies()? target\_link\_libraries() is intended to be used with actual libraries and allows you to control property propagation. The second is meant to be used only with top-level targets to set their build order.
+
+As projects grow in complexity, the dependency tree gets harder to understand. How can we simplify this process?
+
+\mySubsubsection{5.2.5.}{Visualizing dependencies}
+
+Even small projects can be difficult to reason about and share with other developers. A neat diagram will go a long way here. After all, a picture is worth a thousand words. We can do the work and draw a diagram ourselves, just like I did in Figure 5.1. But this is tedious and requires updates whenever the project changes. Luckily, CMake has a great module to generate dependency graphs in the dot/graphviz format, and it supports both internal and external dependencies!
+
+To use it, we can simply execute this command:
+
+\begin{shell}
+cmake --graphviz=test.dot .
+\end{shell}
+
+The module will produce a text file that we can import to the Graphviz visualization software, which can render an image or produce a PDF or SVG file that can be stored as part of the software documentation. Everybody loves great documentation, but hardly anyone likes to create it – now, you don’t need to!
+
+Custom targets are not visible by default and we need to create a special configuration file, CMakeGraphVizOptions.cmake, that will allow us to customize the graph. Use the set(GRAPHVIZ\_CUSTOM\_TARGETS TRUE) command to enable custom targets in your graph:
+
+\filename{ch05/01-targets/CMakeGraphVizOptions.cmake}
+
+\begin{cmake}
+set(GRAPHVIZ_CUSTOM_TARGETS TRUE)
+\end{cmake}
+
+Other options allow the addition of a graph name, a header, and node prefixes and configure which targets should be included or excluded from the output (by name or type). Visit the official CMake documentation for the CMakeGraphVizOptions full description of this module.
+
+If you’re in a rush, you can even run Graphviz straight from your browser at this address: \url{https:// dreampuf.github.io/GraphvizOnline/}.
+
+All you need to do is copy and paste the contents of the test.dot file into the window on the left and your project will be visualized (Figure 5.2). Quite convenient, isn’t it?
+
+\myGraphic{0.7}{content/chapter5/images/2.png}{Figure 5.2: A visualization of the BankApp example in Graphviz}
+
+Using this method, we can quickly see all the explicitly defined targets.
+
+Now that we understand the concept of a target, we know how to define different types of targets, including executables, libraries, and custom targets, as well as how to create a dependency graph and print it. Let’s use this information to do a deeper dive and see how to configure them.
+
+\mySubsubsection{5.2.6.}{Setting properties of targets}
+
+Targets have properties that work in a similar way to fields of C++ objects. Some of these properties are meant to be modified, and some are read only. CMake defines a large list of “known properties” (see the Further reading section) that are available depending on the type of the target (executable, library, or custom). You can also add your own properties if you like. Use the following commands to manipulate the properties of a target:
+
+\begin{shell}
+get_target_property(<var> <target> <property-name>)
+set_target_properties(<target1> <target2> ...
+                      PROPERTIES <prop1-name> <value1>
+                      <prop2-name> <value2> ...)
+\end{shell}
+
+To print a target property on the screen, we first need to store it in the <var> variable and then message it to the user. Reading of the properties has to be done one by one; setting properties on a target allows us to specify multiple properties at the same time, on multiple targets.
+
+\begin{myNotic}{Note}
+The concept of properties isn’t unique to targets; CMake supports setting properties of other scopes as well: GLOBAL, DIRECTORY, SOURCE, INSTALL, TEST, and CACHE. To manipulate all kinds of properties, there are general get\_property() and set\_property() commands. In some projects, you’ll see these low-level commands used to do exactly what the set\_target\_properties() command does, just with a bit more work:
+
+\begin{shell}
+set_property(TARGET <target> PROPERTY <name> <value>)
+\end{shell}
+\end{myNotic}
+
+Generally, it’s better to use as many high-level commands as you can. In some cases, CMake offers short-hand commands that come with additional mechanisms. For example, add\_dependencies(<target> <dep>) is a shorthand for appending dependencies to the MANUALLY\_ADDED\_DEPENDENCIES target property. In this case, we can query it with get\_target\_property() exactly as with any other property. However, we can’t use set\_target\_properties() to change it (it’s read only), as CMake insists on using the add\_dependencies() command to restrict operations to appending only.
+
+We’ll introduce more property-setting commands when we discuss compiling and linking in upcoming chapters. Meanwhile, let’s focus on how the properties of one target can be carried over to another.
+
+\mySamllsection{What are Transitive Usage Requirements?}
+
+Let’s just agree that naming is hard, and sometimes one ends up with a label that’s difficult to understand. “Transitive Usage Requirements” is, unfortunately, one of those cryptic titles that you will encounter in the online CMake documentation. Let’s untangle this strange name and perhaps propose a term that is easier to understand.
+
+Starting from the middle term: Usage. As we previously discussed, one target may depend on another. CMake documentation sometimes refers to such dependency as usage, as in one target uses another.
+
+There will be cases when such a used target sets specific properties or dependencies for itself, which, in turn, constitute requirements for other targets that use it: link some libraries, include a directory, or require specific compiler features.
+
+The last part of our puzzle, transitive, describes the behavior correctly (maybe could be a bit simpler). CMake appends some properties/requirements of used targets to properties of using targets.
+
+You can say that some properties can transition (or simply propagate) across targets implicitly, so it’s easier to express dependencies.
+
+Simplifying this whole concept, I see it as propagated properties between the source target (targets that get used) and destination targets (targets that use other targets).
+
+Let’s look at a concrete example to understand why it’s there and how it works:
+
+\begin{shell}
+target_compile_definitions(<source> <INTERFACE|PUBLIC|PRIVATE> [items1...])
+\end{shell}
+
+This target command will populate the COMPILE\_DEFINITIONS property of a <source> target. Compile definitions are simply -Dname=definition flags passed to the compiler that configure the C++ preprocessor definitions (we’ll get to that in Chapter 7, Compiling C++ Sources with CMake). The interesting part here is the second argument. We need to specify one of three values, INTERFACE, PUBLIC, or PRIVATE, to control which targets the property should be passed to. Now, don’t confuse these with C++ access specifiers – this is a separate concept in its own right.
+
+Propagation keywords work like this:
+
+\begin{itemize}
+\item
+PRIVATE sets the property of the source target.
+
+\item
+INTERFACE sets the property of the destination targets.
+
+\item
+PUBLIC sets the property of the source and destination targets.
+\end{itemize}
+
+When a property is not to be transitioned to any destination targets, set it to PRIVATE. When such a transition is needed, go with PUBLIC. If you’re in a situation where the source target doesn’t use the property in its implementation (.cpp files) and only in the headers, and these are passed to the consumer targets, INTERFACE is the keyword to use.
+
+How does this work under the hood? To manage those properties, CMake provides a few commands such as the aforementioned target\_compile\_definitions(). When you specify a PRIVATE or PUBLIC keyword, CMake will store provided values in the property of the target, in this case, COMPILE\_DEFINITIONS. Additionally, if a keyword is INTERFACE or PUBLIC, it will store the value in a property with an INTERFACE\_ prefix – INTERFACE\_COMPILE\_DEFINITIONS. During the configuration stage, CMake will read the interface properties of source targets and append their contents to destination targets. There you have it – propagated properties, or Transitive Usage Requirements, as CMake calls them.
+
+Properties managed with the set\_target\_properties() command can be found at \url{https://cmake.org/cmake/help/latest/manual/cmake-properties.7.html}, in the Properties on Targets section (not all target properties are transitive). Here are the most important ones:
+
+\begin{itemize}
+\item
+COMPILE\_DEFINITIONS
+
+\item
+COMPILE\_FEATURES
+
+\item
+COMPILE\_OPTIONS
+
+\item
+INCLUDE\_DIRECTORIES
+
+\item
+LINK\_DEPENDS
+
+\item
+LINK\_DIRECTORIES
+
+\item
+LINK\_LIBRARIES
+
+\item
+LINK\_OPTIONS
+
+\item
+POSITION\_INDEPENDENT\_CODE
+
+\item
+PRECOMPILE\_HEADERS
+
+\item
+SOURCES
+\end{itemize}
+
+We’ll discuss most of these options in the following pages, but remember that all of these options are, of course, described in the CMake manual. Find them described in detail at the following link (replace <PROPERTY> with a property that interests you): \url{https://cmake.org/cmake/help/ latest/prop_tgt/<PROPERTY>.html}
+
+The next question that comes to mind is how far this propagation goes. Are the properties set just on the first destination target, or are they sent to the very top of the dependency graph? You get to decide.
+
+To create a dependency between targets, we use the target\_link\_libraries() command. The full signature of this command requires a propagation keyword:
+
+\begin{shell}
+target_link_libraries(<target>
+                    <PRIVATE|PUBLIC|INTERFACE> <item>...
+                    [<PRIVATE|PUBLIC|INTERFACE> <item>...]...)
+\end{shell}
+
+As you can see, this signature also specifies a propagation keyword, and it controls how properties from the source target get stored in the destination target. Figure 5.3 shows what happens to a propagated property during the generation stage (after the configuration stage is completed):
+
+\myGraphic{0.7}{content/chapter5/images/3.png}{Figure 5.3: How properties are propagated to destination targets}
+
+Propagation keywords work like this:
+
+\begin{itemize}
+\item
+PRIVATE appends the source value to the private property of the source target.
+
+\item
+INTERFACE appends the source value to the interface property of the source target.
+
+\item
+PUBLIC appends to both properties of the source target.
+\end{itemize}
+
+As we discussed before, interface properties are only used to propagate the properties further down the chain (to the next destination target), and the source target won’t use them in its build process.
+
+The basic target\_link\_libraries(<target> <item>...) command that we used before implicitly specifies the PUBLIC keyword.
+
+If you correctly set propagation keywords for your source targets, properties will be automatically placed on destination targets for you – unless there’s a conflict…
+
+\mySamllsection{Dealing with conflicting propagated properties}
+
+When one target depends on multiple other targets, there may be a situation where propagated properties are in outright conflict with each other. Say that one used target specifies the POSITION\_INDEPENDENT\_CODE property as true and the other as false. CMake understands this as a conflict and will print an error like this:
+
+\begin{shell}
+CMake Error: The INTERFACE_POSITION_INDEPENDENT_CODE property of "source_ target" does not agree with the value of POSITION_INDEPENDENT_CODE already determined for "destination_target".
+\end{shell}
+
+It is useful to receive such a message, as we explicitly know that we introduced this conflict, and we need to resolve it. CMake has its own properties that must “agree” between source and destination targets.
+
+On rare occasions, this may become important – for example, if you’re building software using the same library in multiple targets that are then linked to a single executable. If these source targets are using different versions of the same library, you may run into problems.
+
+To make sure that we’re only using the same specific version, we can create a custom interface property, INTERFACE\_LIB\_VERSION, and store the version there. This is not enough to solve the problem, as CMake won’t propagate custom properties by default (this mechanism works only on built-in target properties). We must explicitly add a custom property to a list of “compatible” properties.
+
+Each target has four such lists:
+
+\begin{itemize}
+\item
+COMPATIBLE\_INTERFACE\_BOOL
+
+\item
+COMPATIBLE\_INTERFACE\_STRING
+
+\item
+COMPATIBLE\_INTERFACE\_NUMBER\_MAX
+
+\item
+COMPATIBLE\_INTERFACE\_NUMBER\_MIN
+\end{itemize}
+
+Appending your property to one of them will trigger propagation and compatibility checks. The BOOL list will check whether all properties propagated to the destination target evaluate to the same Boolean value. Analogically, STRING will evaluate to a string. NUMBER\_MAX and NUMBER\_MIN are a bit different – propagated values don’t have to match, but the destination target will just receive the highest or the lowest value instead.
+
+This example will help us understand how to apply this in practice:
+
+\filename{ch05/02-propagated/CMakeLists.txt}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26)
+project(PropagatedProperties CXX)
+
+add_library(source1 empty.cpp)
+set_property(TARGET source1 PROPERTY INTERFACE_LIB_VERSION 4)
+set_property(TARGET source1 APPEND PROPERTY
+             COMPATIBLE_INTERFACE_STRING LIB_VERSION)
+
+add_library(source2 empty.cpp)
+set_property(TARGET source2 PROPERTY INTERFACE_LIB_VERSION 4)
+
+add_library(destination empty.cpp)
+
+target_link_libraries(destination source1 source2)
+\end{cmake}
+
+We create three targets here; for simplicity, all are using the same empty source file. On both source targets, we specify our custom property with the INTERFACE\_ prefix, and we set them to the same matching library version. Both source targets are linked to the destination target. Finally, we specify a STRING compatibility requirement as a property for source1 (we don’t add the INTERFACE\_ prefix here).
+
+CMake will propagate this custom property to the destination target and check whether the version of all the source targets is an exact match (the compatibility property can be set on just one target).
+
+Now that we understand what regular targets are, let’s take a look at other things that look like targets, smell like targets, and sometimes act like targets but, as it turns out, aren’t the real deal.
+
+\mySubsubsection{5.2.7.}{Meet the pseudo targets}
+
+The concept of a target is so useful that it would be great if some of its behaviors could be borrowed for other things too; ones that do not represent outputs of the buildsystem but rather inputs – external dependencies, aliases, and so on. These are the pseudo targets, or targets that don’t make it to the generated buildsystem:
+
+\begin{itemize}
+\item
+Imported targets
+
+\item
+Alias targets
+
+\item
+Interface libraries
+\end{itemize}
+
+Let’s take a look.
+
+\mySamllsection{Imported targets}
+
+If you skimmed the table of contents of this book, you know that we’ll be talking about how CMake manages external dependencies – other projects, libraries, and so on. IMPORTED targets are essentially products of this process. CMake can define them as a result of the find\_package() command.
+
+You can adjust the target properties of such a target: compile definitions, compile options, include directories, and so on – and they will even support Transitive Usage Requirements. However, you should treat them as immutable; don’t change their sources or dependencies.
+
+The scope of the definition of an IMPORTED target can be global or local to the directory where it was defined (visible in subdirectories but not in parent directories).
+
+\mySamllsection{Alias targets}
+
+Alias targets do exactly what you expect – they create another reference to a target under a different name. You can create alias targets for executables and libraries with the following commands:
+
+\begin{shell}
+add_executable(<name> ALIAS <target>)
+add_library(<name> ALIAS <target>)
+\end{shell}
+
+Properties of alias targets are read only, and you cannot install or export aliases (they aren’t visible in the generated buildsystem).
+
+So, what is the reason to have aliases at all? They come in handy in scenarios where some part of a project (such as a subdirectory) requires a target with a specific name, and the actual implementation may be available under different names depending on circumstances. For example, you may wish to build a library shipped with your solution or import it based on a user’s choice.
+
+\mySamllsection{Interface libraries}
+
+This is an interesting construct – a library that doesn’t compile anything but instead serves as a utility target. Its whole concept is built around propagated properties (Transitive Usage Requirements).
+
+Interface libraries have two primary uses – to represent header-only libraries, and to bundle a bunch of propagated properties into a single logical unit.
+
+Header-only libraries are fairly easy to create with add\_library(INTERFACE):
+
+\begin{cmake}
+add_library(Eigen INTERFACE
+    src/eigen.h src/vector.h src/matrix.h
+)
+target_include_directories(Eigen INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+    $<INSTALL_INTERFACE:include/Eigen>
+)
+\end{cmake}
+
+In the preceding snippet, we created an Eigen interface library with three headers. Next, using generator expressions (these are indicated with dollar sign and angle brackets, \$<...> and will be explained in the next chapter), we set its include directories to be \$\{CMAKE\_CURRENT\_SOURCE\_ DIR\}/src when a target is exported and include/Eigen when it’s installed (which will also be explained at the end of this chapter).
+
+To use such a library, we just must link it:
+
+\begin{cmake}
+target_link_libraries(executable Eigen)
+\end{cmake}
+
+No actual linking occurs here, but CMake will understand this command as a request to propagate all the INTERFACE properties to the executable target.
+
+The second use case leverages exactly the same mechanism but for a different purpose – it creates a logical target that can be a placeholder for propagated properties. We can then use this target as a dependency for other targets and set properties in a clean, convenient way. Here’s an example:
+
+\begin{cmake}
+add_library(warning_properties INTERFACE)
+target_compile_options(warning_properties INTERFACE
+    -Wall -Wextra -Wpedantic
+)
+target_link_libraries(executable warning_properties)
+\end{cmake}
+
+The add\_library(INTERFACE) command creates a logical warning\_properties target that is used to set compile options specified in the second command on the executable target. I recommend using these INTERFACE targets, as they improve the readability and reusability of your code. Think of it as refactoring a bunch of magic values to a well-named variable. I also suggest explicitly adding a suffix like \_properties to easily differentiate interface libraries from the regular ones.
+
+\mySubsubsection{5.2.8.}{Object libraries}
+
+Object libraries are used to group multiple source files under a single logical target and are compile them into (.o) object files during a build. To create an object library, we follow the same method as with other libraries, but with the OBJECT keyword:
+
+\begin{shell}
+add_library(<target> OBJECT <sources>)
+\end{shell}
+
+Object files produced during the build can be incorporated as compiled elements to other targets with the \$<TARGET\_OBJECTS:objlib> generator expression:
+
+\begin{shell}
+add_library(... $<TARGET_OBJECTS:objlib> ...)
+add_executable(... $<TARGET_OBJECTS:objlib> ...)
+\end{shell}
+
+Alternatively, you can add them as dependencies with the target\_link\_libraries() command.
+
+In the context of our Calc library, object libraries will be useful to avoid redundant compilation of library sources for the static and shared versions of the library. It’s essential to explicitly compile the object files with POSITION\_INDEPENDENT\_CODE enabled, a prerequisite for shared libraries.
+
+Returning to the project’s targets: calc\_obj will supply compiled object files, which then will be used for both the calc\_static and calc\_shared libraries. Let’s explore the practical distinctions between these two types of libraries and understand why one might opt to create both.
+
+Are pseudo targets exhausting the concept of the target? Of course not! That would simply be too easy. We still need to understand how these targets are then used to generate buildsystems.
+
+\mySubsubsection{5.2.9.}{Build targets}
+
+The term “target” can have different meanings depending on the context within a project and the generated buildsystems. In the context of generating a buildsystem, CMake “compiles” the listfiles written in the CMake language into the language of the selected build tool, such as creating a Makefile for GNU Make. These generated Makefiles have their own set of targets. Some of these targets are direct conversions of the targets defined in the listfiles, while others are created implicitly as part of the buildsystem generation process.
+
+One such buildsystem target is ALL, which CMake generates by default to contain all top-level listfile targets, such as executables and libraries (not necessarily custom targets). ALL is built when we run cmake -{}-build <build tree> without choosing any specific target. As you might remember from the first chapter, you can choose one by adding the -{}-target <name> parameter to the cmake build command.
+
+Some executables or libraries might not be needed in every build, but we’d like to keep them as part of the project for those rare occasions when they come in useful. To optimize our default build, we can exclude them from the ALL target like so:
+
+\begin{shell}
+add_executable(<name> EXCLUDE_FROM_ALL [<source>...])
+add_library(<name> EXCLUDE_FROM_ALL [<source>...])
+\end{shell}
+
+Custom targets work the other way around – by default, they’re excluded from the ALL target unless you explicitly add them with an ALL keyword, as we did in the BankApp example.
+
+Another implicitly defined build target is clean, which simply removes produced artifacts from the build tree. We use it to get rid of all old files and build everything from scratch. It’s important, though, to understand that it doesn’t just simply delete everything in the build directory. For clean to work correctly, you need to manually specify any files that your custom targets might create as BYPRODUCTS (see the BankApp example).
+
+This concludes our journey through targets and their different aspects: we know how to create them, configure their properties, use pseudo targets, and decide whether they should be built by default or not. There’s also an interesting non-target mechanism to create custom artifacts that can be used in all actual targets – custom commands (not to be confused with custom targets).
+

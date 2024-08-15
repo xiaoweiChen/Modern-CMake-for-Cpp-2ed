@@ -1,0 +1,59 @@
+Many CMake users don’t encounter generator expressions in their private explorations as they are quite advanced concepts. However, they are crucial for projects that are preparing for the general availability stage, or first release to the wider audience, as they play an important role in exporting, installing, and packaging. If you’re trying to just learn the basics of CMake quickly and focus on the C++ aspect, feel free to skip this chapter for now and return to it later. On the other hand, we discuss generator expressions at this time, because the following chapters will reference this knowledge when explaining the more in-depth aspects of CMake.
+
+We’ll start by introducing the subject of generator expressions: what they are, what their uses are, and how they are formed and expanded. This will be followed by a short presentation of the nesting mechanism and a more thorough description of the conditional expansion, which allows the use of Boolean logic, comparison operations, and queries. Of course, we’ll do a deep dive into the vastness of the available expressions.
+
+But first, we’ll study the transformations of strings, lists, and paths, as it’s good to get the basics out of the way before focusing on the main subject. Ultimately, generator expressions are used in practice to fetch the information available in later stages of building and present it in the appropriate context. Determining that context is a huge part of their value. We’ll discover how to parametrize our build process based on the build configuration selected by the user, the platform at hand, and the current toolchain. That is, what compiler is being used, what its version is, and which capabilities it has, that’s not all: we’ll figure out how to query the properties of build targets and their related information.
+
+To make sure we can fully appreciate the value of the generator expressions, I have included a few interesting examples of use as the final part of this chapter. Oh, and there’s a quick explanation of how to see the output of generator expressions as this is a bit tricky. Don’t worry though, generator expressions aren’t as complex as they might seem, and you will be using them in no time.
+
+In this chapter, we’re going to cover the following main topics:
+
+\begin{itemize}
+\item
+What are generator expressions?
+
+\item
+Learning the basic rules of general expression syntax
+
+\item
+Conditional expansion
+
+\item
+Querying and transforming
+
+\item
+Trying out examples
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

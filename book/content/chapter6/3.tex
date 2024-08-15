@@ -1,0 +1,69 @@
+
+To use generator expressions, we’ll need to add them to a CMake listfile through a command that supports generator expression evaluation. Most of the target-specific commands do, and there are plenty of others (review the official documentation of a particular command to learn more).
+
+A command that is often used with generator exception is target\_compile\_definitions(). To use a generator expression, we’ll need to provide it as a command argument like so:
+
+\begin{cmake}
+target_compile_definitions(foo PUBLIC BAR=$<TARGET_FILE:baz>)
+\end{cmake}
+
+This command adds a -D definition flag to the compiler’s arguments (ignore PUBLIC for now) that sets the BAR preprocessor definition to the path at which the binary artifact of the foo target will be produced. This works because the generator expression is stored in the current form in a variable. The expansion is effectively postponed until the generation stage when many things are fully configured and known.
+
+How is the generator expression formed?
+
+\myGraphic{0.7}{content/chapter6/images/1.png}{Figure 6.1: The syntax of a generator expression}
+
+As you can see in Figure 6.1, the structure seems fairly simple and readable:
+
+\begin{itemize}
+\item
+Open with a dollar and a bracket (\$<).
+
+\item
+Add the EXPRESSION name.
+
+\item
+If an expression requires arguments, add a colon (:) and provide the arg1, arg2 … argN values, separated with a comma (,).
+
+\item
+Close the expression with >.
+\end{itemize}
+
+There are expressions that do not require any arguments, such as \$<PLATFORM\_ID>.
+
+It’s important to note that unless explicitly stated otherwise, expressions are typically evaluated in the context of the target using the expression. This association is inferred from the command in which the expression is used. In the previous example, we saw how target\_compile\_definitions() provides foo as the target it operates on. The target-specific generator expressions used in that command will therefore implicitly use foo. Do note, however, that the generator expression used in the example, \$<TARGET\_FILE>, requires the target attribute as the context to operate on. There are other generator expressions that don’t accept targets as arguments (like \$<COMPILE\_LANGUAGE>), and will implicitly use the target of the enclosing command. These will be discussed in more detail later.
+
+Generator expressions can quickly become very confusing and complicated when using their more advanced features, so it’s important to understand their specifics beforehand.
+
+\mySubsubsection{6.3.1.}{Nesting}
+
+Let’s start with the ability to pass a generator expression as an argument to another generator expression or, in other words, generator expression nesting:
+
+\begin{shell}
+$<UPPER_CASE:$<PLATFORM_ID>>
+\end{shell}
+
+This isn’t a very complex example, but it’s easy to imagine what happens when we increase nesting levels and work with commands using multiple arguments.
+
+To complicate matters even further, it’s possible to add a regular variable expansion to the mix:
+
+\begin{shell}
+$<UPPER_CASE:${my_variable}>
+\end{shell}
+
+The my\_variable variable will be expanded first, at the configuration stage. Subsequently, the generation expression will be expanded at the generation stage. There are some rare uses for this feature, but I strongly recommend avoiding it: generator expressions provide virtually all necessary functions. Mixing regular variables into these expressions adds a layer of indirection that is hard to debug. Additionally, information collected in the config stage will often be outdated, as users will override values used in generator expressions through command-line parameters at the build or installation stage.
+
+Having covered the syntax, let’s move on to discuss the fundamental mechanisms available in generator expressions.
+
+
+
+
+
+
+
+
+
+
+
+
+

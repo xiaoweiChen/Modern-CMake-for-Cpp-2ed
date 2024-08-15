@@ -1,0 +1,169 @@
+As our solutions grow in terms of lines of code and the number of files they contain, it becomes apparent that we must address the looming challenge: either we begin partitioning the project, or risk being overwhelmed by its complexity. There are two ways we can tackle this problem: splitting the CMake code and relocating the source files to subdirectories. In both cases, we aim to follow the design principle called separation of concerns. Put simply, we break down the code into smaller parts, grouping together closely related functionality while keeping other pieces of code separate to establish clear boundaries.
+
+We talked a bit about partitioning CMake code when discussing listfiles in Chapter 1, First Steps with CMake. We spoke about the include() command, which allows CMake to execute the code from an external file.
+
+This method helps with the separation of concerns, but only a little – specialized code is extracted to separate files and can even be shared across unrelated projects, but it can still pollute the global variable scope with its internal logic, if the author is not careful.
+
+You see, calling include() doesn’t introduce any additional scopes or isolations beyond what is already defined within the file. Let’s see why this is a potential problem by considering an example, a piece of software that supports a small car rental company. It will have many source files defining different aspects of the software: managing customers, cars, parking spots, long-term contracts, maintenance records, employee records, and so on. If we were to put all these files in a single directory, finding anything would be a nightmare. Therefore, we create a number of directories in the main directory of our project and move the related files inside it. Our CMakeLists.
+txt file might look similar to this:
+
+\filename{ch04/01-partition/CMakeLists.txt}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26.0)
+project(Rental CXX)
+add_executable(Rental
+               main.cpp
+               cars/car.cpp
+               # more files in other directories
+)
+\end{cmake}
+
+That’s all great, but as you can see, we still have the list of source files from the nested directory in a top-level file! To increase the separation of concerns, we could extract the list of sources to another listfile and store it in a sources variable:
+
+\filename{ch04/02-include/cars/cars.cmake}
+
+\begin{cmake}
+set(sources
+    cars/car.cpp
+    # more files in other directories
+)
+\end{cmake}
+
+Now we can reference this file with the include() command to gain access to the sources variable:
+
+\filename{ch04/02-include/CMakeLists.txt}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26.0)
+project(Rental CXX)
+include(cars/cars.cmake)
+add_executable(Rental
+               main.cpp
+               ${sources} # for cars/
+)
+\end{cmake}
+
+CMake would effectively set sources in the same scope as add\_executable, filling the variable with all the files. This solution works, but it has a few flaws:
+
+\begin{itemize}
+\item
+\textbf{The variables from the nested directory will pollute the top-level scope (and vice versa):} While it’s not an issue in a simple example, in more complex, multi-level trees with multiple variables used in the process, it can quickly become a hard-to-debug problem. What if we have multiple included listfiles that define their sources variable?
+
+\item
+\textbf{All of the directories will share the same configuration: }This issue shows its true colors as projects mature over the years. Without any granularity, we have to treat every source file the same, and we cannot specify different compilation flags, choose a newer language version for some parts of the code, and silence warnings in chosen areas of the code. Everything is global, meaning that we need to introduce changes to all of the translation units at the same time.
+
+\item
+\textbf{There are shared compilation triggers:} Any changes to the configuration will mean that all the files will have to be recompiled, even if the change is meaningless for some of them.
+
+\item
+\textbf{All the paths are relative to the top level:} Note that in cars.cmake, we had to provide a full path to the cars/car.cpp file. This results in a lot of repeated text ruining the readability and going against the Don’t Repeat Yourself (DRY) principle of clean coding (unnecessary repetition leads to mistakes).
+Renaming a directory would be a struggle.
+\end{itemize}
+
+The alternative is to use the add\_subdirectory() command, which introduces a variable scope and more. Let’s take a look.
+
+\mySubsubsection{4.3.1.}{Managing scope with subdirectories}
+
+It’s a common practice to structure your project following the natural structure of the filesystem, where nested directories represent the discrete elements of the application, the business logic, GUI, API, and reporting, and finally, separate directories with tests, external dependencies, scripts, and documentation. To support this concept, CMake offers the following command:
+
+\begin{shell}
+add_subdirectory(source_dir [binary_dir] [EXCLUDE_FROM_ALL])
+\end{shell}
+
+As already established, this adds a source directory to our build. Optionally, we may provide a path that built files will be written to (binary\_dir or the build tree). The EXCLUDE\_FROM\_ALL keyword will disable the automatic building of targets defined in the subdirectory (we’ll cover targets in the next chapter). This may be useful for separating parts of the project that aren’t needed for the core functionality (like examples or extensions).
+
+add\_subdirectory() will evaluate the source\_dir path (relative to the current directory) and parse the CMakeLists.txt file in it. This file is parsed within the directory scope, eliminating the issues mentioned in the previous method:
+
+\begin{itemize}
+\item
+Variables are isolated to the nested scope
+
+\item
+The nested artifacts can be configured independently.
+
+\item
+Modifying the nested CMakeLists.txt file doesn’t require rebuilding unrelated targets.
+
+\item
+Paths are localized to the directory and can be added to the parent include path if desired.
+\end{itemize}
+
+This is what the directory structure looks like for our add\_subdirectory() example:
+
+\begin{shell}
+|--CMakeLists.txt
+|-- cars
+|   |-- CMakeLists.txt
+|   |-- car.cpp
+|   |-- car.h
+|-- main.cpp
+\end{shell}
+
+Here, we have two CMakeLists.txt files. The top-level file will use the nested directory, cars:
+
+\filename{ch04/03-add\_subdirectory/CMakeLists.txt}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26.0)
+project(Rental CXX)
+add_executable(Rental main.cpp)
+add_subdirectory(cars)
+target_link_libraries(Rental PRIVATE cars)
+\end{cmake}
+
+The last line is used to link the artifacts from the cars directory to the Rental executable. It is a target-specific command, which we’ll discuss in depth in the next chapter: Chapter 5, Working with Targets.
+
+Let’s see what the nested listfile looks like:
+
+\filename{ch04/03-add\_subdirectory/cars/CMakeLists.txt}
+
+\begin{cmake}
+add_library(cars OBJECT
+    car.cpp
+# more files in other directories
+)
+target_include_directories(cars PUBLIC .)
+\end{cmake}
+
+In this example, I have used add\_library() to produce a globally visible target cars, and added the cars directory to its public include directories with target\_include\_directories(). This informs CMake where the cars.h resides, so when target\_link\_libraries() is used, the main.cpp file can consume the header without providing a relative path:
+
+\begin{cpp}
+#include "car.h"
+\end{cpp}
+
+We can see the add\_library() command in the nested listfile, so did we start working with libraries in this example? Actually, no. Since we used the OBJECT keyword, we’re indicating we’re only interested in producing the object files (exactly as we did in the previous example). We just grouped them under a single logical target (cars). You may already have a sense of what a target is. Hold that thought – we’ll explain the details in the next chapter.
+
+\mySubsubsection{4.3.2.}{When to use nested projects}
+
+In the previous section, we briefly mentioned the EXCLUDE\_FROM\_ALL argument used in the add\_subdirectory() command to indicate extraneous elements of our codebase. The CMake documentation suggests that if we have such parts living inside the source tree, they should have their own project() commands in their CMakeLists.txt files so that they can generate their own buildsystems and can be built independently.
+
+Are there any other scenarios where this would be useful? Sure. For example, one scenario would be when you’re working with multiple C++ projects built in one CI/CD pipeline (perhaps when building a framework or a set of libraries). Alternatively, maybe you’re porting the buildsystem from a legacy solution, such as GNU Make, which uses plain makefiles. In such a case, you might want an option to slowly break things down into more independent pieces – possibly to put them in a separate build pipeline, or just to work on a smaller scope, which could be loaded by an IDE such as CLion. You can achieve that by adding the project() command to the listfile in the nested directory. Just don’t forget to prepend it with cmake\_minimum\_required().
+
+Since project nesting is supported, could we somehow connect related projects that are built side by side?
+
+\mySubsubsection{4.3.3.}{Keeping external projects external}
+
+While it is technically possible to reference the internals of one project from another in CMake, it is not a regular or recommended practice. CMake does provide some support for this, including the load\_cache() command to load values from another project’s cache. However, using this approach can result in problems with cyclical dependencies and project coupling. It’s best to avoid this command and make a decision: should our related projects be nested, connected through libraries, or merged into a single project?
+
+These are the partitioning tools at our disposal: including listfiles, adding subdirectories, and nesting projects. But how should we use them so our projects stay maintainable and easy to navigate and extend? To do this, we need a well-defined project structure.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

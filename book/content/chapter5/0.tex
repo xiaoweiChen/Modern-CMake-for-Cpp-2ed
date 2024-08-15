@@ -1,0 +1,69 @@
+The entire application in CMake can be built from a single source code file (such as the classic helloworld.cpp). But it’s equally possible to create a project where the executable is built from many source files: dozens or even thousands. Many beginners follow this path: they build their binaries with only a few files and let their projects grow organically without strict planning. They keep adding files as required and before they know it, everything is linked directly to a single binary without any structure whatsoever.
+
+As software developers, we deliberately draw boundaries and designate components to group one or more units of translation (.cpp files). We do it to increase code readability, manage coupling and connascence, speed up the build process, and finally, discover and extract reusable components into autonomic units.
+
+Every big project will push you to introduce some form of partitioning. This is where CMake targets find their use. A CMake target represents a logical unit that focuses on a specific objective. Targets can have dependencies on other targets, and their construction follows a declarative approach. CMake takes care of determining the proper order for building targets, optimizing with parallel builds where possible, and executing the necessary steps accordingly. As a general principle, when a target is built, it generates an artifact that can be utilized by other targets or serve as the final output of the build process.
+
+Notice the usage of the word artifact. I intentionally refrain from using specific terms because CMake offers flexibility beyond just generating executables or libraries. In practice, we can utilize generated buildsystems to produce various types of outputs: additional source files, headers, object files, archives, configuration files, and more. The only requirements are a command-line tool (like a compiler), optional input files, and a designated output path.
+
+Targets are an incredibly powerful concept that greatly streamlines the process of building a project. Understanding how they function and mastering the art of configuring them in an elegant and organized manner is crucial. This knowledge ensures a smooth and efficient development experience.
+
+In this chapter, we’re going to cover the following main topics:
+
+\begin{itemize}
+\item
+Understanding the concept of a target
+
+\item
+Setting properties of targets
+
+\item
+Writing custom commands
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

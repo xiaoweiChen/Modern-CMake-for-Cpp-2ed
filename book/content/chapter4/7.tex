@@ -1,0 +1,57 @@
+
+In Chapter 1, First Steps with CMake, we talked about in-source builds, and how it is recommended to always specify the build path to be out of source. This not only allows for a cleaner build tree and a simpler .gitignore file, but it also decreases the chances you’ll accidentally overwrite or delete any source files.
+
+To stop the build early you may use the following check:
+
+\filename{ch04/09-in-source/CMakeLists.txt}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26.0)
+project(NoInSource CXX)
+if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
+    message(FATAL_ERROR "In-source builds are not allowed")
+endif()
+message("Build successful!")
+\end{cmake}
+
+If you would like more information about the STR prefix and variable references, please revisit Chapter 2, The CMake Language.
+
+Notice, however, that no matter what you do in the preceding code, it seems like CMake will still create a CMakeFiles/ directory and a CMakeCache.txt file.
+
+\begin{myNotic}{Note}
+You might find online suggestions to use undocumented variables to make sure that the user can’t write in the source directory under any circumstances. Relying on undocumented variables to restrict writing in the source directory is not recommended. They may not work in all versions and can be subject to removal or modification without warning.
+\end{myNotic}
+
+If you’re worried about users leaving those files in the source directory, add them to the .gitignore (or equivalent), and change the message to request a manual cleanup.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

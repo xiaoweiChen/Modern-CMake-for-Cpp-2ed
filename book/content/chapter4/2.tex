@@ -12,10 +12,100 @@ In the same chapter, in the section named Project files, we learned about a few 
 
 \mySubsubsection{4.2.1.}{Specifying the minimum CMake version}
 
+It’s important to use the cmake\_minimum\_required() command at the very top of your project files and scripts. This command not only verifies if the system has the correct CMake version but also implicitly triggers another command, cmake\_policy(VERSION), which specifies the policies to be used for the project. These policies define how commands behave within CMake, and they have been introduced over the course of CMake’s development to accommodate changes and improvements in the supported languages and CMake itself.
 
+To keep the language clean and simple, the CMake team introduced policies whenever there was a backward-incompatible change. Each policy enables the new behavior associated with that change. These policies ensure that projects can adapt to the evolving features and functionalities of CMake, while preserving compatibility with older codebases.
+
+By calling cmake\_minimum\_required(), we tell CMake that it needs to apply the default policies configured at the version provided in the argument. When CMake gets upgraded, we don’t need to worry about it breaking our project, as the new policies coming with the new version won’t be enabled.
+
+Policies can affect every single aspect of CMake, including other important commands like project(). For that reason, it is important to start your CMakeLists.txt file by setting the version you’re working with. Otherwise, you will get warnings and errors.
+Each CMake version introduces numerous policies. However, it’s not necessary to delve into details unless you encounter challenges when upgrading older projects to the latest CMake version. In such cases, it is recommended to refer to the official documentation on policies for comprehensive information and guidance: \url{https://cmake.org/cmake/help/latest/manual/cmake-policies.7.html}.
 
 \mySubsubsection{4.2.2.}{Defining languages and metadata}
 
+It’s recommended to put the project() command just after cmake\_minimum\_required(), even though it’s technically not. Doing so will ensure that we use the right policies when configuring the project. We can use one of its two forms:
 
+\begin{shell}
+project(<PROJECT-NAME> [<language-name>...])
+\end{shell}
+
+Or:
+
+\begin{shell}
+project(<PROJECT-NAME>
+        [VERSION <major>[.<minor>[.<patch>[.<tweak>]]]]
+        [DESCRIPTION <project-description-string>]
+        [HOMEPAGE_URL <url-string>]
+        [LANGUAGES <language-name>...])
+\end{shell}
+
+We need to specify <PROJECT-NAME>, but the other arguments are optional. Calling this command will implicitly set the following variables:
+
+\begin{shell}
+PROJECT_NAME
+CMAKE_PROJECT_NAME (only in the top-level CMakeLists.txt)
+PROJECT_IS_TOP_LEVEL, <PROJECT-NAME>_IS_TOP_LEVEL
+PROJECT_SOURCE_DIR, <PROJECT-NAME>_SOURCE_DIR
+PROJECT_BINARY_DIR, <PROJECT-NAME>_BINARY_DIR
+\end{shell}
+
+What languages are supported? Quite a few. And you can use more than one at a time! Here’s a list of language keywords you can use to configure your project:
+
+\begin{itemize}
+\item
+ASM, ASM\_NASM, ASM\_MASM, ASMMARMASM, ASM-ATT: Dialects of Assembler
+
+\item
+C: C
+
+\item
+CXX: C++
+
+\item
+CUDA: Compute Unified Device Architecture by Nvidia
+
+\item
+OBJC: Objective-C
+
+\item
+OBJCXX: Objective-C++
+
+\item
+Fortran: Fortran
+
+\item
+HIP: Heterogeneous(-compute) Interface for Portability (for Nvidia and AMD platforms)
+
+\item
+ISPC: Implicit SPMD Program Compiler’s language
+
+\item
+CSharp: C\#
+
+\item
+Java: Java (requires extra steps, see official documentation)
+\end{itemize}
+
+CMake enables both C and C++ by default, so you may want to explicitly specify only CXX for your C++ projects. Why? The project() command will detect and test the available compilers for your chosen language, so stating the required ones will allow you to save time during the configuration stage, by skipping any checks for unused languages.
+
+Specifying the VERSION keyword will automatically set the variables that can be used to configure packages, or exposed in the header files to be consumed during the compilation (we’ll cover this in the Configuring the headers section of Chapter 7, Compiling C++ Sources with CMake):
+
+\begin{shell}
+PROJECT_VERSION, <PROJECT-NAME>_VERSION
+CMAKE_PROJECT_VERSION (only in the top-level CMakeLists.txt)
+PROJECT_VERSION_MAJOR, <PROJECT-NAME>_VERSION_MAJOR
+PROJECT_VERSION_MINOR, <PROJECT-NAME>_VERSION_MINOR
+PROJECT_VERSION_PATCH, <PROJECT-NAME>_VERSION_PATCH
+PROJECT_VERSION_TWEAK, <PROJECT-NAME>_VERSION_TWEAK
+\end{shell}
+
+We can also set DESCRIPTION and HOMEPAGE\_URL, which will set the following variables for similar purposes:
+
+\begin{shell}
+PROJECT_DESCRIPTION, <PROJECT-NAME>_DESCRIPTION
+PROJECT_HOMEPAGE_URL, <PROJECT-NAME>_HOMEPAGE_URL
+\end{shell}
+
+The cmake\_minimum\_required() and project() commands will allow us to create a basic listfile and initialize an empty project. While the structure may not have been a significant concern for the small, single-file projects, it becomes crucial as the codebase expands. How do you prepare for that?
 
 

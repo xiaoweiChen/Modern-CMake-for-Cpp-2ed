@@ -1,0 +1,30 @@
+
+
+CMake is building the solution in three stages: configuration, generation, and running the build tool. Generally, all the required data is available during the configuration stage. However, occasionally, we encounter a situation similar to the “chicken and the egg” paradox. Take an example from the Using a custom command as a target hook section in Chapter 5, Working with Targets – where a target needs to know the path of a binary artifact of another target. Unfortunately, this information becomes available only after all the listfiles are parsed and the configuration stage is complete.
+
+So, how do we tackle such a problem? One solution could be to create a placeholder for the information and delay its evaluation until the next stage – the generation stage.
+
+This is precisely what generator expressions (also referred to as “genexes”) do. They are built around target properties such as LINK\_LIBRARIES, INCLUDE\_DIRECTORIES, COMPILE\_DEFINITIONS, and propagated properties, although not all. They follow rules similar to the conditional statements and variable evaluation.
+
+\begin{myNotic}{Note}
+Generator expressions will be evaluated at the generation stage (when the configuration is complete and the buildsystem is created), which means that capturing their output into a variable and printing it to the console is not straightforward.
+\end{myNotic}
+
+There’s a significant number of generator expressions, and in a way, they constitute their own, domain-specific language – language that supports conditional expressions, logical operations, comparisons, transformations, queries, and ordering. Utilizing generator expressions enables manipulation and queries of strings, lists, version numbers, shell paths, configurations, and build targets. In this chapter, we will provide brief overviews of these concepts, focusing on the essentials since they are less necessary in most cases. Our primary focus will be on the main application of generator expressions, which involves gathering information from the generated configuration of targets and the state of the build environment. For full reference, it’s best to read the official CMake manual online (see the Further reading section for the URL).
+
+Everything is better explained with an example, so let’s jump right into it, and describe the syntax of generator expressions.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,107 @@
+
+
+It’s no secret that as a project grows, it becomes harder and harder to find things in it – both in listfiles and in the source code. Therefore, it is very important to maintain the project hygiene right from the start.
+
+Imagine a scenario where you need to deliver some important, time-sensitive changes, and they don’t fit well in either of the two directories in your project. Now, you need to additionally push a cleanup commit to restructure the file hierarchy to fit your changes neatly. Or, worse, you decide to just shove them anywhere and add a TODO to deal with the issue later.
+
+Over the course of the year, these problems accumulate, the technical debt grows, and so does the cost of maintaining the code. This becomes extremely troublesome when there’s a crippling bug in a live system that needs a quick fix or when people unfamiliar with the codebase need to introduce occasional changes.
+
+So, we need a good project structure. But what does this mean? There are a few rules that we can borrow from other areas of software development like system design. The project should have the following characteristics:
+
+\begin{itemize}
+\item
+Easy to navigate and extend
+
+\item
+Well bounded (project-specific files should be contained to the project directory)
+
+\item
+Individual targets follow the hierarchical tree
+\end{itemize}
+
+There isn’t one definitive solution, but out of the various project structure templates available online, I suggest using this one as it is simple and extensible:
+
+\myGraphic{0.7}{content/chapter4/images/1.png}{Figure 4.1: An example of a project structure}
+
+This project outlines the directories for the following components:
+
+\begin{itemize}
+\item
+cmake: Shared macros and functions, find\_modules, and one-off scripts
+
+\item
+src: Source and header files for binaries and libraries
+
+\item
+test: Source code for automated tests
+\end{itemize}
+
+In this structure, the CMakeLists.txt file should exist in the following directories: the top-level project directory, test, and src and all its subdirectories. The main listfile shouldn’t declare any build steps on its own, but instead, it should configure the general aspects of the project and delegate the responsibility of building to the nested listfiles with the add\_subdirectory() command. In turn, these listfiles may delegate this work to even deeper layers if needed.
+
+\begin{myNotic}{Note}
+Some developers suggest separating the executables from the libraries and creating two top-level directories instead of one: src and lib. CMake treats both artifacts the same, and separation at this level doesn’t really matter. Feel free to follow that model if it’s your preference.
+\end{myNotic}
+
+Having multiple directories in the src directory comes in handy for bigger projects. But if you’re building just a single executable or library, you may skip them and store your source files directly in src. In any case, remember to add a CMakeLists.txt file there and execute any nested listfiles as well. This is how your file tree might look for a single, simple target:
+
+\myGraphic{0.7}{content/chapter4/images/2.png}{Figure 4.2: The directory structure of an executable}
+
+In Figure 4.1, we see a CMakeLists.txt file in the root of the src directory – it will configure the key project settings and include all listfiles from nested directories. The app1 directory (visible in Figure 4.2) contains another CMakeLists.txt file along with the .cpp implementation files: class\_a.cpp and class\_b.cpp. There’s also the main.cpp file with the executable’s entry point.
+
+The CMakeLists.txt file should define a target that uses these sources to build an executable – again, we’ll learn how to do that in the next chapter.
+
+Our header files are placed in the include directory and can be used to declare symbols for other C++ translation units.
+Next, we have a lib3 directory, which contains a library specific to this executable only (libraries used elsewhere in the project or exported externally should live in the src directory). This structure offers great flexibility and allows for easy project extensions. As we continue adding more classes, we can conveniently group them into libraries to improve compilation speed. Let’s see what a library looks like:
+
+\myGraphic{0.7}{content/chapter4/images/3.png}{Figure 4.3: The directory structure of a library}
+
+Libraries should adhere to the same structure as executables, with a minor distinction: an optional lib1 directory is added to the include directory. This directory is included when the library is intended for external use beyond the project. It contains public header files that other projects will consume during compilation. We’ll return to this subject when we start building our own libraries in Chapter 7, Compiling C++ Sources with CMake.
+
+So, we have discussed how files are laid out in a directory structure. Now, it’s time to take a look at how individual CMakeLists.txt files come together to form a single project and what their role is in a bigger scenario.
+
+\myGraphic{0.7}{content/chapter4/images/4.png}{Figure 4.4: How CMake merges listfiles together in a single project}
+
+In the preceding figure, each box represents a CMakeLists.txt listfile residing in each directory, while the labels in italics represent the actions executed by each file (from top to bottom). Let’s analyze this project once more from CMake’s perspective (for all the details, look at the example in the ch04/05-structure directory):
+
+\begin{enumerate}
+\item
+The execution starts from the root of the project – that is, from a CMakeLists.txt listfile residing at the top of the source tree. This file will set the minimum required CMake version with the appropriate policies, set the project name, supported languages, and global variables, and include the files from the cmake directory, so that their contents are available globally.
+
+\item
+The next step is to enter the scope of the srcdirectory by calling the add\_subdirectory(src bin) command (we’d like to put compiled artifacts in <binary\_tree>/bin rather than <binary\_tree>/src).
+
+\item
+CMake reads the src/CMakeLists.txt file and discovers that its only purpose is to add four nested subdirectories: app1, app2, lib1, and lib2.
+
+\item
+CMake enters the variable scope of app1 and learns about another nested library, lib3, which has its own CMakeLists.txt file; then the scope of lib3 is entered. As you may have noticed, this is a depth-first traversal of the directory structure.
+
+\item
+The lib3 library adds a static library target with the same name. CMake returns to the parent scope of app1.
+
+\item
+The app1 subdirectory adds an executable that depends on lib3. CMake returns to the parent scope of src.
+
+\item
+CMake will continue entering the remaining nested scopes and executing their listfiles until all add\_subdirectory() invocations have been completed.
+
+\item
+CMake returns to the top-level scope and executes the remaining command add\_subdirectory(test). Each time, CMake enters the new scope and executes commands from the appropriate listfile.
+
+\item
+All the targets are collected and checked for their correctness. CMake now has all the necessary information to generate a buildsystem.
+\end{enumerate}
+
+It’s important to note that the previous steps occur in the exact order in which we wrote the commands in our listfiles. In some cases, this order is significant, while in others, it may not be as crucial. We will delve deeper into this topic in the next chapter, Chapter 5, Working with Targets, to understand its implications.
+
+So, when is the right time to create the directories to contain all of the elements of the project? Should we do it right from the start – create everything needed for the future and keep the directories empty – or wait until we actually have the files that need to go in their own category? This is a choice – we could follow the Extreme Programming (XP) rule YAGNI (you aren’t gonna need it), or we could try to make our project future-proof and lay good foundations for new developers to come.
+
+Try to aim for a good balance between these approaches – if you suspect that your project might someday need an extern directory, then add it (your version control system may require an empty .keep file to check a directory into the repository).
+
+Another effective approach to guide others in placing their external dependencies is by creating a README file that outlines the recommended structure. This can be particularly beneficial for less experienced programmers who will work on the project in the future. You may have observed this yourself: developers are reluctant to create directories, especially in the root of the project. If we provide a good project structure, others will be inclined to follow it.
+
+Some projects can be built in almost every environment, while others are quite particular about their requirements. The top-level listfile is the perfect place to determine the appropriate course of action. Let’s see how to do this.
+
+
+
+

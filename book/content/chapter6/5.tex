@@ -1,0 +1,312 @@
+
+Many generator expressions are available, but to avoid getting lost in the weeds, let’s focus on the most common ones. We’ll start with some basic transformations of the available data.
+
+\mySubsubsection{6.5.1.}{Dealing with strings, lists, and paths}
+
+Generator expressions provide only the bare minimum of operations to transform and query data structures. Working with strings in the generator stage is possible with the following expressions:
+
+\begin{itemize}
+\item
+\$<LOWER\_CASE:string>, \$<UPPER\_CASE:string>: This converts to string to the required case.
+\end{itemize}
+
+List operations were fairly limited until recently. Since CMake 3.15, the following operations have been available:
+
+\begin{itemize}
+\item
+\$<IN\_LIST:string,list>: This returns true if list contains a string value.
+
+\item
+\$<JOIN:list,d>: This joins a semicolon-separated list using a d delimiter.
+
+\item
+\$<REMOVE\_DUPLICATES:list>: This deduplicates list (without sorting).
+
+\item
+\$<FILTER:list,INCLUDE|EXCLUDE,regex>: This includes/excludes items from list using a regex.
+\end{itemize}
+
+Since 3.27, the \$<LIST:OPERATION> generator expressions were added, where OPERATION is one of:
+
+\begin{itemize}
+\item
+LENGTH
+
+\item
+GET
+
+\item
+SUBLIST
+
+\item
+FIND
+
+\item
+JOIN
+
+\item
+APPEND
+
+\item
+PREPEND
+
+\item
+INSERT
+
+\item
+POP\_BACK
+
+\item
+POP\_FRONT
+
+\item
+REMOVE\_ITEM
+
+\item
+REMOVE\_AT
+
+\item
+REMOVE\_DUPLICATES
+
+\item
+FILTER
+
+\item
+TRANSFORM
+
+\item
+REVERSE
+
+\item
+SORT
+\end{itemize}
+
+It’s rather rare to work with lists in generator expressions, so we’re only indicating what’s possible. If you find yourself in one of these cases, see the online manual for instructions on how to use these operations.
+
+Finally, we can query and transform the system paths. It’s a useful addition because of its portability across different operating systems. The following simple queries have been available since CMake 3.24:
+
+\begin{itemize}
+\item
+\$<PATH:HAS\_ROOT\_NAME,path>
+
+\item
+\$<PATH:HAS\_ROOT\_DIRECTORY,path>
+
+\item
+\$<PATH:HAS\_ROOT\_PATH,path>
+
+\item
+\$<PATH:HAS\_FILENAME,path>
+
+\item
+\$<PATH:HAS\_EXTENSION,path>
+
+\item
+\$<PATH:HAS\_STEM,path>
+
+\item
+\$<PATH:HAS\_RELATIVE\_PART,path>
+
+\item
+\$<PATH:HAS\_PARENT\_PATH,path>
+
+\item
+\$<PATH:IS\_ABSOLUTE,path>
+
+\item
+\$<PATH:IS\_RELATIVE,path>
+
+\item
+\$<PATH:IS\_PREFIX[,NORMALIZE],prefix,path>: This returns true if prefix is the prefix of path
+\end{itemize}
+
+Analogically, we can retrieve all the path components we were able to check for (since CMake 3.27, it’s been possible to provide a list of paths rather than just one path):
+
+\begin{itemize}
+\item
+\$<PATH:CMAKE\_PATH[,NORMALIZE],path...>
+
+\item
+\$<PATH:APPEND,path...,input,...>
+
+\item
+\$<PATH:REMOVE\_FILENAME,path...>
+
+\item
+\$<PATH:REPLACE\_FILENAME,path...,input>
+
+\item
+\$<PATH:REMOVE\_EXTENSION[,LAST\_ONLY],path...>
+
+\item
+\$<PATH:REPLACE\_EXTENSION[,LAST\_ONLY],path...,input>
+
+\item
+\$<PATH:NORMAL\_PATH,path...>
+
+\item
+\$<PATH:RELATIVE\_PATH,path...,base\_directory>
+
+\item
+\$<PATH:ABSOLUTE\_PATH[,NORMALIZE],path...,base\_directory>
+\end{itemize}
+
+Additionally, some transform operations were introduced in 3.24; we’ll just list them for completeness:
+
+\begin{itemize}
+\item
+\$<PATH:CMAKE\_PATH[,NORMALIZE],path...>
+
+\item
+\$<PATH:APPEND,path...,input,...>
+
+\item
+\$<PATH:REMOVE\_FILENAME,path...>
+
+\item
+\$<PATH:REPLACE\_FILENAME,path...,input>
+
+\item
+\$<PATH:REMOVE\_EXTENSION[,LAST\_ONLY],path...>
+
+\item
+\$<PATH:REPLACE\_EXTENSION[,LAST\_ONLY],path...,input>
+
+\item
+\$<PATH:NORMAL\_PATH,path...>
+
+\item
+\$<PATH:RELATIVE\_PATH,path...,base\_directory>
+
+\item
+\$<PATH:ABSOLUTE\_PATH[,NORMALIZE],path...,base\_directory>
+\end{itemize}
+
+There’s one more path operation, which formats the provided path to the style supported by the shell of the host: \$<SHELL\_PATH:path...>.
+
+Again, previous expressions are introduced for later reference, not as information that you need to memorize right now. The bulk of the recommended practical knowledge is detailed in the subsequent sections.
+
+
+\mySubsubsection{6.5.2.}{Parametrizing the build configuration and platform}
+
+One of the key pieces of information that CMake users will provide when building a project is the desired build configuration. In most cases, it will be Debug or Release. We can use the generator expressions to access these values through the following statements:
+
+\begin{itemize}
+\item
+\$<CONFIG>: This returns the current build configuration as a string: Debug, Release, or another.
+
+\item
+\$<CONFIG:configs>: This returns true if configs contains the current build configuration (case-insensitive comparison).
+\end{itemize}
+
+We discussed the platform in the Chapter 4, Setting Up Your First CMake Project in the Understanding the build environment section. We can read related information the same way as with configuration:
+
+\begin{itemize}
+\item
+\$<PLATFORM\_ID>: This returns the current platform ID as a string: Linux, Windows, or Darwin for macOS.
+
+\item
+\$<PLATFORM\_ID:platform> is true if platform contains the current platform ID.
+\end{itemize}
+
+Such configuration or platform-specific parametrization is a powerful addition to our toolbelt. We can use it in conjunction with the conditional expansion we discussed earlier:
+
+\begin{shell}
+$<IF:condition,true_string,false_string>
+\end{shell}
+
+For example, we may apply one compilation flag when building test binaries, and another for production:
+
+\begin{cmake}
+target_compile_definitions(my_target PRIVATE
+    $<IF:$<CONFIG:Debug>,Test,Production>
+)
+\end{cmake}
+
+But this is just the beginning. There are plenty of other circumstances we can address with generator expressions. Of course, the next important aspect is the tooling present in the system.
+
+\mySubsubsection{6.5.3.}{Tuning for toolchain}
+
+Toolchains, toolkits, or, simply, compilers and linkers luckily (sadly?) aren’t consistent across vendors. This has all sorts of consequences. Some of them are great (better performance in special cases), others not so much (varied configuration flavors, discrepancies in flag naming, and more).
+
+Generator expressions help here by providing sets of queries that can be utilized to alleviate problems and opportunistically improve user experience where possible.
+
+As with the build configurations and platform, there are multiple expressions that return information about the toolchain, both as string and Boolean. However, we’re required to specify which language we’re interested in (replace \#LNG with one of C, CXX, CUDA, OBJC, OBJCXX, Fortran, HIP, or ISPC). Support for HIP was added in 3.21.
+
+\begin{itemize}
+\item
+\$<\#LNG\_COMPILER\_ID>: This returns CMake’s compiler ID of the \#LNG compiler used.
+
+\item
+\$<\#LNG\_COMPILER\_VERSION>: This returns CMake’s compiler version of the \#LNG compiler used.
+\end{itemize}
+
+To check which compiler will execute for C++, we should use the \$<CXX\_COMPILER\_ID> generator expression. The returned value, the CMake’s compiler ID, is a constant defined for every supported compiler. You may encounter values like AppleClang, ARMCC, Clang, GNU, Intel, and MSVC. For the full list, check the official documentation (URL in the Further reading section).
+
+Similarly to the previous section, we can also utilize the toolchain information in conditional expressions. There are multiple queries that return true if any of the provided arguments matches a specific value:
+
+\begin{itemize}
+\item
+\$<\#LNG\_COMPILER\_ID:ids>: This returns true if ids contains CMake’s \#LNG compiler ID.
+
+\item
+\$<\#LNG\_COMPILER\_VERSION:vers>: This returns true if vers contains the CMake’s \#LNG compiler version.
+
+\item
+\$<COMPILE\_FEATURES:features>: This returns true if all features provided in features are supported by the compiler for this target.
+\end{itemize}
+
+Inside commands requiring a target argument, like target\_compile\_definitions(), we can use one of the target-specific expressions to get a string value:
+
+\begin{itemize}
+\item
+\$<COMPILE\_LANGUAGE>: This returns the language of source files at the compilation step.
+
+\item
+\$<LINK\_LANGUAGE>: This returns the language of source files at the link step.
+\end{itemize}
+
+To evaluate a simple Boolean query:
+
+\begin{itemize}
+\item
+\$<COMPILE\_LANGUAGE:langs>: This returns true if langs contains a language used for the compilation of this target. This can be used to provide language-specific flags to the compiler. For example, to compile C++ sources of the target with the -fno-exceptions flag:
+
+\begin{cmake}
+target_compile_options(myapp
+    PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions>
+)
+\end{cmake}
+
+\item
+\$<LINK\_LANGUAGE:langs> – It follows the same rules as COMPILE\_LANGUAGE and returns true if langs contains a language used for linking of this target.
+\end{itemize}
+
+Or, to query more complex scenarios:
+
+\begin{itemize}
+\item
+\$<COMPILE\_LANG\_AND\_ID:lang,compiler\_ids...>: This returns true if the lang language is used for this target, and one of the compilers in the compiler\_ids list will be used for this compilation. This expression is useful to specify compile definitions for specific compilers:
+
+\begin{cmake}
+target_compile_definitions(myapp PRIVATE
+    $<$<COMPILE_LANG_AND_ID:CXX,AppleClang,Clang>:CXX_CLANG>
+    $<$<COMPILE_LANG_AND_ID:CXX,Intel>:CXX_INTEL>
+    $<$<COMPILE_LANG_AND_ID:C,Clang>:C_CLANG>
+)
+\end{cmake}
+
+\item
+In this example, for C++ sources (CXX) compiled with AppleClang or Clang, the -DCXX\_CLANG definition will be set. For the C++ sources compiled with the Intel compiler, the -DCXX\_INTEL definition flag will be set. Lastly, for the C sources (C) compiled with the Clang compiler, we’ll set a -DC\_CLANG definition.
+
+\item
+\$<LINK\_LANG\_AND\_ID:lang,compiler\_ids...>: This works like COMPILE\_LANG\_AND\_ID, but checks the language used for the link step instead. Use this expression to specify link libraries, link options, link directories, and link dependencies of a particular language and a linker combination in a target.
+\end{itemize}
+
+An important note to make here is that a single target can be combined from sources of multiple languages. For example, it’s possible to link C artifacts with C++ (but we should declare both languages in the project() command). Therefore, generator expressions referencing a specific language will be used for some source files, but not for others.
+
+Let’s move on to the next important category: target-related generator expressions.
+
+\mySubsubsection{6.5.4.}{Querying target-related information}
+
+\mySubsubsection{6.5.5.}{Escaping}
