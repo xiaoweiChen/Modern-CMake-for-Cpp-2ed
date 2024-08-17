@@ -1,0 +1,168 @@
+
+After compiling the source code, it’s often desirable to sidestep recompilation for the same platform or even share the compiled output with external projects. One could distribute the individual object files as initially produced, but this comes with challenges. Distributing multiple files and integrating them one by one into a buildsystem can be a hassle, particularly when dealing with a large number. A more efficient approach is to consolidate all object files into a singular unit for sharing. CMake significantly simplifies this task. We can generate these libraries with a simple add\_library() command (paired with the target\_link\_libraries() command).
+
+By convention, all the libraries have a common prefix, lib, and use system-specific extensions that denote what kind of library they are:
+
+\begin{itemize}
+\item
+A static library has a .a extension on Unix-like systems and .lib on Windows.
+
+\item
+Shared libraries (and modules) have a .so extension on some Unix-like systems (like Linux) and .dylib on others (macOS). On Windows, their extension is .dll .
+
+\item
+Shared modules usually use the same extensions as shared libraries, but not always. On macOS, they can use .so, especially when the module is ported from another Unix platform.
+\end{itemize}
+
+The process of building libraries (static, shared, or shared modules) is by convention called “linking,” as can be seen in the build output of the ch08/01-libraries project:
+
+\begin{shell}
+[ 33%] Linking CXX static library libmy_static.a
+[ 66%] Linking CXX shared library libmy_shared.so
+[100%] Linking CXX shared module libmy_module.so
+[100%] Built target module_gui
+\end{shell}
+
+However, not all of the preceding libraries necessarily use a linker for their creation. The process might skip certain steps like relocation and reference resolution for some libraries.
+
+Let’s delve into each library type to understand their respective workings.
+
+\mySubsubsection{8.3.1.}{Static libraries}
+
+Static libraries are essentially a collection of raw object files stored in an archive. Sometimes, they’re extended with an index to speed up linking the process. On Unix-like systems, such archives can be created by the ar tool, and indexed with ranlib.
+
+During the build process, only necessary symbols from the static library are imported into the final executable, optimizing its size and memory usage. This selective integration ensures the executable is self-contained, eliminating the need for external files at runtime.
+
+To create a static library, we can simply use the command that we have already seen in the previous chapters:
+
+\begin{shell}
+add_library(<name> [<source>...])
+\end{shell}
+
+This short-hand code will produce a static library by default. This can be overridden by setting the BUILD\_SHARED\_LIBS variable to ON. If we want to build a static library regardless, we can provide an explicit keyword:
+
+\begin{shell}
+add_library(<name> STATIC [<source>...])
+\end{shell}
+
+Utilizing static libraries might not always be an ideal option, especially when we aim to share compiled code among multiple applications running on the same machine.
+
+\mySubsubsection{8.3.2.}{Shared libraries}
+
+Shared libraries differ significantly from static libraries. They are constructed using a linker, which completes both stages of linking. This results in a file complete with section headers, sections, and a section header table, as illustrated in Figure 8.1.
+
+Shared libraries, often referred to as shared objects, can be utilized across multiple distinct applications simultaneously. When the first program uses a shared library, the OS loads one instance of it into the memory. Subsequent programs are then provided with the same address by the OS, courtesy of intricate virtual memory mechanisms. However, for every process that uses the library, the .data and .bss segments of the library are instantiated separately. This ensures that each process can adjust its variables without influencing other processes.
+
+Thanks to this approach, the overall memory usage in the system is optimized. If we’re using a widely recognized library, it might not be necessary to include it with our program, as it’s likely already available on the target machine. However, if it’s not pre-installed, users are expected to manually install it before running the application. This can lead to potential issues if the installed version of a library differs from what’s expected. Such problems are referred to as “dependency hell.” More details can be found in the Further reading section of this chapter.
+
+We can build shared libraries by explicitly using the SHARED keyword:
+
+\begin{shell}
+add_library(<name> SHARED [<source>...])
+\end{shell}
+
+Since shared libraries are loaded during the program initialization, there’s no association between the executing program and the actual library file on disk. Instead, the linking is done indirectly. In Unix-like systems, this is achieved through a shared object name (SONAME), which can be understood as the “logical name” of the library.
+
+This allows flexibility in library versioning and ensures that backward-compatible changes to libraries don’t immediately break dependent applications.
+
+We can query some path properties of the produced SONAME file with generator expressions (be sure to replace target with the name of your target):
+
+\begin{itemize}
+\item
+\$<TARGET\_SONAME\_FILE:target> returns the full path (.so.3).
+
+\item
+\$<TARGET\_SONAME\_FILE\_NAME:target> returns only the filename.
+
+\item
+\$<TARGET\_SONAME\_FILE\_DIR:target> returns the directory.
+\end{itemize}
+
+These come in handy in more advanced scenarios that we’ll cover later in the book, including:
+
+\begin{itemize}
+\item
+Correct usage of the generated library during packaging and installation.
+
+\item
+Writing custom CMake rules for dependency management.
+
+\item
+Utilizing SONAME during testing.
+
+\item
+Copying or renaming produced libraries in post-build commands.
+\end{itemize}
+
+You may have similar needs for other OS-specific artifacts; for that purpose, CMake offers two families of generator expressions that offer the same suffixes as SONAME. For Windows, we have:
+
+\begin{itemize}
+\item
+\$<TARGET\_LINKER\_FILE:target>returns the full path to the .libimport library associated with the produced dynamic-link library (DLL). Note that the.lib extension is the same as for the static Windows library, but their application is not the same.
+
+\item
+\$<TARGET\_RUNTIME\_DLLS:target> returns a list of DLLs that the target depends on at runtime.
+
+\item
+\$<TARGET\_PDB\_FILE:target> returns the full path to the .pdb program database file (used for debugging purposes).
+\end{itemize}
+
+Since shared libraries are loaded into the OS’s memory during the initialization of the program, they are applicable when knowing upfront which libraries the program will use. What about the scenarios where this needs to be determined during the runtime?
+
+\mySubsubsection{8.3.3.}{Shared modules}
+
+A shared module, or module library, is a variant of a shared library designed to be used as a plugin loaded during runtime. Unlike standard shared libraries, which load automatically when a program starts, a shared module only loads when the program explicitly requests it. This can be done through the system calls:
+
+\begin{itemize}
+\item
+LoadLibrary on Windows
+
+\item
+dlopen() followed by dlsym() on Linux and macOS
+\end{itemize}
+
+The primary reason for this approach is memory conservation. Many software applications have advanced features that aren’t utilized throughout the life cycle of every process. Loading such features into memory every time would be inefficient.
+
+Alternatively, we might want to provide an avenue for extending the main program with specialized features that can be sold, delivered, and loaded separately.
+
+To build shared modules, we need to use the MODULE keyword:
+
+\begin{shell}
+add_library(<name> MODULE [<source>...])
+\end{shell}
+
+You shouldn’t attempt to link your executable with a module, as the module is designed to be deployed separately from the executable that will utilize it.
+
+\mySubsubsection{8.3.4.}{Position-independent code (PIC)}
+
+Programs today are inherently somewhat position-independent because of the use of virtual memory. This technology abstracts physical addresses. When calling a function, the CPU uses the memory management unit (MMU) to translate a virtual address (starting from 0 for every process) to the corresponding physical address (determined at the time of allocation). Interestingly, these mappings don’t always follow a specific order.
+
+Compiling a library introduces uncertainty: it’s unclear which processes might use the library or where it will be located in virtual memory. We also can’t predict the addresses of the symbols or their locations relative to the library’s machine code. To handle this, we need another level of indirection.
+
+PIC was introduced to map symbols (like references to functions and global variables) to their runtime addresses. PIC introduces a new section to the binary file: the Global Offset Table (GOT). During the linking, the relative position of the GOT section to the .text section (the program code) is calculated. All symbol references will be pointed through an offset to a placeholder in the GOT.
+
+When the program is loaded, the GOT section transforms into a memory segment. Over time, this segment accumulates the runtime addresses of the symbols. This method, termed “lazy loading,” ensures that the loader populates specific GOT entries only when required.
+
+All sources for shared libraries and modules must be compiled with a PIC flag activated. By setting the POSITION\_INDEPENDENT\_CODE target property to ON, we’ll tell CMake to appropriately add compiler-specific flags such as -fPIC for GCC or Clang.
+
+This property is automatically enabled for shared libraries. However, if a shared library depends on another target, such as a static or object library, you must also apply this property to the dependent target:
+
+\begin{shell}
+set_target_properties(dependency
+                      PROPERTIES POSITION_INDEPENDENT_CODE ON)
+\end{shell}
+
+Overlooking this step will cause conflicts in CMake, since it checks this property for inconsistencies. You can find a more thorough exploration of this in the Dealing with conflicting propagated properties section of Chapter 5, Working with Targets.
+
+Our next discussion point pivots to symbols. Specifically, the subsequent section will explore the challenges of name collisions, which can lead to ambiguity and definition inconsistencies.
+
+
+
+
+
+
+
+
+
+
+

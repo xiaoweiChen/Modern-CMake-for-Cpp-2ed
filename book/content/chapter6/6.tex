@@ -1,12 +1,171 @@
 
+Everything is easier to grasp when there’s a good practical example to support the theory. Obviously, we’d like to write some CMake code and try it out. However, since generator expressions aren’t evaluated until after the configuration is complete, we cannot use any configuration-time commands like message() to experiment. We need to use some special tricks instead. To debug generator expressions, you can use either of these methods:
 
+\begin{itemize}
+\item
+Write it to a file (this particular version of the file() command supports generator expressions): file(GENERATE OUTPUT filename CONTENT "\$<...>")
+
+\item
+Add a custom target and build it explicitly from the command line: add\_custom\_target(gendbg COMMAND \$\{CMAKE\_COMMAND\} -E echo "\$<...>")
+\end{itemize}
+
+I recommend the first option for simpler practice. Remember, though, that we won’t be able to use all the expressions in these commands, as some are target specific. Having covered this, let’s look at some of the uses for generator expressions.
 
 \mySubsubsection{6.6.1.}{Build configurations}
 
+In Chapter 1, First Steps with CMake, we discussed the build type, specifying which configuration we are building – Debug, Release, and so on. There may be cases where you’d like to act differently based on what kind of build you’re making. A simple and easy way to do so is by utilizing the \$<CONFIG> generator expression:
+
+\begin{shell}
+target_compile_options(tgt $<$<CONFIG:DEBUG>:-ginline-points>)
+\end{shell}
+
+The preceding example checks whether the config equals DEBUG; if that’s the case, the nested expression is evaluated to 1. The outer shorthand if expression then becomes true, and our -ginline-points debug flag gets added to the options. It’s important to know this form, so you’ll be able to understand such expressions in other projects, but I’d recommend using the more verbose \$<IF:...> for better readability.
+
 \mySubsubsection{6.6.2.}{System-specific one liners}
+
+Generator expressions can also be used to compact verbose if commands into neat one liners.
+
+Let’s suppose we have the following code:
+
+\begin{cmake}
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+    target_compile_definitions(myProject PRIVATE LINUX=1)
+endif()
+\end{cmake}
+
+It tells the compiler to add -DLINUX=1 to the arguments if this is the target system. While this isn’t terribly long, it could be replaced with a fairly simple expression:
+
+\begin{cmake}
+target_compile_definitions(myProject PRIVATE
+                           $<$<CMAKE_SYSTEM_NAME:LINUX>:LINUX=1>)
+\end{cmake}
+
+Such code works well, but there’s a limit to how much you can pack into a generator expression until it becomes too hard to read. On top of that, many CMake users postpone learning about generator expressions and have trouble following what happens. Luckily, we won’t have such problems after completing this chapter.
 
 \mySubsubsection{6.6.3.}{Interface libraries with compiler-specific flags}
 
+Interface libraries, as we discussed in Chapter 5, Working with Targets, can be used to provide flags to match the compiler:
+
+\begin{cmake}
+add_library(enable_rtti INTERFACE)
+target_compile_options(enable_rtti INTERFACE
+    $<$<OR:$<COMPILER_ID:GNU>,$<COMPILER_ID:Clang>>:-rtti>
+)
+\end{cmake}
+
+Even in such a simple example, we can already see how difficult an expression is to understand when we nest too many generator expressions. Unfortunately, sometimes this is the only way to achieve the desired effect. Here’s the explanation of the example:
+
+\begin{itemize}
+\item
+We check whether COMPILER\_ID is GNU; if that’s the case, we evaluate OR to 1.
+
+\item
+If it’s not, we check whether COMPILER\_ID is Clang, and evaluate OR to 1. Otherwise, evaluate OR to 0.
+
+\item
+If OR is evaluated to 1, add -rtti to the enable\_rtti compile options. Otherwise, do nothing.
+\end{itemize}
+
+Next, we can link our libraries and executables with the enable\_rtti interface library. CMake will add the -rtti flag if a compiler supports it. Side note: RTTI stands for run-time type information and is used in C++ with keywords like typeid to determine the class of an object at run time; unless your code is using this feature, the flag doesn’t need to be enabled.
+
 \mySubsubsection{6.6.4.}{Nested generator expressions}
 
+Sometimes, it’s not obvious what happens when we try to nest elements in a generator expression. We can debug the expressions by generating a test output to a debug file.
+
+Let’s try out a few things and see what happens:
+
+\filename{ch06/01-nesting/CMakeLists.txt}
+
+\begin{cmake}
+set(myvar "small text")
+set(myvar2 "small text >")
+
+file(GENERATE OUTPUT nesting CONTENT "
+    1 $<PLATFORM_ID>
+    2 $<UPPER_CASE:$<PLATFORM_ID>>
+    3 $<UPPER_CASE:hello world>
+    4 $<UPPER_CASE:${myvar}>
+    5 $<UPPER_CASE:${myvar2}>
+")
+\end{cmake}
+
+After building this project as described in the Technical requirements section of this chapter, we can read the produced nesting file using the Unix cat command:
+
+\begin{shell}
+# cat nesting
+
+    1 Linux
+    2 LINUX
+    3 HELLO WORLD
+    4 SMALL TEXT
+    5 SMALL text>
+\end{shell}
+
+This is how each line works:
+
+\begin{enumerate}
+\item
+The PLATFORM\_ID output value is LINUX.
+
+\item
+The output from the nested value will get transformed correctly to uppercase LINUX.
+
+\item
+We can transform plain strings.
+
+\item
+We can transform the content of configuration-stage variables.
+
+\item
+Variables will be interpolated first, and closing angle brackets (>) will be interpreted as part of the genex, in that only part of the string will get capitalized.
+\end{enumerate}
+
+In other words, be aware that the content of variables may affect the behavior of your genex expansions. If you need an angle bracket in a variable, use \$<ANGLE-R>.
+
 \mySubsubsection{6.6.5.}{The difference between a conditional expression and the evaluation of a BOOL operator}
+
+Generator expressions can be a little confusing when it comes to evaluating Boolean types to strings. It is important to understand how they differ from regular conditional expressions, starting with an explicit IF keyword:
+
+\filename{ch06/02-boolean/CMakeLists.txt}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26)
+project(Boolean CXX)
+
+file(GENERATE OUTPUT boolean CONTENT "
+    1 $<0:TRUE>
+    2 $<0:TRUE,FALSE> (won't work)
+    3 $<1:TRUE,FALSE>
+    4 $<IF:0,TRUE,FALSE>
+    5 $<IF:0,TRUE,>
+")
+\end{cmake}
+
+Let’s read the produced file using the Linux cat command:
+
+\begin{enumerate}
+\item
+This is a Boolean expansion, where BOOL is 0; therefore, the TRUE string isn’t written.
+
+\item
+This is a typical mistake – the author intended to print TRUE or FALSE depending on the BOOL value, but since it is a Boolean false expansion as well, two arguments are treated as one and not printed.
+
+\item
+This is the same mistake for a reversed value – it is a Boolean true expansion that has both arguments written in a single line.
+
+\item
+This is a proper conditional expression starting with IF – it prints FALSE because the first argument is 0.
+
+\item
+This is the correct usage of a conditional expression, however, when we don’t need to provide values for Boolean false, we should use the form used in the first line.
+\end{enumerate}
+
+Generator expressions are notorious for their convoluted syntax. The differences mentioned in this example can confuse even experienced builders. If in doubt, copy such an expression to another file and analyze it by adding indentation and whitespace to understand it better.
+
+Seeing examples of how generator expressions work has prepared us to use them in practice. Upcoming chapters will discuss many topics, where generator expressions will be relevant. In time, we’ll cover even more of their applications.
+
+
+
+
+
+

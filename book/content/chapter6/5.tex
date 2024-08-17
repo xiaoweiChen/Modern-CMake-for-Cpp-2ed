@@ -309,4 +309,124 @@ Let’s move on to the next important category: target-related generator express
 
 \mySubsubsection{6.5.4.}{Querying target-related information}
 
+There are plenty of generator expressions that query target properties and check target-related information. Note that until CMake 3.19, many target expressions referencing another target were used to automatically create a dependency between them. This no longer happens in the latest versions of CMake.
+
+Some generator expressions will infer the target from the command being called; the most commonly used is the basic query that returns the target’s property value:
+
+\begin{shell}
+$<TARGET_PROPERTY:prop>
+\end{shell}
+
+\begin{itemize}
+\item
+Less known, but useful in the target\_link\_libraries() command, is the \$<LINK\_ONLY:deps> generator expression. It allows us to store the PRIVATE link dependencies, which won’t be propagated through transitive usage requirements; these are used in interface libraries, which we discussed in Chapter 5, Working with Targets, in the Understanding the transitive usage requirements section.
+\end{itemize}
+
+There also is a set of install and export-related expressions, which infer their targets from the context they’re being used. We’ll discuss them in depth in Chapter 14, Installing and Packaging, so we can just have a quick introduction for now:
+
+\begin{itemize}
+\item
+\$<INSTALL\_PREFIX>: This returns the install prefix when the target is exported with install(EXPORT) or when evaluated in INSTALL\_NAME\_DIR; otherwise, it is empty.
+
+\item
+\$<INSTALL\_INTERFACE:string>: This returns string when the expression is exported with install(EXPORT).
+
+\item
+\$<BUILD\_INTERFACE:string>: This returns string when the expression is exported with the export() command or by another target in the same buildsystem.
+
+\item
+\$<BUILD\_LOCAL\_INTERFACE:string>: This returns string when the expression is exported by another target in the same buildsystem.
+\end{itemize}
+
+However, most queries require the target name to be explicitly provided as the first argument:
+
+\begin{itemize}
+\item
+\$<TARGET\_EXISTS:target>: This returns true if the target exists.
+
+\item
+\$<TARGET\_NAME\_IF\_EXISTS:target>: This returns the target name if the target exists and an empty string otherwise.
+
+\item
+\$<TARGET\_PROPERTY:target,prop>: This returns the prop property value for the target.
+
+\item
+\$<TARGET\_OBJECTS:target>: This returns a list of object files for an object library target.
+\end{itemize}
+
+You can query the path of the target artifact:
+
+\begin{itemize}
+\item
+\$<TARGET\_FILE:target>: This returns the full path.
+
+\item
+\$<TARGET\_FILE\_NAME:target>: This returns just the filename.
+
+\item
+\$<TARGET\_FILE\_BASE\_NAME:target>: This returns the base name.
+
+\item
+\$<TARGET\_FILE\_NAME:target>: This returns the base name without the prefix or suffix (for libmylib.so the base name would be mylib).
+
+\item
+\$<TARGET\_FILE\_PREFIX:target>: This returns just the prefix (for example, lib).
+
+\item
+\$<TARGET\_FILE\_SUFFIX:target>: This returns just the suffix (for example, .so or .exe).
+
+\item
+\$<TARGET\_FILE\_DIR:target>: This returns the directory.
+\end{itemize}
+
+There are families of expressions that offer similar functionality as the regular TARGET\_FILE expression (each expression also accepts the \_NAME, \_BASE\_NAME or \_DIR suffix):
+
+\begin{itemize}
+\item
+TARGET\_LINKER\_FILE: This queries the path of the file used when linking to the target. Usually, it is the library produced by the target (.a, .lib, .so). However, on platforms with Dynamic-Link Libraries (DLLs), it will be a .lib import library associated with the target’s DLL.
+
+\item
+TARGET\_PDB\_FILE: This queries the path of the linker-generated program database file (.pdb).
+\end{itemize}
+
+Managing libraries is a complex topic, and CMake offers a lot of generator expressions to help. However, we’ll postpone introducing them until they become relevant in Chapter 8, Linking Executables and Libraries.
+
+Finally, there are some Apple package-specific expressions as well:
+
+\begin{itemize}
+\item
+\$<TARGET\_BUNDLE\_DIR:target>: This is the full path to the bundle directory (my.app, my.framework, or my.bundle) for the target.
+
+\item
+\$<TARGET\_BUNDLE\_CONTENT\_DIR:target>: This is the full path to the bundle content directory for the target. On macOS, it’s my.app/Contents, my.framework, or my.bundle/Contents. Other Software Development Kits (SDKs) (such as iOS) have a flat bundle structure – my.app, my.framework, or my.bundle.
+\end{itemize}
+
+These are the main generator expressions for dealing with targets. It’s worth knowing, there’s plenty more. I recommend referring to the official documentation for a complete list.
+
 \mySubsubsection{6.5.5.}{Escaping}
+
+On a rare occasion, you may need to pass a character to a generator expression that has a special meaning. To escape this behavior, use the following expressions:
+
+\begin{itemize}
+\item
+\$<ANGLE-R>: This a literal > symbol
+
+\item
+\$<COMMA>: This a literal , symbol
+
+\item
+\$<SEMICOLON>: This a literal ; symbol
+\end{itemize}
+
+The last expression can be useful to prevent list expansion when an argument containing ; is used.
+
+Now that we have introduced all the queries and transformations, we can see how they work in practice. Let’s go through some examples of applications.
+
+
+
+
+
+
+
+
+

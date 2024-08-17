@@ -1,0 +1,71 @@
+You might assume that once we’ve successfully compiled the source code into a binary file, our role as build engineers is complete. However, that’s not entirely true. While binary files do contain all the necessary code for a CPU to execute, this code can be distributed across multiple files in a complex manner. We wouldn’t want the CPU to scour different files searching for individual code snippets. Instead, our goal is to consolidate these separate units into a single file. To achieve this, we use a process known as linking.
+
+A quick look shows that CMake has few linking commands, with target\_link\_libraries() being the main one. Why dedicate a whole chapter to a single command then? Unfortunately, almost nothing is ever easy in computer science, and linking is no exception: to get the right results, we need to understand the whole story – we need to know how exactly a linker works and get the basics right. We’ll talk about the internal structure of object files, how the relocation and reference resolution mechanisms work, and what are they for. We’ll discuss how the final executable differs from its components and how the process image is constructed by the system when loading the program into memory.
+
+Then, we’ll introduce all kinds of libraries to you: static, shared, and shared modules. Even though they’re all called “libraries,” they’re quite different. Creating a well-linked executable relies on having the right configuration and addressing specific details like position-independent code (PIC).
+
+We’ll learn about another nuisance of linking – the One Definition Rule (ODR). It’s crucial to have the exact number of definitions. Managing duplicate symbols can be particularly challenging, especially with shared libraries. Additionally, we’ll explore why linkers occasionally fail to locate external symbols, even if the executable is correctly linked to the relevant library.
+
+Finally, we’ll discover how to use a linker efficiently, preparing our solution for testing within specific frameworks.
+
+In this chapter, we’re going to cover the following main topics:
+
+\begin{itemize}
+\item
+Getting the basics of linking right
+
+\item
+Building different library types
+
+\item
+Solving problems with the ODR
+
+\item
+The order of linking and unresolved symbols
+
+\item
+Separating main() for testing
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

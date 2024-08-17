@@ -1,0 +1,307 @@
+
+As programmers and build engineers, we must also consider other aspects of compilation such as the time it takes to complete and the ease with which we can identify and rectify mistakes made during the solution-building process.
+
+\mySubsubsection{7.5.1.}{Reducing compilation time}
+
+In busy projects that require frequent recompilations (possibly several times an hour), it’s paramount to ensure the compilation process is as quick as possible. This not only affects the efficiency of your code-compile-test loop but also your concentration and workflow.
+
+Luckily, C++ is already pretty good at managing compilation time, thanks to separate translation units. CMake will take care to only recompile sources that were impacted by recent changes. However, if we need to improve things even more, there are a couple of techniques we can use: header precompilation and unity builds.
+
+\mySamllsection{Precompilation of headers}
+
+Header files (.h) are included in the translation unit by the preprocessor before the actual compilation begins. This means they must be recompiled every time the .cpp implementation files change. Moreover, if multiple translation files are using the same shared header, it has to be compiled every time it’s included. This is inefficient, but it has been the standard for a long time.
+
+Luckily, since version 3.16, CMake offers a command to enable header precompilation. This allows the compiler to process headers separately from the implementation file, thereby speeding up the compilation process. This is the syntax for the provided command:
+
+\begin{shell}
+target_precompile_headers(<target>
+                          <INTERFACE|PUBLIC|PRIVATE> [header1...]
+                         [<INTERFACE|PUBLIC|PRIVATE> [header2...]
+...])
+\end{shell}
+
+The list of added headers is stored in the PRECOMPILE\_HEADERS target property. As we discussed in Chapter 5, Working with Targets, in the What are transitive usage requirements? section, we can use the propagated properties to share the headers with any depending targets by choosing the PUBLIC or INTERFACE keyword; however, this shouldn’t be done for targets exported with the install() command. Other projects shouldn’t be forced to consume our precompiled headers as this is not a conventional practice.
+
+\begin{myNotic}{Note}
+Use the \$<BUILD\_INTERFACE:...> generator expression described in Chapter 6, Using Generator Expressions, to prevent precompiled headers from appearing in the usage requirements of targets when they’re installed. However, they will still be added to targets exported from the build tree with the export() command. Don’t worry if this seems confusing right now – it will be fully explained in Chapter 14, Installing and Packaging.
+\end{myNotic}
+
+CMake will put all headers’ names in a cmake\_pch.h or cmake\_pch.hxx file, which will then be precompiled to a compiler-specific binary file with a .pch, .gch, or .pchi extension.
+
+We can use it in our listfile like so:
+
+\filename{ch07/06-precompile/CMakeLists.txt}
+
+\begin{cmake}
+add_executable(precompiled hello.cpp)
+target_precompile_headers(precompiled PRIVATE <iostream>)
+\end{cmake}
+
+We can also use it in the corresponding source file:
+
+\filename{ch07/06-precompile/hello.cpp}
+
+\begin{cmake}
+int main() {
+    std::cout << "hello world" << std::endl;
+}
+\end{cmake}
+
+Note that in our main.cpp file, we don’t need to include cmake\_pch.h or any other header – it will be included by CMake with compiler-specific command-line options.
+
+In the previous example, I used a built-in header; however, you can easily add your own headers with class or function definitions. Use one of the two forms to reference the header:
+
+\begin{itemize}
+\item
+header.h (a direct path) is interpreted as relative to the current source directory and will be included with an absolute path.
+
+\item
+The [["header.h"]] (double brackets and quotes) path will be scanned according to the target’s INCLUDE\_DIRECTORIES property, which can be configured with target\_include\_directiories().
+\end{itemize}
+
+Some online references may discourage precompiling headers that aren’t part of a standard library, such as <iostream>, or using precompiled headers altogether. This is because changing the list or editing a custom header will cause recompilation of all translation units in the target. With CMake, this concern is not as significant, especially if you structure your project correctly (with relatively small targets focused on a narrow domain). Each target has a separate precompiled header file, which limits the impact of the header changes.
+
+If your headers are considered relatively stable, you might decide to reuse precompiled headers in your targets. For this purpose, CMake provides a convenient command:
+
+\begin{shell}
+target_precompile_headers(<target> REUSE_FROM <other_target>)
+\end{shell}
+
+This sets the PRECOMPILE\_HEADERS\_REUSE\_FROM property of the target reusing the headers and creates a dependency between these targets. Using this method, the consuming target can no longer specify its own precompiled headers. Additionally, all compile options, compile flags, and compile definitions must match between targets.
+
+Pay attention to requirements, especially if you have any headers that use the double bracket format ([["header.h"]]). Both targets need to set their include paths appropriately to make sure those headers are found by the compiler.
+
+\mySamllsection{Unity builds}
+
+CMake 3.16 introduced another compilation time optimization feature – unity builds, also known as unified builds or jumbo builds. Unity builds work by combining multiple implementation source files by utilizing the \#include directive. This has some interesting implications, some of which are beneficial, while others could be potentially harmful.
+
+The most obvious advantage is avoiding the recompilation of headers in different translation units when CMake creates a unified build file:
+
+\begin{cpp}
+#include "source_a.cpp"
+#include "source_b.cpp"
+\end{cpp}
+
+When both sources contain a \#include "header.h" line, the referenced file will be parsed only once, thanks to include guards (assuming they have been properly added). While not as refined as precompiled headers, it is an alternative.
+
+The second benefit of this type of build is the fact that the optimizer may now act on a greater scale and optimize interprocedural calls across all bundled sources. This is similar to link-time optimization, which we discussed in Chapter 4, Setting Up Your First CMake Project, in the Interprocedural optimization section.
+
+However, these benefits come with trade-offs. As we reduced the number of object files and processing steps, we also increased the amount of memory needed to process larger files. Additionally, we reduced the amount of parallelizable work. Compilers aren’t exceptionally good at multithreaded compiling, as they don’t typically need to be – the buildsystem will usually start many compilation tasks to execute all the files simultaneously on different threads. Grouping all files together complicates this, as CMake now has fewer files to compile in parallel.
+
+With unity builds, you also need to consider some C++ semantic implications that might not be so obvious to catch – anonymous namespaces hiding symbols across files are now scoped to the unity file, rather than to an individual translation unit. The same thing happens with static global variables, functions, and macro definitions. This may cause name collisions, or incorrect function overloads to be executed.
+
+Jumbo builds are suboptimal when recompiling, as they will compile many more files than needed. They work best when the code is meant to compile all files as fast as possible. Tests done on Qt Creator (a popular GUI library) show that you can expect an improvement anywhere between 20\% to 50\% (depending on the compiler used).
+
+To enable unity builds, we have two options:
+
+\begin{itemize}
+\item
+Set the CMAKE\_UNITY\_BUILD variable to true – it will initialize the UNITY\_BUILD property on every target defined thereafter.
+
+\item
+Manually set the UNITY\_BUILD target property to true on every target that should use unity builds.
+\end{itemize}
+
+The second option is achieved by calling the following:
+
+\begin{shell}
+set_target_properties(<target1> <target2> ...
+                      PROPERTIES UNITY_BUILD true)
+\end{shell}
+
+Manually setting these properties on many targets is of course more work and increases the cost of maintenance, but you may need to do so to control this setting on a finer level.
+
+By default, CMake will create builds containing eight source files, as specified by the UNITY\_BUILD\_BATCH\_SIZE property of a target (copied at the creation of a target from the CMAKE\_UNITY\_BUILD\_BATCH\_SIZE variable). You can change the target property or default variable.
+
+Starting from version 3.18, you can explicitly define how files should be bundled with named groups. To do so, change the target’s UNITY\_BUILD\_MODE property to GROUP (the default is BATCH). Then, assign your source files to groups by setting their UNITY\_GROUP property to the name of your choosing:
+
+\begin{shell}
+set_property(SOURCE <src1> <src2> PROPERTY UNITY_GROUP "GroupA")
+\end{shell}
+
+CMake will then disregard UNITY\_BUILD\_BATCH\_SIZE and add all files from the group to a single unity build.
+
+CMake’s documentation advises against enabling unity builds for public projects by default. It is recommended that the end user of your application should be able to decide whether they want jumbo builds or not by providing the -DCMAKE\_UNITY\_BUILD command-line argument. If unity builds cause issues due to the way your code is written, you should explicitly set the target’s property to false. However, you are free to enable this feature for code that will be used internally, such as within a company or for your private project.
+
+These are the most important aspects of reducing compilation time with CMake. There are other aspects of programming that often cost us a lot of time – one of the most notorious is debugging.
+Let’s see how we can improve things there.
+
+\mySubsubsection{7.5.2.}{Finding mistakes}
+
+As programmers, we spend a substantial amount of time hunting for bugs. This, sadly, is a fact of our profession. The process of identifying errors and rectifying them can often get under our skin, especially when it requires long hours. The difficulty is amplified when we’re left flying blind, without the necessary tools to help us navigate through these challenging situations. For this reason, it is crucial that we pay great attention to setting up our environment in a way that simplifies this process, making it as easy and bearable as possible. One way we can achieve this is by configuring the compiler with target\_compile\_options(). So, which compile options could assist us in this endeavor?
+
+\mySamllsection{Configuring errors and warnings}
+
+There are many stressful things about software development – fixing critical bugs in the middle of the night, working on high-visibility, costly failures in large systems, and dealing with annoying compilation errors. Some errors are hard to understand, while others are tediously challenging to fix. In your quest to simplify your work and reduce the chance of failure, you’ll find many recommendations on how to configure your compiler’s warnings.
+
+One such fine piece of advice is to enable the -Werror flag as default for all builds. On the surface, this flag’s function is deceptively simple – it treats all the warnings as errors, preventing the code from compiling until you resolve each one. While it may seem like a beneficial approach, it seldom is.
+
+You see, warnings are not classified as errors for a reason: they’re designed to caution you. It’s up to you to decide how to address these warnings. Having the liberty to overlook a warning, particularly when you’re experimenting or prototyping your solution, is often invaluable.
+
+On the other hand, if you have a perfect, no-warnings, all-shiny piece of code, it seems a shame to allow future modifications to tarnish this pristine state. What harm could come from enabling it and just keeping it there? Seemingly none, at least until your compiler gets upgraded, that is. New compiler versions tend to be stricter about deprecated features or more adept at offering improvement suggestions. While this is beneficial when warnings remain as warnings, it can lead to unexpected build failures with unchanged code or, even more frustratingly, when you need to quickly rectify a problem unrelated to the new warning.
+
+So, when is it acceptable to enable all possible warnings? The short answer is when you’re creating a public library. In these cases, you’ll want to preempt issue tickets that fault your code for misbehavior in stricter environments than yours. If you opt to enable this setting, ensure you stay updated with the new compiler versions and the warnings they introduce. It’s also important to explicitly manage this update process, separately from making any code changes.
+
+Otherwise, let warnings be what they are, and concentrate on errors. If you feel compelled to be pedantic, use the -Wpedantic flag. This particular flag enables all warnings demanded by strict ISO C and ISO C++ standards. However, bear in mind that this flag doesn’t confirm conformance with the standard; it only identifies non-ISO practices that require a diagnostic message.
+
+More lenient and down-to-earth coders will be satisfied with -Wall, optionally coupled with -Wextra for an extra touch of sophistication, which should suffice. These warnings are considered genuinely useful, and you should address them in your code when time allows.
+
+There are plenty of other warning flags that may be useful depending on your project type. I recommend that you read the manual for your chosen compiler to see what options are available.
+
+\mySamllsection{Debugging the build}
+
+Occasionally, the compilation will break. This usually happens when we try to refactor a significant amount of code or clean up our buildsystem. At times, issues can be resolved easily; however, there are more complex problems that require a thorough investigation into the configuration steps. We already know how to print more verbose CMake outputs (as discussed in Chapter 1, First Steps with CMake), but how do we analyze what actually happens under the hood at each stage?
+
+\noindent
+\textbf{Debugging individual stages}
+
+The -save-temps, which can be passed to both GCC and Clang compilers, allows us to debug individual stages of compilation. This flag will instruct the compilers to store the output of certain compilation stages in files, rather than in memory.
+
+\filename{ch07/07-debug/CMakeLists.txt}
+
+\begin{cmake}
+add_executable(debug hello.cpp)
+target_compile_options(debug PRIVATE -save-temps=obj)
+\end{cmake}
+
+Enabling this option will produce two extra files (.ii and .s) per translation unit.
+
+The first one, <build-tree>/CMakeFiles/<target>.dir/<source>.ii, stores the output of the preprocessing stage, with comments explaining where each part of the source code comes from:
+
+\begin{shell}
+# 1 "/root/examples/ch07/06-debug/hello.cpp"
+# 1 "<built-in>"
+# 1 "<command-line>"
+# 1 "/usr/include/stdc-predef.h" 1 3 4
+# / / / ... removed for brevity ... / / /
+# 252 "/usr/include/x86_64-linux
+  gnu/c++/9/bits/c++config.h" 3
+namespace std
+{
+    typedef long unsigned int size_t;
+    typedef long int ptrdiff_t;
+    typedef decltype(nullptr) nullptr_t;
+}
+...
+\end{shell}
+
+The second one, <build-tree>/CMakeFiles/<target>.dir/<source>.s, contains the output of the linguistic analysis stage, ready for the assembler stage:
+
+\begin{shell}
+        .file "hello.cpp"
+        .text
+        .section .rodata
+        .type _ZStL19piecewise_construct, @object
+        .size _ZStL19piecewise_construct, 1
+_ZStL19piecewise_construct:
+        .zero 1
+        .local _ZStL8__ioinit
+        .comm _ZStL8__ioinit,1,1
+.LC0:
+        .string "hello world"
+        .text
+        .globl main
+        .type main, @function
+main:
+( ... )
+\end{shell}
+
+Depending on the type of problem, we can often uncover the actual issue. For instance, the preprocessor’s output can help us identify bugs, such as incorrect include paths (which may provide the wrong version of libraries), or mistakes in definitions that lead to erroneous \#ifdef evaluations.
+
+Meanwhile, the output of the linguistic analysis is particularly beneficial for targeting specific processors and resolving critical optimization problems.
+
+\noindent
+\textbf{Debugging issues with header file inclusion}
+
+Debugging incorrectly included files can be a challenging task. I should know – in my first corporate job, I had to port an entire code base from one buildsystem to another. If you ever find yourself in a situation that requires a precise understanding of the paths used to include a requested header, consider using the -H compile option:
+
+\filename{ch07/07-debug/CMakeLists.txt}
+
+\begin{cmake}
+add_executable(debug hello.cpp)
+target_compile_options(debug PRIVATE -H)
+\end{cmake}
+
+The produced output will look similar to this:
+
+\begin{shell}
+[ 25%] Building CXX object
+  CMakeFiles/inclusion.dir/hello.cpp.o
+. /usr/include/c++/9/iostream
+.. /usr/include/x86_64-linux-gnu/c++/9/bits/c++config.h
+... /usr/include/x86_64-linux-gnu/c++/9/bits/os_defines.h
+.... /usr/include/features.h
+-- removed for brevity --
+.. /usr/include/c++/9/ostream
+\end{shell}
+
+After the name of the object file, each row in the output contains a path to a header. In this example, a single dot at the beginning of the line indicates a top-level inclusion (where the \#include directive is in hello.cpp). Two dots signify that this file is included by the subsequent file (<iostream>).
+Each additional dot denotes another level of nesting.
+
+At the end of this output, you may also find suggestions for possible improvements to your code:
+
+\begin{shell}
+Multiple include guards may be useful for:
+/usr/include/c++/9/clocale
+/usr/include/c++/9/cstdio
+/usr/include/c++/9/cstdlib
+\end{shell}
+
+While you’re not required to address issues in the standard library, you may see some of your own headers listed. In such cases, you might want to consider making corrections.
+
+\mySamllsection{Providing information for the debugger}
+
+Machine code is a cryptic list of instructions and data, encoded in a binary format. It doesn’t convey any greater meaning or objective. This is because the CPU doesn’t care what the goal of the program is or what the sense of all of the instructions is. The only requirement is the correctness of the code. The compiler will translate all of the preceding into numeric identifiers of CPU instructions, store data to initialize memory where needed, and provide tens of thousands of memory addresses. In other words, the final binary doesn’t need to contain the actual source code, variable names, signatures of functions, or any other details that programmers care about. That’s the default output of the compiler – raw and bare.
+
+This is done primarily to save space and execute without too much overhead. Coincidentally, we are also somewhat protecting our application from reverse engineering. Yes, you can understand what each CPU instruction does without the source code (for example, copy this value to that register). But even basic programs contain too many of these instructions to make sense of them.
+
+If you’re a particularly driven individual, you can use a tool called a disassembler, and with a lot of knowledge (and a bit of luck), you’ll be able to decipher what might be happening. However, this approach isn’t very practical, as disassembled code doesn’t have original symbols, making it incredibly hard and slow to untangle what goes where.
+
+Instead, we can ask the compiler to store the source code in the produced binary along with the map of references between compiled and original code. Then, we can attach a debugger to a running program and see which source line is being executed at any given moment. This is indispensable when we’re working on code, such as writing new functionality or correcting errors.
+
+These two use cases are the reason for two build configs: Debug and Release. As we’ve seen earlier, CMake will provide some flags to the compiler by default to manage this process, storing them first in global variables:
+
+\begin{itemize}
+\item
+CMAKE\_CXX\_FLAGS\_DEBUG contains -g
+
+\item
+CMAKE\_CXX\_FLAGS\_RELEASE contains -DNDEBUG
+\end{itemize}
+
+The -g flag simply means “add debugging information.” It’s provided in the OS’s native format: stabs, COFF, XCOFF, or DWARF. These formats can then be accessed by debuggers such as gdb (the GNU debugger). Usually, this is sufficient for IDEs such as CLion (as they use gdb under the hood). In other cases, refer to the manual of the provided debugger and check what the appropriate flag is for the compiler of your choice.
+
+For the Release configuration, CMake will add the -DNDEBUG flag. It’s a preprocessor definition, which simply means “not a debug build.” Some debug-oriented macros will be deliberately disabled by this option. One of them is assert, available in the <assert.h> header file. If you decide to use assertions in your production code, they simply won’t work:
+
+\begin{cpp}
+int main(void)
+{
+    assert(false); // blod
+    std::cout << "This shouldn't run. \n";
+    return 0;
+}
+\end{cpp}
+
+The assert(false) call won’t have any effect in the Release configuration, but it will stop the execution just fine in Debug. What do you do if you’re practicing assertive programming and still need to use assert() for release builds? Either change the defaults that are provided by CMake (remove NDEBUG from CMAKE\_CXX\_FLAGS\_RELEASE) or implement a hardcoded override by undefining the macro before the header inclusion:
+
+\begin{cpp}
+#undef NDEBUG
+#include <assert.h>
+\end{cpp}
+
+Refer to the assert reference for more information: \url{https://en.cppreference.com/w/c/error/assert}.
+
+You can consider replacing assert() with static\_assert(), which was introduced in C++11, if your assertions can be done during compilation time, as this function isn’t protected with the \#ifndef(NDEBUG) preprocessor directive like assert().
+
+With this, we have learned how to manage the process of compilation.
+
+
+
+
+
+
+
+
+
+
+

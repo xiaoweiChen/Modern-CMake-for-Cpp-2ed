@@ -1,0 +1,181 @@
+
+The behavior of the linker can sometimes seem capricious, throwing complaints seemingly without cause. This often becomes a particularly vexing challenge for novice programmers unfamiliar with the intricacies of this tool. Understandably, they often try to steer clear of build configurations for as long as possible. But there comes a time when they need to make a change – perhaps integrating a library they’ve developed – and all hell breaks loose.
+
+Consider this: a relatively straightforward dependency chain where the main executable relies on an “outer” library. In turn, this outer library depends on a “nested” library that contains the essential int b variable. Out of the blue, a cryptic error message confronts the programmer:
+
+\begin{shell}
+outer.cpp:(.text+0x1f): undefined reference to 'b'
+\end{shell}
+
+Such errors are not particularly uncommon. Typically, they indicate a forgotten library in the linker. Yet, in this scenario, the library seems to have been correctly added to the target\_link\_libraries() command:
+
+\filename{ch08/06-unresolved/CMakeLists.txt}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26)
+project(Order CXX)
+add_library(outer outer.cpp)
+add_library(nested nested.cpp)
+add_executable(main main.cpp)
+target_link_libraries(main nested outer)
+\end{cmake}
+
+What then!? Very few errors can be as infuriating to debug and understand. What we’re seeing here is an incorrect order of linking. Let’s dive into the source code to figure out the reason:
+
+\filename{ch08/06-unresolved/main.cpp}
+
+\begin{cmake}
+#include <iostream>
+extern int a;
+int main() {
+    std::cout << a << std::endl;
+}
+\end{cmake}
+
+The code seems easy enough – we’ll print an external variable a, which can be found in the outer library. We’re declaring it ahead of time with the externkeyword. Here is the source for that library:
+
+\filename{ch08/06-unresolved/outer.cpp}
+
+\begin{cmake}
+extern int b;
+int a = b;
+\end{cmake}
+
+This is quite simple too – outer depends on the nested library to provide the external variable, b, which gets assigned to the a variable. Let’s see the source of nested to confirm that we’re not missing the definition:
+
+\filename{ch08/06-unresolved/nested.cpp}
+
+\begin{cmake}
+int b = 123;
+\end{cmake}
+
+Indeed, we have provided the definition for b, and since it’s not marked as local with the static keyword, it’s correctly exported from the nested target. As we saw previously, this target is linked with the main executable in CMakeLists.txt:
+
+\begin{cmake}
+target_link_libraries(main nested outer)
+\end{cmake}
+
+So, where does the undefined reference to 'b' error come from? Resolving undefined symbols works like this – a linker processes the binaries from left to right.
+
+As the linker iterates through the binaries, it will do the following:
+
+\begin{enumerate}
+\item
+Collect all undefined symbols exported from this binary and store them for later.
+
+\item
+Try to resolve undefined symbols (collected from all binaries processed so far) with symbols defined in this binary.
+
+\item
+Repeat this process for the next binary.
+\end{enumerate}
+
+If any symbols remain undefined after the whole operation is completed, the linking fails. This is the case in our example (CMake prepends the object files of the executable target in front of the libraries):
+
+\begin{enumerate}
+\item
+The linker processed main.o, found an undefined reference to the a variable, and collected it for future resolution.
+
+\item
+The linker processed libnested.a, no undefined references were found, and there was nothing to resolve.
+
+\item
+The linker processed libouter.a, found an undefined reference to the b variable, and resolved the reference to the a variable.
+\end{enumerate}
+
+We did correctly resolve the reference to the a variable, but not to the b variable. To correct this, we need to reverse the order of linking so that nested comes after outer:
+
+\begin{cmake}
+arget_link_libraries(main outer nested)
+\end{cmake}
+
+Sometimes, we’ll encounter cyclic references, where translation units define symbols for each other, and there’s no single valid order where all references can be satisfied. The only way to solve this is to process some targets twice:
+
+\begin{cmake}
+target_link_libraries(main nested outer nested)
+\end{cmake}
+
+This is a common practice, however slightly inelegant in use. If you have the privilege of using CMake 3.24 or newer, you can utilize the \$<LINK\_GROUP> generator expression with the RESCAN feature that adds linker-specific flags, like -{}-start-group or -{}-end-group, to ensure all symbols are evaluated:
+
+\begin{cmake}
+target_link_libraries(main "$<LINK_GROUP:RESCAN,nested,outer>")
+\end{cmake}
+
+Bear in mind that this mechanism introduces additional processing steps and should be used only if necessary. There are very rare cases where cyclic references are needed (and justified). Encountering this issue usually indicates poor design. It’s supported on Linux, BSD, SunOS, and Windows with a GNU toolchain.
+
+We’re now prepared to deal with ODR issues. What other problems we can encounter? Suspiciously missing symbols during linking. Let’s find out what that’s about.
+
+\mySubsubsection{8.5.1.}{Dealing with unreferenced symbols}
+
+When libraries, especially static libraries, are created, they are essentially archives that consist of multiple object files bundled together. We mentioned that some archiving tools might also create symbol indexes to expedite the linking process. Those indexes provide a mapping between each symbol and the object files in which they are defined. When a symbol is resolved, the object file containing it is incorporated into the resulting binary (some linkers further optimize this by only including specific sections of the file). If no symbols from an object file within a static library are referenced, that object file might be entirely omitted. Hence, only portions of a static library that are actually used could appear in the final binary.
+
+However, there are several scenarios where you might need some of the unreferenced symbols:
+
+\begin{itemize}
+\item
+Static initialization: If your library has global objects requiring initialization (i.e., their constructors are executed) before main(), and these objects aren’t directly referenced elsewhere; the linker might exclude them from the final binary.
+
+\item
+Plugin architectures: If you’re developing a plugin system (with module libraries) where code needs to be identified and loaded at runtime without direct referencing.
+
+\item
+Unused code in static libraries: If you’re developing a static library containing utility functions or code that isn’t always directly referenced but you still want it in the final binary.
+
+\item
+Template instantiations: For libraries relying heavily on templates; some template instantiations might be overlooked during linking if not explicitly mentioned.
+
+\item
+Linking Issues: Particularly with intricate buildsystems or elaborate codebases, linking might yield unpredictable outcomes where some symbols or code sections appear to be absent.
+\end{itemize}
+
+In these instances, forcing the inclusion of all object files during the linking process might be beneficial. This is often achieved via a mode called whole-archive linking.
+
+Specific compiler linking flags are:
+
+\begin{itemize}
+\item
+-{}-whole-archive for GCC
+
+\item
+-{}-force-load for Clang
+
+\item
+/WHOLEARCHIVE for MSVC
+\end{itemize}
+
+To do so, we can use the target\_link\_options() command:
+
+\begin{cmake}
+target_link_options(tgt INTERFACE
+    -Wl,--whole-archive $<TARGET_FILE:lib1> -Wl,--no-whole-archive
+)
+\end{cmake}
+
+However, this command is linker specific, so incorporating generator expressions to detect different compilers and provide respective flags is essential. Fortunately, CMake 3.24 introduced a new generator expression for this purpose:
+
+\begin{cmake}
+target_link_libraries(tgt INTERFACE
+    "$<LINK_LIBRARY:WHOLE_ARCHIVE,lib1>"
+)
+\end{cmake}
+
+Utilizing this method ensures that the tgt target incorporates all object files from the lib1 library.
+
+Nevertheless, a few potential drawbacks need consideration:
+
+\begin{itemize}
+\item
+Increased binary size: This flag can substantially enlarge your final binary since all objects from the specified library are incorporated, whether they’re utilized or not.
+
+\item
+Potential for symbol clashes: Introducing all symbols might cause clashes with others, leading to linker errors.
+
+\item
+Maintenance overhead: Over-relying on such flags can obscure underlying issues in the design or structure of your code.
+\end{itemize}
+
+With an understanding of how to address common linking challenges, we can now progress to preparing our project for tests.
+
+
+
+

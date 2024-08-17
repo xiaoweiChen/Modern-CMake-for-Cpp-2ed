@@ -1,0 +1,123 @@
+As we’ve established, the linker enforces the ODR and ensures that all external symbols provide their definitions during the linking process. Another linker-related challenge we might face is the elegant and efficient testing of the project.
+
+In an ideal scenario, we should be testing the exact same source code that runs in production. A comprehensive testing pipeline would build the source code, run tests on the resulting binary, and then package and distribute the executable (optionally excluding the tests themselves).
+
+But how can we implement this? Executables typically have a precise execution flow, often involving the reading of command-line arguments. The compiled nature of C++ doesn’t readily support pluggable units that can be temporarily injected into the binary just for testing. This suggests that we may need a nuanced approach to tackle this challenge.
+
+Luckily, we can use a linker to help us deal with this in an elegant manner. Consider extracting all logic from your program’s main() to an external function, start\_program(), like so:
+
+\filename{ch08/07-testing/main.cpp}
+
+\begin{cpp}
+extern int start_program(int, const char**);
+int main(int argc, const char** argv) {
+    return start_program(argc, argv);
+}
+\end{cpp}
+
+It’s reasonable to skip testing this new main() function when it’s written in such form; it is only forwarding arguments to a function defined elsewhere (in another file). We can then create a library containing the original source from main() wrapped in a new function – start\_program(). In this example, the code checks whether the command-line argument count is higher than 1:
+
+\filename{ch08/07-testing/program.cpp}
+
+\begin{cpp}
+#include <iostream>
+int start_program(int argc, const char** argv) {
+    if (argc <= 1) {
+        std::cout << "Not enough arguments" << std::endl;
+        return 1;
+    }
+    return 0;
+}
+\end{cpp}
+
+We can now prepare a project that builds this application and links together those two translation units:
+
+\filename{ch08/07-testing/CMakeLists.txt}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26)
+project(Testing CXX)
+add_library(program program.cpp)
+add_executable(main main.cpp)
+target_link_libraries(main program)
+\end{cmake}
+
+The main target is just providing the required main() function. The command-line argument verification logic is contained in the program target. We can now test it by creating another executable with its own main() function, which will host the test cases.
+
+In a real-world scenario, frameworks such as GoogleTest or Catch2 will provide their own main() method that can be used to replace your program’s entry point and run all the defined tests. We’ll dive deep into the subject of actual testing in Chapter 11, Testing Frameworks. For now, let’s focus on the general principle and write our own test cases directly in the main() function:
+
+\filename{ch08/07-testing/test.cpp}
+
+\begin{cpp}
+#include <iostream>
+extern int start_program(int, const char**);
+using namespace std;
+int main()
+{
+    cout << "Test 1: Passing zero arguments to start_program:\n";
+    auto exit_code = start_program(0, nullptr);
+    if (exit_code == 0)
+        cout << "Test FAILED: Unexpected zero exit code.\n";
+    else
+        cout << "Test PASSED: Non-zero exit code returned.\n";
+    cout << endl;
+
+    cout << "Test 2: Passing 2 arguments to start_program:\n";
+    const char *arguments[2] = {"hello", "world"};
+    exit_code = start_program(2, arguments);
+    if (exit_code != 0)
+        cout << "Test FAILED: Unexpected non-zero exit code\n";
+    else
+        cout << "Test PASSED\n";
+}
+\end{cpp}
+
+The preceding code will call start\_program twice, with and without arguments, and check whether the returned exit codes are correct. Here’s the output you’ll see if tests execute correctly:
+
+\begin{shell}
+./test
+Test 1: Passing zero arguments to start_program:
+Not enough arguments
+Test PASSED: Non-zero exit code returned
+
+Test 2: Passing 2 arguments to start_program:
+Test PASSED
+\end{shell}
+
+The Not enough arguments line is coming from start\_program(), and is an expected error message (we’re checking whether the program is failing correctly).
+
+This unit test leaves much to be desired in terms of clean code and elegant testing practices, but it’s a start.
+
+We have now defined main() twice:
+
+\begin{itemize}
+\item
+In main.cpp for production use
+
+\item
+In test.cpp for test purposes
+\end{itemize}
+
+Let’s define the testing executable at the bottom of our CMakeLists.txt now:
+
+\begin{cmake}
+add_executable(test test.cpp)
+target_link_libraries(test program)
+\end{cmake}
+
+This addition creates a new target that links against the same binary code as our production code. Yet, it gives us the flexibility to call all exported functions as needed. Thanks to this, we can run all code paths automatically and check whether they work as expected. Great!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,120 @@
+We discussed the life cycle of a C++ program in Chapter 7, Compiling C++ Sources with CMake. It consists of five main stages – writing, compiling, linking, loading, and execution. After correctly compiling all the sources, we need to put them together into an executable. We said that object files produced in a compilation can’t be executed by a processor directly. But why?
+
+To answer this, let’s understand that object files are a variant of the widely-used Executable and Linkable Format (ELF), common in Unix-like systems and many others. Systems like Windows or macOS have their own formats, but we’ll focus on ELF to explain the principle. Figure 8.1 shows how a compiler structures these files:
+
+\myGraphic{0.5}{content/chapter8/images/1.png}{Figure 8.1: The structure of an object file}
+
+The compiler will prepare an object file for every unit of translation (for every .cpp file). These files will be used to build an in-memory image of our program. Object files consist of:
+
+\begin{itemize}
+\item
+An ELF Header, which identifies the target operating system (OS), file type, target instruction set architecture, and details on the position and size of two header tables found in ELF files: the Program Headers table (which isn’t present in object files) and the Section Headers table.
+
+\item
+Binary sections that group information by type.
+
+\item
+A Section Headers table, containing information about the name, the type, flags, the destination address in memory, the offset in the file, and other miscellaneous information. It is used to understand what sections are in this file and where they are, just like a table of contents.
+\end{itemize}
+
+When the compiler works through your source code, it categorizes the gathered information into distinct sections. These sections form the core of the ELF file, positioned between the ELF Header and the Section Headers. Here are some examples of such sections:
+
+\begin{itemize}
+\item
+The .text section contains machine code with all the instructions designated for processor execution.
+
+\item
+The .data section holds values for initialized global and static variables.
+
+\item
+The .bss section reserves space for uninitialized global and static variables, which get initialized to zero at the program’s start.
+
+\item
+The .rodata section keeps values of constants, making it a read-only data segment.
+
+\item
+The .strtab section is a string table containing constant strings, like “Hello World” from a basic hello.cpp example.
+
+\item
+The .shstrtab section is a string table holding the names of all other sections.
+\end{itemize}
+
+These sections closely mirror the final version of the executable that gets placed into RAM to run our application. Yet, we can’t simply concatenate object files together and load the resulting file into the memory. Merging without caution would lead to a host of complications. For one, we’d squander both space and time, consuming excessive RAM pages. Transferring instructions and data to the CPU cache would also become cumbersome. The entire system would have to deal with increased complexity, burning precious cycles, and jumping between countless .text, .data, and other sections during execution.
+
+We’ll take a more organized approach: each section of an object file will be grouped with sections of the same type as other object files. This procedure is called relocation, which is why the ELF file type for object files is labeled as “Relocatable.” But relocation is more than just assembling matching sections. It also involves updating internal references in the file, such as addresses of variables, functions, symbol table indices, and string table indices. Each of these values is local to its own object file and starts numbering from zero. So, when merging files, it’s imperative to adjust these values to ensure they reference the right addresses in the consolidated file.
+
+Figure 8.2 shows relocation in action – the .text section is already relocated, the .data is being assembled from all linked files, and the .rodata and .strtab sections will follow the same process (for simplicity, the figure doesn’t contain headers):
+
+\myGraphic{0.5}{content/chapter8/images/2.png}{Figure 8.2: The relocation of the .data section}
+
+Next, the linker needs to resolve references. When code from one translation unit refers to a symbol defined in another, whether by including its header or using the extern keyword, the compiler acknowledges the declaration, assuming the definition will be provided later. The linker’s role is mainly to gather these unresolved external symbol references, and then identify and populate the addresses where they belong in the consolidated executable. Figure 8.3 shows a simple example of this reference resolution process:
+
+\myGraphic{0.5}{content/chapter8/images/3.png}{Figure 8.3: A reference resolution}
+
+This part of the linking can be a source of problems if a programmer is unaware of how it works. We may end up with unresolved references that can’t locate their corresponding external symbols. Or, the opposite: we have provided too many definitions and the linker doesn’t know which one to choose.
+
+The final executable file looks very similar to the object file, as it contains relocated sections with resolved references, a Section Headers table, and of course, the ELF Header describing the whole file. The main difference is the presence of the Program Header depicted in the following figure:
+
+\myGraphic{0.5}{content/chapter8/images/4.png}{Figure 8.4: The structure of the executable file in ELF}
+
+The Program Header is located right after the ELF Header. The OS’s loader will read this Program Header to set up the program, configure the memory layout, and create a process image. Entries in the Program Header specify which sections will be copied, in what order, and to which addresses in the virtual memory. They also contain information about their access control flags (read, write, or execute), and a few other useful details. Each named section will be represented by one fragment of memory in the created process; such a fragment is called a segment.
+
+Object files may also be bundled in a library, which is an intermediate product that can be used in a final executable or another library.
+
+Now that we understand how linking works in principle, let’s move on to the next section, where we’ll discuss three different types of libraries.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
