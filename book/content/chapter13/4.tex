@@ -1,0 +1,151 @@
+Doxygen Awesome offers a few additional features that can be enabled by including a few JavaScript snippets in the documentation header, within the HTML <head> tags. They can be quite useful, as they allow switching between light and dark mode, adding a Copy button for code snippets, paragraph-header permalinks, and an interactive table of contents.
+
+However, implementing these features requires copying additional code to the output directory and including it in the generated HTML files.
+
+Here is the JavaScript code to be included just before the </head> tag:
+
+\filename{ch13/cmake/extra\_headers}
+
+\begin{minted}{html}
+<script type="text/javascript" src="$relpath^doxygen-awesome-darkmodetoggle.js"></script>
+<script type="text/javascript" src="$relpath^doxygen-awesome-fragmentcopy-button.js"></script>
+<script type="text/javascript" src="$relpath^doxygen-awesome-paragraphlink.js"></script>
+<script type="text/javascript" src="$relpath^doxygen-awesome-interactivetoc.js"></script>
+
+<script type="text/javascript">
+    DoxygenAwesomeDarkModeToggle.init()
+    DoxygenAwesomeFragmentCopyButton.init()
+    DoxygenAwesomeParagraphLink.init()
+    DoxygenAwesomeInteractiveToc.init()
+</script>
+\end{minted}
+
+As you can see, this code will first include a few JavaScript files and then initialize different extensions. Unfortunately, this code cannot be simply added to a variable somewhere. Instead, we’ll need to override the default header with a custom file. Such an override can be done by providing a path to this file in the Doxygen’s HTML\_HEADER configuration variable.
+
+To create a custom header without hardcoding the entire content, you can use Doxygen’s command-line tool to generate a default header file and edit it before generating the documentation:
+
+\begin{shell}
+doxygen -w html header.html footer.html style.css
+\end{shell}
+
+Although we won’t be using or changing the footer.html or style.css, they are required arguments, so we need to create them anyway.
+
+Finally, we need to automatically prepend the </head> tag with the contents of the ch13/cmake/extra\_headers file to include the required JavaScript. This can be done with the Unix command-line tool sed, which will edit the header.html file in place:
+
+\begin{shell}
+sed -i '/<\/head>/r ch13/cmake/extra_headers' header.html
+\end{shell}
+
+Now we need to codify those steps in CMake language. Here’s the macro that achieves that:
+
+\filename{ch13/02-doxygen-nice/cmake/Doxygen.cmake (fragment)}
+
+\begin{cmake}
+macro(UseDoxygenAwesomeExtensions)
+    set(DOXYGEN_HTML_EXTRA_FILES
+        ${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome-darkmode-toggle.js
+        ${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome-fragment-copybutton.js
+        ${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome-paragraph-link.js
+        ${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome-interactive-toc.js
+    )
+
+    execute_process(
+        COMMAND doxygen -w html header.html footer.html style.css
+        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+    )
+    execute_process(
+        COMMAND sed -i
+        "/<\\/head>/r ${PROJECT_SOURCE_DIR}/cmake/extra_headers"
+        header.html
+        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+    )
+    set(DOXYGEN_HTML_HEADER ${PROJECT_BINARY_DIR}/header.html)
+endmacro()
+\end{cmake}
+
+This code looks complex, but after a close inspection, you’ll find it’s actually quite straightforward.
+
+Here’s what it does:
+
+\begin{enumerate}
+\item
+Copies the four JavaScript files to the output directory
+
+\item
+Executes the doxygen command to generate the default HTML files
+
+\item
+Executes the sed command to inject the required JavaScript into the header
+
+\item
+Overrides the default header with the custom version
+\end{enumerate}
+
+To complete the integration, call this macro right after enabling the basic stylesheet:
+
+\filename{ch13/02-doxygen-nice/cmake/Doxygen.cmake (fragment)}
+
+\begin{cmake}
+function(Doxygen input output)
+# …
+    UseDoxygenAwesomeCss()
+    UseDoxygenAwesomeExtensions()
+# …
+endfunction()
+\end{cmake}
+
+The complete code for this example, along with practical examples, is available in the online repository for the book. As always, I recommend reviewing and exploring these examples in a practical environment.
+
+\begin{myNotic}{Other documentation generation utilities}
+There are dozens of other tools that are not covered in this book, as we’re focusing on projects supported by CMake. Nevertheless, some of them may be more appropriate for your use case. If you’re feeling adventurous, visit the websites of two projects I found interesting:
+
+\begin{itemize}
+\item
+Adobe’s Hyde (\url{https://github.com/adobe/hyde}): Aimed at the Clang compiler, Hyde produces Markdown files that can be consumed by tools such as Jekyll (https://jekyllrb.com/), a static page generator supported by GitHub
+
+\item
+Standardese (\url{https://github.com/standardese/standardese}): This uses libclang to compile your code and provides output in HTML, Markdown, LaTex, and man pages. It aims (quite boldly) to be the next Doxygen.
+\end{itemize}
+\end{myNotic}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

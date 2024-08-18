@@ -1,12 +1,199 @@
 
+Static program analysis involves examining source code without running the compiled version. Consistently using static checkers can significantly improve code quality by making it more consistent and less susceptible to bugs and known security vulnerabilities. The C++ community offers a wide range of static checkers like Astrée, clang-tidy, CLazy, CMetrics, Cppcheck, Cpplint, CQMetrics, ESBMC, FlawFinder, Flint, IKOS, Joern, PC-Lint, Scan-Build, Vera++, and more.
+
+Many of these tools recognize CMake as an industry standard and offer ready-to-use support or integration tutorials. Some build engineers prefer not to write CMake code and instead include static checkers through external modules available online. An example is the collection by Lars Bilke on his GitHub repository: \url{https://github.com/bilke/cmake-modules}.
+
+A common belief is that setting up static checkers is complicated. This perception exists because static checkers often emulate the behavior of a real compiler to understand the code. But it doesn’t have to be difficult.
+
+Cppcheck outlines the following simple steps in its manual:
+
+\begin{enumerate}
+\item
+Locate the static checker’s executable.
+
+\item
+Generate a compile database with the following:
+\begin{itemize}
+\item
+cmake -DCMAKE\_EXPORT\_COMPILE\_COMMANDS=ON.
+\end{itemize}
+
+\item
+Run the checker using the generated JSON file:
+\begin{itemize}
+\item
+<path-to-cppcheck> -{}-project=compile\_commands.json
+\end{itemize}
+\end{enumerate}
+
+These steps should be integrated into the build process to ensure they are not overlooked.
+
+Since CMake knows how to build our targets, can it also support any static checkers? Absolutely, and it’s easier than you might think. CMake allows you to enable checkers on a per-target basis for the following tools:
+
+\begin{itemize}
+\item
+include-what-you-use (https://include-what-you-use.org)
+
+\item
+clang-tidy (https://clang.llvm.org/extra/clang-tidy)
+
+\item
+Link What You Use (a built-in CMake checker)
+
+\item
+Cpplint (https://github.com/cpplint/cpplint)
+
+\item
+Cppcheck (https://cppcheck.sourceforge.io)
+\end{itemize}
+
+To enable these checkers, set a target property to a semicolon-separated list containing the path to the checker’s executable and any command-line options to forward:
+
+\begin{itemize}
+\item
+<LANG>\_CLANG\_TIDY
+
+\item
+<LANG>\_CPPCHECK
+
+\item
+<LANG>\_CPPLINT
+
+\item
+<LANG>\_INCLUDE\_WHAT\_YOU\_USE
+
+\item
+LINK\_WHAT\_YOU\_USE
+\end{itemize}
+
+Replace <LANG> with C for C sources and CXX for C++. If you want to enable a checker for all project targets, set a global variable prefixed with CMAKE\_ – for example:
+
+\begin{shell}
+set(CMAKE_CXX_CLANG_TIDY /usr/bin/clang-tidy-3.9;-checks=*)
+\end{shell}
+
+Any target defined after this statement will have its CXX\_CLANG\_TIDY property set to this value. Remember that enabling this analysis may slightly extend your build time. On the other hand, having more detailed control over how targets are tested by the checker can be useful. We can create a straightforward function to handle this:
+
+\filename{ch12/02-clang-tidy/cmake/ClangTidy.cmake}
+
+\begin{cmake}
+function(AddClangTidy target)
+    find_program(CLANG-TIDY_PATH clang-tidy REQUIRED)
+    set_target_properties(${target}
+        PROPERTIES CXX_CLANG_TIDY
+        "${CLANG-TIDY_PATH};-checks=*;--warnings-as-errors=*"
+    )
+endfunction()
+\end{cmake}
+
+The AddClangTidy function follows two basic steps:
+
+\begin{enumerate}
+\item
+Locate the clang-tidy binary and store its path in CLANG-TIDY\_PATH. The REQUIRED keyword ensures that configuration stops with an error if the binary is not found.
+
+\item
+Enable clang-tidy for the target by providing the binary path and specific options to activate all checks and treat warnings as errors.
+\end{enumerate}
+
+To use this function, we just need to include the module and call it for the chosen target:
+
+\filename{ch12/02-clang-tidy/src/CMakeLists.txt}
+
+\begin{cmake}
+add_library(sut STATIC calc.cpp run.cpp)
+target_include_directories(sut PUBLIC .)
+add_executable(bootstrap bootstrap.cpp)
+target_link_libraries(bootstrap PRIVATE sut)
+include(ClangTidy)
+AddClangTidy(sut)
+\end{cmake}
+
+This approach is concise and very effective. When building the solution, the clang-tidy output will appear as follows:
+
+\begin{shell}
+[ 6%] Building CXX object bin/CMakeFiles/sut.dir/calc.cpp.o
+/root/examples/ch12/04-clang-tidy/src/calc.cpp:3:11: warning: method 'Sum'
+can be made static [readability-convert-member-functions-to-static]
+int Calc::Sum(int a, int b) {
+          ^
+[ 12%] Building CXX object bin/CMakeFiles/sut.dir/run.cpp.o
+/root/examples/ch12/04-clang-tidy/src/run.cpp:1:1: warning: #includes are
+not sorted properly [llvm-include-order]
+#include <iostream>
+^ ~~~~~~~~~~
+/root/examples/ch12/04-clang-tidy/src/run.cpp:3:1: warning: do not use
+namespace using-directives; use using-declarations instead [google-buildusing-namespace]
+using namespace std;
+^
+/root/examples/ch12/04-clang-tidy/src/run.cpp:6:3: warning: initializing
+non-owner 'Calc *' with a newly created 'gsl::owner<>' [cppcoreguidelinesowning-memory]
+auto c = new Calc();
+^
+\end{shell}
+
+Note that unless you add the -{}-warnings-as-errors=* option to the command-line arguments, the build will succeed. Organizations should decide on a set of rules that must be strictly followed to prevent non-compliant code from entering the repository.
+
+clang-tidy also offers a useful -{}-fix option that automatically corrects your code when possible. This feature is a valuable time-saver and is particularly helpful when expanding the list of checks. Just like with formatting, be cautious of merge conflicts when adding changes made by static analysis tools to existing code bases.
+
+Depending on your situation, the repository size, and team preferences, you should select a handful of checkers that best suit your needs. Including too many can become disruptive. Here’s a brief overview of the checkers supported by CMake right out of the box.
 
 \mySubsubsection{12.3.1.}{clang-tidy}
 
+Here’s what the official website says about clang-tidy:
+
+\begin{myTip}{Tip}
+clang-tidy is a clang-based C++ “linter” tool. Its purpose is to provide an extensible framework for diagnosing and fixing typical programming errors, like style violations, interface misuse, or bugs that can be deduced via static analysis. clang-tidy is modular and provides a convenient interface for writing new checks.
+\end{myTip}
+
+The tool is quite versatile, offering more than 400 checks. It pairs well with ClangFormat, enabling automatically applied fixes (over 150 are available) to conform to the same format file. The checks it offers cover performance, readability, modernization, C++ core guidelines, and bug-prone areas.
+
 \mySubsubsection{12.3.2.}{Cpplint}
+
+Here’s a description of Cpplint from its official website:
+
+\begin{myTip}{Tip}
+Cpplint is a command-line tool to check C/C++ files for style issues following Google’s C++ style guide. Cpplint is developed and maintained by Google Inc. at google/ styleguide.
+\end{myTip}
+
+This linter aims to align your code with Google’s style guide. Written in Python, it may introduce an unwanted dependency for some projects. The fixes are offered in formats consumable by Emacs, Eclipse, VS7, Junit, and as sed commands.
 
 \mySubsubsection{12.3.3.}{Cppcheck}
 
+Here’s what the official website says about Cppcheck:
+
+\begin{myTip}{Tip}
+Cppcheck is a static analysis tool for C/C++ code. It provides unique code analysis to detect bugs and focuses on detecting undefined behaviour and dangerous coding constructs. The goal is to have very few false positives. Cppcheck is designed to be able to analyze your C/C++ code even if it has non-standard syntax (common in embedded projects).
+\end{myTip}
+
+This tool is particularly good for minimizing false positives, making it a reliable option for code analysis. It has been around for over 14 years and is still actively maintained. It’s especially useful if your code is not compatible with Clang.
+
 \mySubsubsection{12.3.4.}{include-what-you-use}
 
+Here’s a description of include-what-you-use from its official website:
+
+\begin{myTip}{Tip}
+The main goal of include-what-you-use is to remove superfluous \#includes. It does this both by figuring out what \#includes are not actually needed for this file (for both .cc and .h files), and replacing \#includes with forward-declares when possible.
+\end{myTip}
+
+While having too many included headers may not seem like a significant issue in small projects, the time saved from avoiding needless compilation of header files can quickly accumulate in larger projects.
+
 \mySubsubsection{12.3.5.}{Link What You Use}
+
+Here is a description of “Link what you use” on CMake's blog:
+
+\begin{myTip}{Tip}
+This is a built in CMake feature that uses options of ld and ldd to print out if executables link more libraries than they actually require.
+\end{myTip}
+
+Static analysis plays a crucial role in industries like medicine, nuclear power, aviation, automotive, and machinery, where software errors could be life-threatening. Wise developers also adopt these practices in less critical environments, especially when the costs are low. Using static analysis during the build process is not only more cost-effective than manual bug finding and fixing, but it’s also easy to enable with CMake. I’d go as far as to say that there’s almost no reason to skip these checks in any quality-sensitive software, which includes any software involving people other than just the developer.
+
+This feature also helps speed up the build time by focusing on eliminating unneeded binary artifacts. Unfortunately, not all bugs can be detected before running a program. Luckily, we can take additional steps to gain a deeper understanding of our projects, like using Valgrind.
+
+
+
+
+
+
+
 

@@ -1,0 +1,191 @@
+How can we make the targets of project A available to the consuming project, B? Usually, we’d use the find\_package() command, but that requires creating a package and installing it on the system. While useful, this approach involves some work. Sometimes, we just need a quick way to build a project and make its targets available for other projects.
+
+One time-saving method is to include in project B the main listfile of A, which already contains all the target definitions. However, this file might also include global configuration, CMake commands with side effects, additional dependencies, and perhaps unwanted targets for B (like unit tests). So, this is not the best approach. Instead, we can provide a target export file for the consuming project, B, to include with the include() command:
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26.0)
+project(B)
+include(/path/to/A/TargetsOfA.cmake)
+\end{cmake}
+
+This will define all targets of A with the correct properties set, using commands such as add\_library() and add\_executable().
+
+You must specify all targets to export after the TARGETS keyword and provide the destination filename after FILE. The other arguments are optional:
+
+\begin{shell}
+export(TARGETS [target1 [target2 [...]]]
+       [NAMESPACE <namespace>] [APPEND] FILE <path>
+       [EXPORT_LINK_INTERFACE_LIBRARIES]
+)
+\end{shell}
+
+Here’s the explanation of the individual arguments:
+
+\begin{itemize}
+\item
+NAMESPACE is recommended to indicate that the target has been imported from other projects.
+
+\item
+APPEND prevents CMake from erasing the file’s contents before writing.
+
+\item
+EXPORT\_LINK\_INTERFACE\_LIBRARIES exports target link dependencies (including imported and config-specific variants).
+\end{itemize}
+
+Let’s apply this exporting method to the Calc library example, which provides two simple methods:
+
+\filename{ch14/01-export/src/include/calc/basic.h}
+
+\begin{cpp}
+#pragma once
+int Sum(int a, int b);
+int Multiply(int a, int b);
+\end{cpp}
+
+We need to declare the Calc target so we have something to export:
+
+\filename{ch14/01-export/src/CMakeLists.txt}
+
+\begin{cmake}
+add_library(calc STATIC basic.cpp)
+target_include_directories(calc INTERFACE include)
+\end{cmake}
+
+Then, to generate the export file, we are using the export(TARGETS) command:
+
+\filename{ch14/01-export/CMakeLists.txt (fragment)}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26)
+project(ExportCalcCXX)
+add_subdirectory(src bin)
+set(EXPORT_DIR "${CMAKE_CURRENT_BINARY_DIR}/cmake")
+export(TARGETS calc
+    FILE "${EXPORT_DIR}/CalcTargets.cmake"
+    NAMESPACE Calc::
+)
+\end{cmake}
+
+Our exported target declaration file will be located in the cmake subdirectory of the build tree (following the convention for .cmake files). To avoid repeating this path later, we’re setting it in the EXPORT\_DIR variable. Then, we call export() to generate the target declaration file, CalcTargets. cmake, with the calc target. For projects including this file, it will be visible as Calc::calc.
+
+Note that this export file isn’t a package yet. More importantly, all paths in this file are absolute and hardcoded to the build tree, making them non-relocatable (discussed in the Understanding the issues with relocatable targets section).
+
+The export() command also has a shorter version using the EXPORT keyword:
+
+\begin{shell}
+export(EXPORT <export> [NAMESPACE <namespace>] [FILE <path>])
+\end{shell}
+
+However, it requires the name of a predefined export rather than a list of exported targets. Such <export> instances are named lists of targets that are created by install(TARGETS) (we’ll cover this command in the Installing logical targets section).
+
+Here’s a tiny example demonstrating how this shorthand is used in practice:
+
+\filename{ch14/01-export/CMakeLists.txt (continued)}
+
+\begin{cmake}
+install(TARGETS calc EXPORT CalcTargets)
+export(EXPORT CalcTargets
+    FILE "${EXPORT_DIR}/CalcTargets2.cmake"
+    NAMESPACE Calc::
+)
+\end{cmake}
+
+This code works similarly to the previous example, but now it shares a single target list between the export() and install() commands.
+
+Both methods of generating export files yield similar results. They include some boilerplate code and a few lines defining the target. With <build-tree> set to the build tree path, they’ll create a target export file similar to this:
+
+\filename{<build-tree>/cmake/CalcTargets.cmake (fragment)}
+
+\begin{cmake}
+# Create imported target Calc::calc
+add_library(Calc::calc STATIC IMPORTED)
+set_target_properties(Calc::calc PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES
+    "/<source-tree>/include"
+)
+# Import target "Calc::calc" for configuration ""
+set_property(TARGET Calc::calc APPEND PROPERTY
+    IMPORTED_CONFIGURATIONS NOCONFIG
+)
+set_target_properties(Calc::calc PROPERTIES
+    IMPORTED_LINK_INTERFACE_LANGUAGES_NOCONFIG "CXX"
+    IMPORTED_LOCATION_NOCONFIG "/<build-tree>/libcalc.a"
+)
+\end{cmake}
+
+Normally, we wouldn’t edit or even open this file, but it’s important to note that the paths will be hardcoded in it (see the highlighted lines). In its current form, the built project isn’t relocatable. To change that, some additional steps are required. In the next section, we’ll explain what relocation is and why it is important.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

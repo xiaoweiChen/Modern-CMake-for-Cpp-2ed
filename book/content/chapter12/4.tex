@@ -1,7 +1,276 @@
 
+Valgrind (\url{https://www.valgrind.org}) is an *nix instrumentation framework for building dynamic analysis utilities, which means it performs analysis during a program’s runtime. It comes with a wide range of tools for various types of investigations and checks. Some of the tools include:
 
+\begin{itemize}
+\item
+Memcheck: detects memory management problems
+
+\item
+Cachegrind: profiles CPU caches, and identifies cache misses and other issues
+
+\item
+Callgrind: an extension of Cachegrind that provides extra information on call graphs
+
+\item
+Massif: a heap profiler that shows how different parts of the program use the heap over time
+
+\item
+Helgrind: a thread debugger for data race issues
+
+\item
+DRD: a lighter, more limited version of Helgrind
+\end{itemize}
+
+Each tool on this list is highly useful when the situation calls for it. Most system package managers know Valgrind and can install it on your OS with ease. If you’re using Linux, it may already be installed. Additionally, the official website provides the source code for those who prefer to build it themselves.
+
+Our discussion will primarily focus on Memcheck, the most commonly used tool in the Valgrind suite (when developers refer to Valgrind, they often mean Valgrind's Memcheck). We’ll explore how to use it with CMake, which will make it easier to adopt other tools from the suite if you find them necessary later on.
 
 \mySubsubsection{12.4.1.}{Memcheck}
 
+Memcheck is invaluable for debugging memory issues, a topic that can be especially complex in C++. Programmers have extensive control over memory management, making various mistakes possible. These can range from reading unallocated or already freed memory to freeing memory multiple times, and even writing to incorrect addresses. These bugs can easily go unnoticed and creep into even straightforward programs. Sometimes, a single forgotten variable initialization is all it takes to run into trouble.
+
+Invoking Memcheck looks like this:
+
+\begin{shell}
+valgrind [valgrind-options] tested-binary [binary-options]
+\end{shell}
+
+Memcheck is Valgrind's default tool, but you can also explicitly specify it like so:
+
+\begin{shell}
+valgrind --tool=memcheck tested-binary
+\end{shell}
+
+Running Memcheck can slow down your program considerably; the manual (see the link in Further reading) says that programs instrumented with it can be 10–15 times slower. To avoid waiting for Valgrind every time we run tests, we’ll create a separate target that will be called from the command line whenever we need to test our code. Ideally, this will be done before any new code is merged into the main code base. You can include this step in an early Git hook or as part of your Continuous Integration (CI) pipeline.
+
+To create a custom target for Valgrind, you can use this command after the CMake generation stage:
+
+\begin{shell}
+cmake --build <build-tree> -t valgrind
+\end{shell}
+
+Here’s how you can add such a target in CMake:
+
+\filename{ch12/03-valgrind/cmake/Valgrind.cmake}
+
+\begin{cmake}
+function(AddValgrind target)
+    find_program(VALGRIND_PATH valgrind REQUIRED)
+    add_custom_target(valgrind
+        COMMAND ${VALGRIND_PATH} --leak-check=yes
+        $<TARGET_FILE:${target}>
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    )
+endfunction()
+\end{cmake}
+
+In this example, we define a CMake function named AddValgrind that takes the target to be tested (we’ll be able to reuse it across projects). Two main things occur here:
+
+\begin{enumerate}
+\item
+CMake checks default system paths for the valgrind executable and stores its path in the VALGRIND\_PATH variable. The REQUIRED keyword will halt the configuration with an error if the binary isn’t found.
+
+\item
+A custom target, valgrind, is created. It runs Memcheck on the specified binary, with an option to always check for memory leaks.
+\end{enumerate}
+
+Valgrind options can be set in various ways:
+
+\begin{itemize}
+\item
+In the ~/.valgrindrc file (in your home directory)
+
+\item
+Through the \$VALGRIND\_OPTS environment variable
+
+\item
+In the ./.valgrindrc file (in the working directory)
+\end{itemize}
+
+These are checked in that order. Also, note that the last file will only be considered if it belongs to the current user, is a regular file, and isn’t marked as world-writable. This is a safety mechanism, as options given to Valgrind can be potentially harmful.
+
+To use the AddValgrind function, we provide it with a unit\_tests target, as we want to run it in a finely controlled environment like unit tests:
+
+\filename{ch12/03-valgrind/test/CMakeLists.�txt (fragment)}
+
+\begin{cmake}
+# ...
+add_executable(unit_tests calc_test.cpp run_test.cpp)
+# ...
+include(Valgrind)
+AddValgrind(unit_tests)
+\end{cmake}
+
+Remember that generating build trees with the Debug config allows Valgrind to tap into the debug information, making its output much clearer.
+
+Let’s see how this works in practice:
+
+\begin{shell}
+# cmake -B <build tree> -S <source tree> -DCMAKE_BUILD_TYPE=Debug
+# cmake --build <build-tree> -t valgrind
+\end{shell}
+
+This configures the project, builds the sut and unit\_tests targets, and starts the execution of Memcheck, which will provide us with general information:
+
+\begin{shell}
+[100%] Built target unit_tests
+==954== Memcheck, a memory error detector
+==954== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==954== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==954== Command: ./unit_tests
+\end{shell}
+
+The ==954== prefix contains the process ID, helping to distinguish Valgrind commentary from the output of the tested process.
+
+Next, tests are run as usual with gtest:
+
+\begin{shell}
+[==========] Running 3 tests from 2 test suites.
+[----------] Global test environment set-up.
+...
+[==========] 3 tests from 2 test suites ran. (42 ms total)
+[ PASSED ] 3 tests.
+\end{shell}
+
+At the end, a summary is presented:
+
+\begin{shell}
+==954==
+==954== HEAP SUMMARY:
+==954==     in use at exit: 1 bytes in 1 blocks
+==954==   total heap usage: 209 allocs, 208 frees, 115,555 bytes allocated
+\end{shell}
+
+Uh-oh! We are still using at least 1 byte. Allocations made with malloc() and new aren’t matched with the appropriate free() and delete operations. It seems we have a memory leak in our program. Valgrind provides more details to find it:
+
+\begin{shell}
+==954== 1 bytes in 1 blocks are definitely lost in loss record 1 of 1
+==954==   at 0x483BE63: operator new(unsigned long) (in /usr/lib/x86_64-
+linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==954==   by 0x114FC5: run() (run.cpp:6)
+==954==   by 0x1142B9: RunTest_RunOutputsCorrectEquations_
+Test::TestBody() (run_test.cpp:14)
+\end{shell}
+
+Lines starting with by 0x<address> indicate individual functions in a call stack. I’ve truncated the output (it had some noise from GTest) to focus on the interesting bit —— the topmost function and source reference, run()(run.cpp:6):
+
+Finally, the summary is found at the bottom:
+
+\begin{shell}
+==954== LEAK SUMMARY:
+==954==    definitely lost: 1 bytes in 1 blocks
+==954==    indirectly lost: 0 bytes in 0 blocks
+==954==      possibly lost: 0 bytes in 0 blocks
+==954==    still reachable: 0 bytes in 0 blocks
+==954==         suppressed: 0 bytes in 0 blocks
+==954==
+==954== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
+\end{shell}
+
+algrind is excellent at finding complex issues. Sometimes, it can dig even deeper to find issues that aren’t easily categorized. These will show up in the “possibly lost" row.
+
+Let’s see what the issue found by Memcheck was in this case:
+
+\filename{ch12/03-valgrind/src/run.cpp}
+
+\begin{cpp}
+#include <iostream>
+#include "calc.h"
+using namespace std;
+int run() {
+    auto c = new Calc();
+    cout << "2 + 2 = " << c->Sum(2, 2) << endl;
+    cout << "3 * 3 = " << c->Multiply(3, 3) << endl;
+    return 0;
+}
+\end{cpp}
+
+That’s right: the highlighted code is faulty. We do, in fact, create an object that isn’t deleted before the test ends. This is the exact reason why having extensive test coverage is so important.
+
+Valgrind is a helpful tool, but its output can become overwhelming in complex programs. There is a way to manage this information more efficiently – it’s the Memcheck-Cover project.
+
 \mySubsubsection{12.4.2.}{Memcheck-Cover}
+
+Commercial IDEs like CLion can directly parse Valgrind's output, making it easier to navigate through a graphical interface without having to scroll in the console. If your editor lacks this feature, a third-party report generator can offer a clearer view. Memcheck-Cover, developed by David Garcin, gives a better experience by creating an HTML file, as shown in the following figure:
+
+\myGraphic{0.8}{content/chapter12/images/1.png}{Figure 12.1: A report generated by Memcheck-Cover}
+
+This neat little project is available on GitHub (\url{https://github.com/Farigh/memcheck-cover}); it requires Valgrind and gawk (the GNU AWK tool). To use it, we’ll prepare a setup function in a separate CMake module. It will consist of two parts:
+
+\begin{enumerate}
+\item
+Fetching and configuring the tool
+
+\item
+Adding a custom target to run Valgrind and generate a report
+\end{enumerate}
+
+Here’s how the configuration looks:
+
+\filename{ch12/04-memcheck/cmake/Memcheck.cmake}
+
+\begin{cmake}
+function(AddMemcheck target)
+    include(FetchContent)
+    FetchContent_Declare(
+        memcheck-cover
+        GIT_REPOSITORY https://github.com/Farigh/memcheck-cover.git
+        GIT_TAG release-1.2
+    )
+    FetchContent_MakeAvailable(memcheck-cover)
+    set(MEMCHECK_PATH ${memcheck-cover_SOURCE_DIR}/bin)
+\end{cmake}
+
+In the first part, we follow the same practices as with a regular dependency: include the FetchContent module, and specify the project’s repository and desired Git tag with FetchContent\_Declare. Next, we initiate the fetch process and configure the binary path, using the memcheckcover\_SOURCE\_DIR variable set by FetchContent\_Populate (called implicitly by FetchContent\_MakeAvailable).
+
+The second part of the function is creating the target to generate reports. We’ll call it memcheck (so that it doesn’t overlap with the previous valgrind target if we want to keep both options for some reason):
+
+\filename{ch12/04-memcheck/cmake/Memcheck.cmake (continued)}
+
+\begin{cmake}
+    add_custom_target(memcheck
+        COMMAND ${MEMCHECK_PATH}/memcheck_runner.sh -o
+            "${CMAKE_BINARY_DIR}/valgrind/report"
+            -- $<TARGET_FILE:${target}>
+        COMMAND ${MEMCHECK_PATH}/generate_html_report.sh
+            -i "${CMAKE_BINARY_DIR}/valgrind"
+            -o "${CMAKE_BINARY_DIR}/valgrind"
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    )
+endfunction()
+\end{cmake}
+
+This happens in two commands:
+
+\begin{enumerate}
+\item
+First, we’ll run the memcheck\_runner.sh wrapper script, which will execute Valgrind's Memcheck and collect the output to the file provided with the -o argument.
+
+\item
+Then, we’ll parse the output and create the report with generate\_html\_report.sh. This script requires input and output directories provided with the -i and -o arguments.
+\end{enumerate}
+
+Both steps should be executed in the CMAKE\_BINARY\_DIR working directory so that the unit test binary can access files through relative paths if needed.
+
+The last thing we need to add to our listfiles is, of course, a call to this function:
+
+\filename{ch12/04-memcheck/test/CMakeLists.txt (fragment)}
+
+\begin{cmake}
+include(Memcheck)
+AddMemcheck(unit_tests)
+\end{cmake}
+
+After generating a buildsystem with the Debug config, we can build the target with the following:
+
+\begin{shell}
+# cmake -B <build tree> -S <source tree> -DCMAKE_BUILD_TYPE=Debug
+# cmake --build <build-tree> -t memcheck
+\end{shell}
+
+Then, we can enjoy our formatted report, generated as an HTML page.
+
+
+
+
 

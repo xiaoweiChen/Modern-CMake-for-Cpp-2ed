@@ -1,0 +1,194 @@
+One of the most established and popular tools for generating documentation from C++ sources is Doxygen. And when I say “established,” I mean it: the first version was released by Dimitri van Heesch in October 1997. Since then, it has grown immensely and is actively supported by almost 250 contributors to its repository (\url{https://github.com/doxygen/doxygen}).
+
+You might be concerned about the challenge of incorporating Doxygen into larger projects that haven’t used documentation generation from the start. Indeed, the task of annotating every function can appear overwhelming. However, I encourage you to start small. Focus on documenting elements you’ve recently worked on in your latest commits. Remember, even partially complete documentation is a step forward compared to none at all, and it gradually helps in building a more comprehensive understanding of your project.
+
+Doxygen can produce documentation in the following formats:
+
+\begin{itemize}
+\item
+HyperText Markup Language (HTML)
+
+\item
+Rich Text Format (RTF)
+
+\item
+Portable Document Format (PDF)
+
+\item
+Lamport TeX (LaTeX)
+
+\item
+PostScript (PS)
+
+\item
+Unix manual (man pages)
+
+\item
+Microsoft Compiled HTML Help (.CHM)
+\end{itemize}
+
+If you annotate your code with comments providing additional information in the format specified by Doxygen, it will parse them to enrich the output file. Moreover, the code structure will be analyzed to produce helpful charts and diagrams. The latter is optional, as it requires the external Graphviz tool (\url{https://graphviz.org/}).
+
+The developer should first consider the following question: Will the users of the project only receive the documentation, or will they generate it themselves (perhaps when building from source)? The first option implies that documentation is distributed with the binaries, available online, or (less elegantly) checked in with the source code into the repository.
+
+This consideration matters because if you want users to generate documentation during the build, they will need the dependencies present in their system. This isn’t a significant problem since Doxygen and Graphviz are available through most package managers, and all that’s required is a simple command, such as this one for Debian:
+
+\begin{shell}
+apt-get install doxygen graphviz
+\end{shell}
+
+Binaries are also available for Windows (check the project’s website in the Further reading section).
+
+However, some users might not be comfortable installing this tooling. We must decide whether to generate documentation for users or have them add the dependencies if needed. The project could automatically add them for users as well, as described in Chapter 9, Managing Dependencies in CMake. Note that Doxygen is built with CMake, so you already know how to compile it from sources if needed.
+
+When Doxygen and Graphviz are installed in the system, we can add the generation to our project. Contrary to what some online sources suggest, this isn’t as difficult or involved as it might seem. We don’t need to create external configuration files, provide paths to the Doxygen executable, or add custom targets. Since CMake 3.9, we can use the doxygen\_add\_docs() function from the FindDoxygen find-module, which sets up the documentation target.
+
+The signature looks like this:
+
+\begin{shell}
+doxygen_add_docs(targetName [sourceFilesOrDirs...]
+  [ALL] [WORKING_DIRECTORY dir] [COMMENT comment])
+\end{shell}
+
+The first argument specifies the target name, which we need to build explicitly with the -t argument to cmake (after generating a build tree), as follows:
+
+\begin{shell}
+# cmake --build <build-tree> -t targetName
+\end{shell}
+
+Or, we can ensure that the documentation is always built by adding the ALL argument, although this is usually not necessary. The WORKING\_DIRECTORY option is straightforward; it specifies the directory where the command should be run. The value set by the COMMENT option is displayed before the documentation generation starts, providing useful information or instructions.
+
+We’ll follow the practice from previous chapters and create a utility module with a helper function (so it can be reused in other projects), as follows:
+
+\filename{ch13/01-doxygen/cmake/Doxygen.cmake}
+
+\begin{cmake}
+function(Doxygen input output)
+    find_package(Doxygen)
+    if (NOT DOXYGEN_FOUND)
+        add_custom_target(doxygen COMMAND false
+            COMMENT "Doxygen not found")
+        return()
+    endif()
+    set(DOXYGEN_GENERATE_HTML YES)
+    set(DOXYGEN_HTML_OUTPUT
+        ${PROJECT_BINARY_DIR}/${output})
+    doxygen_add_docs(doxygen
+        ${PROJECT_SOURCE_DIR}/${input}
+        COMMENT "Generate HTML documentation"
+    )
+endfunction()
+\end{cmake}
+
+The function accepts two arguments—input and output directories—and creates a custom doxygen target. Here’s what happens:
+
+\begin{enumerate}
+\item
+First, we use CMake’s built-in Doxygen find-module to determine whether Doxygen is available in the system.
+
+\item
+If it isn’t available, we create a dummy doxygen target that informs the user and runs a false command, which (on Unix-like systems) returns 1, causing the build to fail. We terminate the function at that point with return().
+
+\item
+If Doxygen is available, we configure it to generate HTML output in the provided output directory. Doxygen is extremely configurable (find out more in the official documentation). To set any option, simply follow the example by calling set() and prepend its name with DOXYGEN\_.
+
+\item
+Set up the actual doxygen target. All the DOXYGEN\_ variables will be forwarded to Doxygen’s configuration file, and documentation will be generated from the provided input directory in the source tree.
+\end{enumerate}
+
+If your documentation is to be generated by users, step 2 should probably involve installing Doxygen instead.
+
+To use this function, we can incorporate it into the main listfile of our project as follows:
+
+\filename{ch13/01-doxygen/CMakeLists.txt}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26)
+project(Doxygen CXX)
+enable_testing()
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+add_subdirectory(src bin)
+include(Doxygen)
+Doxygen(src docs)
+\end{cmake}
+
+Not difficult at all! Building the doxygen target generates HTML documentation that looks like this:
+
+\myGraphic{0.8}{content/chapter13/images/1.png}{Figure 13.1: Class reference generated with Doxygen}
+
+To add important details in Member Function Documentation, we can precede the C++ method declaration with an appropriate comment in the header file, like so:
+
+\filename{ch13/01-doxygen/src/calc.h (fragment)}
+
+\begin{cpp}
+/**
+    Multiply... Who would have thought?
+    @param a the first factor
+    @param b the second factor
+    @result The product
+*/
+int Multiply(int a, int b);
+\end{cpp}
+
+This format is known as Javadoc. It is important to begin the comment block with double asterisks: /**. More information can be found in the description of Doxygen’s docblocks (see the link in the Further reading section). The Multiply function with such annotations will be rendered as shown in the following figure:
+
+\myGraphic{0.8}{content/chapter13/images/2.png}{Figure 13.2: Annotations of the parameters and result}
+
+As mentioned earlier, if Graphviz is installed, Doxygen will detect it and generate dependency diagrams, as illustrated here:
+
+\myGraphic{0.8}{content/chapter13/images/3.png}{Figure 13.3: Inheritance and collaboration diagrams generated by Doxygen}
+
+By generating documentation directly from the source code, we establish a process that enables quick updates in tandem with any code changes during the development cycle. Also, any overlooked updates in the comments are likely to be noticed during code review.
+
+Many developers express concerns that the design provided by Doxygen appears dated, making them hesitant to showcase the generated documentation to their clients. However, there is a simple solution to this issue.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

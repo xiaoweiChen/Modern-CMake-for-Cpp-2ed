@@ -1,0 +1,168 @@
+Professional developers usually follow rules. It’s said that senior developers know when to break them because they can justify the need. On the flip side, very senior developers often avoid breaking rules to save time explaining their choices. The key is to focus on issues that genuinely affect a product, rather than getting caught up in minor details.
+
+When it comes to coding style and formatting, developers face many options: should we use tabs or spaces for indentation? If spaces, how many? What should be the character limit in a column or a file? These choices typically don’t change the program’s behavior but can trigger lengthy discussions that add little value.
+
+Common practices do exist, but debates often center on personal preference and anecdotal evidence. For instance, choosing 80 characters per column over 120 is arbitrary. What matters is maintaining a consistent style, as inconsistency can hinder the code’s readability. To ensure consistency, it’s advisable to use a formatting tool like clang-format. This tool can notify us if the code isn’t formatted correctly and even make corrections. Here’s an example command for formatting code:
+
+\begin{shell}
+clang-format -i --style=LLVM filename1.cpp filename2.cpp
+\end{shell}
+
+
+The -i option instructs clang-format to edit files directly, while -{}-style specifies the formatting style to use, such as LLVM, Google, Chromium, Mozilla, WebKit, or a custom style provided in a file (more details are available in the Further reading section).
+
+Of course, we don’t want to execute this command manually every time we make a change; CMake should handle this as part of the building process. We already know how to locate clang-format on the system (we’ll need to install it manually beforehand). What we haven’t covered is how to apply this external tool to all our source files. To do it, we’ll create a convenient function that can be included from the cmake directory:
+
+\filename{ch12/01-formatting/cmake/Format.cmake}
+
+\begin{cmake}
+function(Format target directory)
+    find_program(CLANG-FORMAT_PATH clang-format REQUIRED)
+    set(EXPRESSION h hpp hh c cc cxx cpp)
+    list(TRANSFORM EXPRESSION PREPEND "${directory}/*.")
+    file(GLOB_RECURSE SOURCE_FILES FOLLOW_SYMLINKS
+        LIST_DIRECTORIES false ${EXPRESSION}
+    )
+    add_custom_command(TARGET ${target} PRE_BUILD COMMAND
+        ${CLANG-FORMAT_PATH} -i --style=file ${SOURCE_FILES}
+    )
+endfunction()
+\end{cmake}
+
+The Format function accepts two arguments: target and directory. It will format all source files from the directory, right before the target is built.
+
+Technically, not all files in the directory must belong to the target, and the target’s sources could be spread across multiple directories. However, tracking down all the source files and headers related to the target is complicated, especially when we need to exclude headers from external libraries. In this case, it’s easier to focus on directories than on logical targets. We can call the function for each directory that needs formatting.
+
+This function has the following steps:
+
+\begin{enumerate}
+\item
+Find the installed clang-format binary. The REQUIRED keyword will halt the configuration with an error if the binary wasn’t found.
+
+\item
+Create a list of file extensions to format (to be used as a globbing expression).
+
+\item
+Prepend each expression with a path to directory.
+
+\item
+Search recursively for sources and headers (using the previously created list), put found file paths into the SOURCE\_FILES variable (but skip any directory paths found)
+
+\item
+Attach the formatting command to the PRE\_BUILD step of target.
+\end{enumerate}
+
+This approach works well for small to medium-sized code bases. For larger code bases, we might need to convert absolute file paths to relative ones and run the formatting command, using the directory as a working directory. This could be necessary due to character limits in shell commands, which usually cap at around 13,000 characters.
+
+Let’s explore how to use this function in practice. Here’s our project structure:
+
+\begin{shell}
+- CMakeLists.txt
+- .clang-format
+- cmake
+  |- Format.cmake
+- src
+  |- CMakeLists.txt
+  |- header.h
+  |- main.cpp
+\end{shell}
+
+First, we set up the project and add the cmake directory to the module path for later inclusion:
+
+\filename{ch12/01-formatting/CMakeLists.txt}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26)
+project(Formatting CXX)
+enable_testing()
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+add_subdirectory(src bin)
+\end{cmake}
+
+Next, we populate the listfile for the src directory:
+
+\filename{ch12/01-formatting/src/CMakeLists.txt}
+
+\begin{cmake}
+add_executable(main main.cpp)
+include(Format)
+Format(main .)
+\end{cmake}
+
+This is straightforward. We create an executable target named main, include the Format.cmake module, and call the Format() function for the main target in the current directory (src).
+
+Now, we need some unformatted source files. The header contains a simple unused function:
+
+\filename{ch12/01-formatting/src/header.h}
+
+\begin{cpp}
+int unused() { return 2 + 2; }
+\end{cpp}
+
+We’ll also include a source file with excessive, incorrect whitespace:
+
+\filename{ch12/01-formatting/src/main.cpp}
+
+\begin{cpp}
+#include <iostream>
+                                using namespace std;
+                    int main() {
+        cout << "Hello, world!" << endl;
+                                            }
+\end{cpp}
+
+Almost there. We just need the formatter’s configuration file, enabled via the -{}-style=file command-line argument:
+
+
+\filename{ch12/01-formatting/.clang-format}
+
+\begin{shell}
+BasedOnStyle: Google
+ColumnLimit: 140
+UseTab: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: false
+\end{shell}
+
+ClangFormat will scan the parent directories for the .clang-format file, which specifies the exact formatting rules. This lets us customize every detail. In my case, I’ve started with Google’s coding style and made a few adjustments: a 140-character column limit, no tabs, and no short loops, functions, or if statements on a single line.
+
+After building the project (formatting occurs automatically before compilation), our files look like this:
+
+\filename{ch12/01-formatting/src/header.h (formatted)}
+
+\begin{cpp}
+int unused() {
+    return 2 + 2;
+}
+\end{cpp}
+
+The header file was formatted, even though it isn’t used by the target. Short functions can’t be on a single line, and as expected, new lines were added. The main.cpp file also looks pretty slick now. Unneeded whitespace is gone, and indentations are standardized:
+
+\filename{ch12/01-formatting/src/main.cpp (formatted)}
+
+\begin{cpp}
+#include <iostream>
+using namespace std;
+int main() {
+    cout << "Hello, world!" << endl;
+}
+\end{cpp}
+
+Automating formatting saves time during code reviews. If you’ve ever had to amend a commit just because of whitespace issues, you know the relief this brings. Consistent formatting keeps your code clean effortlessly.
+
+\begin{myNotic}{Note}
+Applying formatting to an entire code base will most likely introduce a big one-off change to the majority of the files in the repository. This may cause a lot of merge conflicts if you (or your teammates) have some ongoing work. It’s best to coordinate such efforts to happen after all pending changes are done. If this isn’t possible, consider gradual adoption, perhaps on a per-directory basis. Your teammates will appreciate it.
+\end{myNotic}
+
+Although the formatter excels in making code visually consistent, it’s not a comprehensive program analysis tool. For more advanced needs, other utilities designed for static analysis are necessary.
+
+
+
+
+
+
+
+
+
+

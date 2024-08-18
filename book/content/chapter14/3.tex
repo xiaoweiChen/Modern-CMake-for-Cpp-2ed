@@ -1,17 +1,653 @@
 
+In Chapter 1, First Steps with CMake, we indicated that CMake offers a command-line mode for installing built projects on the system:
+
+\begin{shell}
+cmake --install <dir> [<options>]
+\end{shell}
+
+Here, <dir> is the path to the generated build tree (required). The <options> include:
+
+\begin{itemize}
+\item
+-{}-config <cfg>: This selects the build configuration for multi-configuration generators.
+
+\item
+-{}-component <comp>: This limits the installation to the given component.
+
+\item
+-{}-default-directory-permissions <permissions>: This sets the default permissions for the installed directories (in <u=rwx,g=rx,o=rx> format).
+
+\item
+-{}-install-prefix <prefix>: This specifies the non-default installation path (stored in the CMAKE\_INSTALL\_PREFIX variable). It defaults to /usr/local on Unix-like systems and to c:/Program Files/\$\{PROJECT\_NAME\} on Windows.
+Before CMake 3.21, you’ll have to use a less-explicit option: -{}-prefix <prefix>.
+
+\item
+-v, -{}-verbose: This increases the verbosity of the output (achievable also by setting the VERBOSE environment variable).
+\end{itemize}
+
+Installations typically involve copying generated artifacts and necessary dependencies to a system directory. Using CMake introduces a convenient installation standard to all CMake projects and offers several additional benefits:
+
+\begin{itemize}
+\item
+It provides platform-specific installation paths for artifacts, depending on their types (by following GNU coding standards).
+
+\item
+It enhances the installation process by generating target export files, allowing direct reuse of project targets by other projects.
+
+\item
+It creates discoverable packages through config files, wrapping the target export files and package-specific CMake macros and functions defined by the author.
+\end{itemize}
+
+These features are quite powerful as they save a lot of time and simplify the usage of projects that are prepared this way. The first step in performing a basic installation is copying the built artifacts to their destination directory. This brings us to the install() command and its various modes:
+
+\begin{itemize}
+\item
+install(TARGETS): This installs output artifacts such as libraries and executables.
+
+\item
+install(FILES|PROGRAMS): This installs individual files and sets their permissions. These files don’t need to be part of any logical targets.
+
+\item
+install(DIRECTORY): This installs entire directories.
+
+\item
+install(SCRIPT|CODE): This runs a CMake script or a snippet during installation.
+
+\item
+install(EXPORT): This generates and installs a target export file.
+
+\item
+install(RUNTIME\_DEPENDENCY\_SET <set-name> [...]): This installs runtime dependency sets defined in the project.
+
+\item
+install(IMPORTED\_RUNTIME\_ARTIFACTS <target>... [...]): This queries imported targets for runtime artifacts and installs them.
+\end{itemize}
+
+Adding these commands to your listfile generates a cmake\_install.cmake file in your build tree. While it’s possible to manually invoke this script with cmake -P, this is not recommended. The file is intended for internal use by CMake when cmake -{}-install is executed.
+
+Every install() mode has a comprehensive set of options, with a few shared across modes:
+
+\begin{itemize}
+\item
+DESTINATION: This specifies the installation path. Relative paths are prepended with CMAKE\_INSTALL\_PREFIX, while absolute paths are used verbatim (and not supported by cpack).
+
+\item
+PERMISSIONS: This sets file permissions on supported platforms. The available values include OWNER\_READ, OWNER\_WRITE, OWNER\_EXECUTE, GROUP\_READ, GROUP\_WRITE, GROUP\_ EXECUTE, WORLD\_READ, WORLD\_WRITE, WORLD\_EXECUTE, SETUID, and SETGID. Default directory permissions created during installation time can be set with the CMAKE\_INSTALL\_DEFAULT\_DIRECTORY\_PERMISSIONS variable.
+
+\item
+CONFIGURATIONS: This specifies configurations (Debug, Release). Options following this keyword apply only if the current build configuration is in the list.
+
+\item
+OPTIONAL: This prevents errors when the installed files don’t exist.
+\end{itemize}
+
+Two shared options, COMPONENT and EXCLUDE\_FROM\_ALL, are used in component-specific installations. These will be discussed in the Defining components section later in the chapter. For now, let’s take a look at the first installation mode: install(TARGETS).
 
 \mySubsubsection{14.3.1.}{Installing logical targets}
 
+Targets defined by add\_library() and add\_executable() can easily be installed with the install(TARGETS) command. This means copying the artifacts that have been produced by the buildsystem to the appropriate destination directories and setting suitable file permissions for them. The general signature for this mode is as follows:
+
+\begin{shell}
+install(TARGETS <target>... [EXPORT <export-name>]
+        [<output-artifact-configuration> ...]
+        [INCLUDES DESTINATION [<dir> ...]]
+)
+\end{shell}
+
+After the initial mode specifier, that is, TARGETS, we must provide a list of targets we’d like to install. Here, we may optionally assign them to a named export with the EXPORT option, which can be used in export(EXPORT) and install(EXPORT) to produce a target export file. Then, we must configure the installation of output artifacts (grouped by type). Optionally, we can provide a list of directories that will be added to the target export file for each target in its INTERFACE\_INCLUDE\_DIRECTORIES property.
+
+[<output-artifact-configuration>...] provides a list of configuration blocks. The full syntax of a single block is as follows:
+
+\begin{shell}
+<TYPE> [DESTINATION <dir>]
+       [PERMISSIONS permissions...]
+       [CONFIGURATIONS [Debug|Release|...]]
+       [COMPONENT <component>]
+       [NAMELINK_COMPONENT <component>]
+       [OPTIONAL] [EXCLUDE_FROM_ALL]
+       [NAMELINK_ONLY|NAMELINK_SKIP]
+\end{shell}
+
+The command mandates that every output artifact block starts with <TYPE> (this is the only required element). CMake recognizes several of them:
+
+\begin{itemize}
+\item
+ARCHIVE: Static libraries (.a) and DLL import libraries for Windows-based systems (.lib).
+
+\item
+LIBRARY: Shared libraries (.so), but not DLLs.
+
+\item
+RUNTIME: Executables and DLLs.
+
+\item
+OBJECTS: Object files from OBJECT libraries.
+
+\item
+FRAMEWORK: Static and shared libraries that have the FRAMEWORK property set (this excludes them from ARCHIVE and LIBRARY). This is macOS-specific.
+
+\item
+BUNDLE: Executables marked with MACOSX\_BUNDLE (also not part of RUNTIME).
+
+\item
+FILE\_SET <set>: Files in the <set> file set specified for the target. Either C++ header files or C++ module headers (since CMake 3.23).
+
+\item
+PUBLIC\_HEADER, PRIVATE\_HEADER, RESOURCE: Files specified in the target properties with the same name (on Apple platforms, they should be set on the FRAMEWORK or BUNDLE targets).
+\end{itemize}
+
+The CMake documentation claims that if you only configure one artifact type (for example, LIBRARY), only this type will be installed. For CMake version 3.26.0, this is not true: all the artifacts will be installed as if they were configured with the default options. This can be solved by specifying <TYPE> EXCLUDE\_FROM\_ALL for all unwanted artifact types.
+
+\begin{myNotic}{Note}
+A single install(TARGETS) command can have multiple artifact configuration blocks. However, be aware that you may only specify one of each type per call. That is, if you’d like to configure different destinations of ARCHIVE artifacts for the Debug and Release configurations, then you must make two separate install(TARGETS ... ARCHIVE) calls.
+\end{myNotic}
+
+You may also omit the type name and specify options for all the artifacts. Installation would then be then performed for every file that’s produced by these targets, regardless of their type:
+
+\begin{cmake}
+install(TARGETS executable, static_lib1
+    DESTINATION /tmp
+)
+\end{cmake}
+
+In many cases, you don’t need to provide the DESTINATION explicitly, thanks to the built-in defaults, but there are a few caveats to keep in mind when dealing with different platforms.
+
 \mySamllsection{Utilizing the default destination for different platforms}
+
+When CMake installs your project’s files, it copies them into a specific directory in the system. Different file types belong in different directories. This directory is determined by the following formula:
+
+\begin{cmake}
+${CMAKE_INSTALL_PREFIX} + ${DESTINATION}
+\end{cmake}
+
+As mentioned in the previous section, you can explicitly provide the DESTINATION component for installation, or let CMake use a built-in default based on the type of the artifact:
+
+% Please add the following required packages to your document preamble:
+% \usepackage{longtable}
+% Note: It may be necessary to compile the document several times to get a multi-page table to line up properly
+\begin{longtable}{|l|l|l|}
+\hline
+\textbf{Artifact type}                                    & \textbf{Built-in default} & \textbf{Install directory variable} \\ \hline
+\endfirsthead
+%
+\endhead
+%
+RUNTIME                                                   & bin                       & CMAKE\_INSTALL\_BINDIR              \\ \hline
+\begin{tabular}[c]{@{}l@{}}LIBRARY\\ ARCHIVE\end{tabular} & lib                       & CMAKE\_INSTALL\_LIBDIR              \\ \hline
+\begin{tabular}[c]{@{}l@{}}PUBLIC\_HEADER\\ PRIVATE\_HEADER\\ FILE\_SET (type HEADERS)\end{tabular} & include & CMAKE\_INSTALL\_INCLUDEDIR \\ \hline
+\end{longtable}
+
+\begin{center}
+Table 14.1: Default destinations per artifact type
+\end{center}
+
+While default paths are useful, they aren’t always appropriate. For example, CMake defaults the DESTINATION for libraries to lib. The full path for libraries is then computed as /usr/local/lib for Unix-like systems and something like C:\verb|\|Program Files (x86)\verb|\|<project-name>\verb|\|lib on Windows. However, this is not ideal for Debian with multi-arch support, which requires an architecture-specific path (e.g., i386-linux-gnu) when INSTALL\_PREFIX is /usr. Determining the correct path for each platform is a common challenge for Unix-like systems. To address this, follow the GNU Coding Standards, the link to which is added in the Further reading section at the end of this chapter.
+
+We can override the default destinations for each value by setting a CMAKE\_INSTALL\_<DIRTYPE>\_DIR variable. Instead of developing an algorithm to detect the platform and assign appropriate paths to the install directory variables, use the CMake GNUInstallDirs utility module. This module handles most platforms by setting the install directory variables accordingly. Just include it using include() before any install() commands, and you’ll be set.
+
+Users needing custom configurations can override the install directory variables via the command-line argument like so:
+
+\begin{shell}
+-DCMAKE_INSTALL_BINDIR=/path/in/the/system
+\end{shell}
+
+However, installing the public headers of libraries still presents challenges. Let’s explore why.
 
 \mySamllsection{Dealing with public headers}
 
+When managing public headers in CMake, it’s best practice to store them in a directory that indicates their origin and introduces namespacing, such as /usr/local/include/calc. This enables their use in C++ projects with the inclusion directive:
+
+\begin{cpp}
+#include <calc/basic.h>
+\end{cpp}
+
+Most preprocessors interpret angle-bracketed directives as requests to scan standard system directories. We can use the GNUInstallDirs module to automatically populate the DESTINATION part of the installation path, ensuring headers end up in the include directory.
+
+Since CMake 3.23.0, we can explicitly add headers to be installed to the appropriate target with the target\_sources() command and the FILE\_SET keyword. This method is preferred, as it takes care of the relocation of headers. Here’s the syntax:
+
+\begin{shell}
+target_sources(<target>
+    [<PUBLIC|PRIVATE|INTERFACE>
+        [FILE_SET <name> TYPE <type> [BASE_DIR <dir>] FILES]
+        <files>...
+    ]...
+)
+\end{shell}
+
+Assuming our headers are in the src/include/calc directory, here’s a practical example:
+
+\filename{ch14/02-install-targets/src/CMakeLists.txt (fragment)}
+
+\begin{cmake}
+add_library(calc STATIC basic.cpp)
+target_include_directories(calc INTERFACE include)
+target_sources(calc PUBLIC FILE_SET HEADERS
+                           BASE_DIRS include
+                           FILES include/calc/basic.h
+)
+\end{cmake}
+
+The preceding snippet defines a new target file set called HEADERS. We’re using a special case here: if the name of the file set matches one of the available types, CMake will assume we want the file set to be of such type, eliminating the need to define the type explicitly. If you use a different name, remember to define the FILE\_SET's type with the appropriate TYPE <TYPE> keyword.
+
+Having defined the file set, we can use it in the installation command like so:
+
+\filename{ch14/02-install-targets/src/CMakeLists.txt (continued)}
+
+\begin{cmake}
+...
+
+include(GNUInstallDirs)
+install(TARGETS calc ARCHIVE FILE_SET HEADERS)
+\end{cmake}
+
+We include the GNUInstallDirs module and configure the installation of the calc static library and its headers. Running cmake in install mode works as expected:
+
+\begin{shell}
+# cmake -S <source-tree> -B <build-tree>
+# cmake --build <build-tree>
+# cmake --install <build-tree>
+-- Install configuration: ""
+-- Installing: /usr/local/lib/libcalc.a
+-- Installing: /usr/local/include/calc/basic.h
+\end{shell}
+
+Support for the FILE\_SET HEADERS keyword is a relatively recent update, and unfortunately, not all environments will provide the newer version of CMake.
+
+If you’re stuck on a version older than 3.23, you’ll need to specify public headers (as a semicolon-separated list) in the PUBLIC\_HEADER property of the library target, and deal with the relocation manually (more on this in the Understanding the issues with relocatable targets section):
+
+\filename{ch14/03-install-targets-legacy/src/CMakeLists.txt (fragment)}
+
+\begin{cmake}
+add_library(calc STATIC basic.cpp)
+target_include_directories(calc INTERFACE include)
+set_target_properties(calc PROPERTIES
+    PUBLIC_HEADER src/include/calc/basic.h
+)
+\end{cmake}
+
+You’ll also need to change the destination directory to include the library name in the include path:
+
+\filename{ch14/02-install-targets-legacy/src/CMakeLists.txt (continued)}
+
+\begin{cmake}
+...
+include(GNUInstallDirs)
+install(TARGETS calc
+    ARCHIVE
+    PUBLIC_HEADER
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/calc
+)
+\end{cmake}
+
+Explicitly inserting /calc in the path is necessary because files specified in the PUBLIC\_HEADER property don’t retain their directory structure. They will all be installed in the same destination, even if nested in different base directories. This significant drawback led to the development of FILE\_SET.
+
+Now, you know how to address most installation cases, but how should you approach more advanced scenarios?
+
 \mySubsubsection{14.3.2.}{Low-level installation}
+
+Modern CMake is moving away from directly manipulating files. Ideally, we should add files to a logical target, using it as a higher level of abstraction to represent all underlying assets: source files, headers, resources, configuration, and so on. The main advantage is the code’s dryness; usually, adding a file to the target requires changing no more than one line.
+
+Unfortunately, adding every installed file to a target isn’t always possible or convenient. In such cases, three options are available: install(FILES), install(PROGRAMS), and install(DIRECTORY).
 
 \mySamllsection{Installing with install(FILES) and install(PROGRAMS)}
 
+The FILES and PROGRAMS modes are very similar. They can be used to install various assets, including public header files, documentation, shell scripts, configuration, and runtime assets like images, audio files, and datasets.
+
+Here’s the command signature:
+
+\begin{shell}
+install(<FILES|PROGRAMS> files...
+        TYPE <type> | DESTINATION <dir>
+        [PERMISSIONS permissions...]
+        [CONFIGURATIONS [Debug|Release|...]]
+        [COMPONENT <component>]
+        [RENAME <name>] [OPTIONAL] [EXCLUDE_FROM_ALL]
+)
+\end{shell}
+
+The main difference between FILES and PROGRAMS is the default file permissions set on the copied files. install(PROGRAMS) sets EXECUTE for all users, whereas install(FILES) does not (though both will set OWNER\_WRITE, OWNER\_READ, GROUP\_READ, and WORLD\_READ).
+
+ou can modify this behavior by using the optional PERMISSIONS keyword, and then choosing the leading keyword (FILES or PROGRAMS) as an indicator of what’s installed. We’ve already covered how PERMISSIONS, CONFIGURATIONS, and OPTIONAL work. COMPONENT and EXCLUDE\_FROM\_ALL will be discussed later in the Defining components section.
+
+After the initial keyword, we need to list all the files we want to install. CMake supports relative and absolute paths, as well as generator expressions. Remember that if your file path starts with a generator expression, it must be absolute.
+
+The next required keyword is TYPE or DESTINATION. You can either explicitly provide the DESTINATION path or ask CMake to look it up for a specific TYPE file. Unlike in install(TARGETS), TYPE in this context does not select any subset of the provided files to be installed. Nevertheless, the computation of the installation path follows the same pattern (where the + symbol denotes a platform-specific path separator):
+
+\begin{cmake}
+${CMAKE_INSTALL_PREFIX} + ${DESTINATION}
+\end{cmake}
+
+Similarly, every TYPE will have built-in defaults:
+
+% Please add the following required packages to your document preamble:
+% \usepackage{longtable}
+% Note: It may be necessary to compile the document several times to get a multi-page table to line up properly
+\begin{longtable}{|l|l|l|}
+\hline
+\textbf{文件类型} & \textbf{Built-In Default} & \textbf{Installation Directory Variable} \\ \hline
+\endfirsthead
+%
+\endhead
+%
+BIN           & bin                       & CMAKE\_INSTALL\_BINDIR                   \\ \hline
+SBIN          & sbin                      & CMAKE\_INSTALL\_SBINDIR                  \\ \hline
+LIB           & lib                       & CMAKE\_INSTALL\_LIBDIR                   \\ \hline
+INCLUDE       & include                   & CMAKE\_INSTALL\_INCLUDEDIR               \\ \hline
+SYSCONF       & etc                       & CMAKE\_INSTALL\_SYSCONFDIR               \\ \hline
+SHAREDSTATE   & com                       & CMAKE\_INSTALL\_SHARESTATEDIR            \\ \hline
+LOCALSTATE    & var                       & CMAKE\_INSTALL\_LOCALSTATEDIR            \\ \hline
+RUNSTATE      & \$LOCALSTATE/run          & CMAKE\_INSTALL\_RUNSTATEDIR              \\ \hline
+DATA          & \$DATAROOT                & CMAKE\_INSTALL\_DATADIR                  \\ \hline
+INFO          & \$DATAROOT/info           & CMAKE\_INSTALL\_INFODIR                  \\ \hline
+LOCALE        & \$DATAROOT/locale         & CMAKE\_INSTALL\_LOCALEDIR                \\ \hline
+MAN           & \$DATAROOT/man            & CMAKE\_INSTALL\_MANDIR                   \\ \hline
+DOC           & \$DATAROOT/doc            & CMAKE\_INSTALL\_DOCDIR                   \\ \hline
+\end{longtable}
+
+\begin{center}
+Table 14.2: Built-in defaults per file type
+\end{center}
+
+The behavior here follows the same principle that was described in the Utilizing the default destination for different platforms subsection: if no installation directory variable for this TYPE of file is set, CMake will provide a built-in default path. Again, for portability, we can use the GNUInstallDirs module.
+
+Some of the built-in guesses in the table are prefixed with installation directory variables:
+
+\begin{itemize}
+\item
+\$LOCALSTATE is CMAKE\_INSTALL\_LOCALSTATEDIR or defaults to var
+
+\item
+\$DATAROOT is CMAKE\_INSTALL\_DATAROOTDIR or defaults to share
+\end{itemize}
+
+As with install(TARGETS), the GNUInstallDirs module will provide platform-specific installation directory variables. Let’s look at an example:
+
+\filename{ch14/04-install-files/CMakeLists.txt}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26)
+project(InstallFiles CXX)
+include(GNUInstallDirs)
+install(FILES
+    src/include/calc/basic.h
+    src/include/calc/nested/calc_extended.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/calc
+)
+\end{cmake}
+
+In this case, CMake installs the two header-only libraries, basic.h and nested/calc\_extended.h, into the project-specific subdirectory within the system-wide include directory.
+
+\begin{myNotic}{Note}
+From the GNUInstallDirs source, we know that CMAKE\_INSTALL\_INCLUDEDIR is the same for all supported platforms. However, using it is still recommended for readability and consistency with more dynamic variables. For instance, CMAKE\_INSTALL\_LIBDIR varies by architecture and distribution – lib, lib64, or lib/<multiarchtuple>.
+\end{myNotic}
+
+Since CMake 3.20, you can use the RENAME keyword with theinstall(FILES) and install(PROGRAMS) commands. This keyword has to be followed by a new filename and only works if the command installs a single file.
+
+The example in this section demonstrates the ease of installing files in the appropriate directory. However, there’s one issue – observe the installation output:
+
+\begin{shell}
+# cmake -S <source-tree> -B <build-tree>
+# cmake --build <build-tree>
+# cmake --install <build-tree>
+-- Install configuration: ""
+-- Installing: /usr/local/include/calc/basic.h
+-- Installing: /usr/local/include/calc/calc_extended.h
+\end{shell}
+
+Both files are installed in the same directory, regardless of their original nesting. Sometimes, this isn’t desirable. In the next section, we’ll explore how to handle this situation.
+
 \mySamllsection{Working with entire directories}
+
+If adding individual files to your installation command isn’t suitable, you can opt for a broader approach and work with entire directories. The install(DIRECTORY) mode is designed for this, copying the specified directories verbatim to the chosen destination. Here’s how it looks:
+
+\begin{shell}
+install(DIRECTORY dirs...
+        TYPE <type> | DESTINATION <dir>
+        [FILE_PERMISSIONS permissions...]
+        [DIRECTORY_PERMISSIONS permissions...]
+        [USE_SOURCE_PERMISSIONS] [OPTIONAL] [MESSAGE_NEVER]
+        [CONFIGURATIONS [Debug|Release|...]]
+        [COMPONENT <component>] [EXCLUDE_FROM_ALL]
+        [FILES_MATCHING]
+        [[PATTERN <pattern> | REGEX <regex>] [EXCLUDE]
+        [PERMISSIONS permissions...]] [...]
+)
+\end{shell}
+
+Many options here are similar to those in install(FILES) and install(PROGRAMS) and function in the same manner. One key detail is that if the paths provided after the DIRECTORY keyword don’t end with /, the last directory of the path is appended to the destination. For example:
+
+\begin{cmake}
+install(DIRECTORY aaa DESTINATION /xxx)
+\end{cmake}
+
+This command creates a directory, /xxx/aaa, and copies the contents of aaa to it. In contrast, the following command copies the contents of aaa directly to /xxx:
+
+\begin{cmake}
+install(DIRECTORY aaa/ DESTINATION /xxx)
+\end{cmake}
+
+install(DIRECTORY) also introduces other mechanisms that are not available for files:
+
+\begin{itemize}
+\item
+Output silencing
+
+\item
+Extended permission control
+
+\item
+File/directory filtering
+\end{itemize}
+
+Let’s start with the output silencing option, MESSAGE\_NEVER. It disables output diagnostics during installation. It is very useful when we have many files in the directories we’re installing and it would be too noisy to print them all.
+
+Regarding permissions, install(DIRECTORY) supports three options:
+
+\begin{itemize}
+\item
+USE\_SOURCE\_PERMISSIONS sets the permissions on installed files that follow the original files. This only works when FILE\_PERMISSIONS is not set.
+
+\item
+FILE\_PERMISSIONS allows us to specify the permissions we want to set on installed files and directories. The default permissions are OWNER\_WRITE, OWNER\_READ, GROUP\_READ, and WORLD\_READ.
+
+\item
+DIRECTORY\_PERMISSIONS works similarly to FILE\_PERMISSIONS, but it will set additional EXECUTE permissions for all users (this is because EXECUTE on directories in Unix-like systems denotes permission to list their contents).
+\end{itemize}
+
+Note that CMake ignores permissions options on platforms that don’t support them. More nuanced permission control is achievable by adding the PERMISSIONS keyword after each filtering expression. Files or directories matched by this will receive the specified permissions.
+
+Let’s talk about filters or “globbing” expressions. They control which files/directories from source directories are installed and follow this syntax:
+
+\begin{shell}
+PATTERN <pat> | REGEX <reg> [EXCLUDE] [PERMISSIONS <perm>]
+\end{shell}
+
+There are two matching methods to choose from:
+
+\begin{itemize}
+\item
+With PATTERN, which is the simpler option, you can provide a pattern with the ? placeholders (matching any character) and the * wildcards (matching any string). Only paths that end with <pat> will be matched.
+
+\item
+The REGEX option is more advanced, supporting regular expressions. It allows the matching of any part of the path, although the \^{} and \$ anchors can still denote the beginning and end of the path.
+\end{itemize}
+
+Optionally, the FILES\_MATCHING keyword can be set before the first filter, specifying that the filters will apply to files and not directories.
+
+Remember two caveats:
+
+\begin{itemize}
+\item
+FILES\_MATCHING requires an inclusive filter. You may exclude some files, but no files will be copied unless you also include some. However, all directories will be created, regardless of filtering.
+
+\item
+All subdirectories are included by default; you can only filter out.
+\end{itemize}
+
+For each filter method, you can choose to exclude matched paths with the EXCLUDE command (this only works when FILES\_MATCHING isn’t used).
+
+Specific permissions for all matched paths can be set by adding the PERMISSIONS keyword and a list of desired permissions after any filter. Let’s explore this with an example where we install three directories in different ways. We have some static data files for runtime use:
+
+\begin{shell}
+data
+- data.csv
+\end{shell}
+
+We also need some public headers located in the src directory among other unrelated files:
+
+\begin{shell}
+src
+- include
+  - calc
+    - basic.h
+    - ignored
+      - empty.file
+    - nested
+      - calc_extended.h
+\end{shell}
+
+Finally, we need two configuration files at two levels of nesting. To make things more interesting, we’ll make /etc/calc/ contents accessible only to the file owner:
+
+\begin{shell}
+etc
+- calc
+  - nested.conf
+- sample.conf
+\end{shell}
+
+To install the directory with static data files, we start our project with the most basic form of the install(DIRECTORY) command:
+
+\filename{ch14/05-install-directories/CMakeLists.txt (fragment)}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26)
+project(InstallDirectories CXX)
+install(DIRECTORY data/ DESTINATION share/calc)
+\end{cmake}
+
+This command will simply take all the contents of our data directory and put it in \$\{CMAKE\_INSTALL\_PREFIX\} and share/calc. Note that our source path ends with a / symbol to indicate we don’t want to copy the data directory itself, only its contents.
+
+The second case is the opposite: we don’t add the trailing / because the directory should be included. This is because we’re relying on a system-specific path for the INCLUDE file type, which is provided by GNUInstallDirs (note how the INCLUDE and EXCLUDE keywords represent unrelated concepts):
+
+\filename{ch14/05-install-directories/CMakeLists.txt (fragment)}
+
+\begin{cmake}
+...
+include(GNUInstallDirs)
+install(DIRECTORY src/include/calc TYPE INCLUDE
+    PATTERN "ignored" EXCLUDE
+    PATTERN "calc_extended.h" EXCLUDE
+)
+\end{cmake}
+
+Additionally, we have excluded two paths from this operation: the entire ignored directory and all files ending with calc\_extended.h (remember how PATTERN works).
+
+The third case installs some default configuration files and sets their permissions:
+
+\filename{ch14/05-install-directories/CMakeLists.txt (fragment)}
+
+\begin{cmake}
+install(DIRECTORY etc/ TYPE SYSCONF
+    DIRECTORY_PERMISSIONS
+        OWNER_READ OWNER_WRITE OWNER_EXECUTE
+    PATTERN "nested.conf"
+        PERMISSIONS OWNER_READ OWNER_WRITE
+)
+\end{cmake}
+
+We avoid appending etc from the source path to the SYSCONF path (as GNUInstallDirs has already provided this) to prevent duplication. We set two permission rules: subdirectories are editable and listable only by the owner, and files ending with nested.conf are editable only by the owner.
+
+Installing directories covers various use cases, but for other advanced scenarios (like post-install configuration), external tools may be required. How do we integrate them?
 
 \mySubsubsection{14.3.3.}{Invoking scripts during installation}
 
+If you have ever installed a shared library on a Unix-like system, you might recall needing to instruct the dynamic linker to scan trusted directories and build its cache using ldconfig (refer to the Further reading section for references). To facilitate fully automatic installations, CMake provides the install(SCRIPT) and install(CODE) modes. Here is the complete syntax:
+
+\begin{shell}
+install([[SCRIPT <file>] [CODE <code>]]
+        [ALL_COMPONENTS | COMPONENT <component>]
+        [EXCLUDE_FROM_ALL] [...]
+)
+\end{shell}
+
+Choose between the SCRIPT and CODE modes and provide the necessary arguments – a path to a CMake script to run or a CMake snippet to execute during installation. To illustrate, let’s modify the 02-install-targets example to build a shared library:
+
+\filename{ch14/06-install-code/src/CMakeLists.txt}
+
+\begin{cmake}
+add_library(calc SHARED basic.cpp)
+target_include_directories(calc INTERFACE include)
+target_sources(calc PUBLIC FILE_SET HEADERS
+                           BASE_DIRS include
+                           FILES include/calc/basic.h
+)
+\end{cmake}
+
+Change the artifact type from ARCHIVE to LIBRARY in the installation script and then add logic to run ldconfig afterward:
+
+\filename{ch14/06-install-code/CMakeLists.txt (fragment)}
+
+\begin{cmake}
+install(TARGETS calc LIBRARY FILE_SET HEADERS))
+if (UNIX)
+    install(CODE "execute_process(COMMAND ldconfig)")
+endif()
+\end{cmake}
+
+The if() condition ensures the command is appropriate for the operating system (ldconfig should not be executed on Windows or macOS). The provided code must be syntactically valid in CMake (errors will only surface during installation).
+
+After running the installation command, confirm its success by printing the cached libraries:
+
+\begin{shell}
+# cmake -S <source-tree> -B <build-tree>
+# cmake --build <build-tree>
+# cmake --install <build-tree>
+-- Install configuration: ""
+-- Installing: /usr/local/lib/libcalc.so
+-- Installing: /usr/local/include/calc/basic.h
+# ldconfig -p | grep libcalc
+        libcalc.so (libc6,x86-64) => /usr/local/lib/libcalc.so
+\end{shell}
+
+Both SCRIPT and CODE modes support generator expressions, adding versatility to this command. It can be used for various purposes: printing user messages, verifying successful installations, extensive configuration, file signing, and more.
+
+Next, let’s delve into the aspect of managing runtime dependencies in CMake installations, one of the newest features of CMake.
+
 \mySubsubsection{14.3.4.}{Installing runtime dependencies}
+
+We’ve covered almost all kinds of installable artifacts and their respective commands. The final subject to discuss is runtime dependencies. Executables and shared libraries often depend on other libraries that must be present in the system and are dynamically loaded at program initialization. Since version 3.21, CMake can build a list of these required libraries for each target and capture their location at build time by referencing the appropriate sections of the binary file. This list can then be used to install these runtime artifacts in the system for future use.
+
+For a target defined in the project, this can be achieved in two steps:
+
+\begin{shell}
+install(TARGETS ... RUNTIME_DEPENDENCY_SET <set-name>)
+install(RUNTIME_DEPENDENCY_SET <set-name> <arg>...)
+\end{shell}
+
+Alternatively, this can be accomplished with a single command with the same effect:
+
+\begin{shell}
+install(TARGETS ... RUNTIME_DEPENDENCIES <arg>...)
+\end{shell}
+
+If a target is imported, rather than defined in the project, its runtime dependencies can be installed as follows:
+
+\begin{shell}
+install(IMPORTED_RUNTIME_ARTIFACTS <target>...)
+\end{shell}
+
+The preceding snippet can be extended with the RUNTIME\_DEPENDENCY\_SET <set-name> argument to create a named reference that can be later used in the install(RUNTIME\_DEPENDENCY\_SET) command.
+
+If this feature sounds beneficial for your project, I recommend checking the official documentation of the install() command to learn more.
+
+Now that we understand all the different ways we can install files on the system, let’s explore how to turn them into a natively available package for other CMake projects.
+
+
+
+
+
+
+
+
+
+

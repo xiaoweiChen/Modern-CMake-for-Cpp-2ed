@@ -1,11 +1,467 @@
 
+We’ve extensively used find\_package() in previous chapters and observed its convenience and simplicity. To make our project accessible through this command, we need to complete a few steps so CMake can treat our project as a coherent package:
 
-\mySubsubsection{12.4.1.}{Understanding the issues with relocatable targets}
+\begin{enumerate}
+\item
+Make our targets relocatable.
 
-\mySubsubsection{12.4.2.}{Installing target export files}
+\item
+Install the target export file to a standard location.
 
-\mySubsubsection{12.4.3.}{Writing basic config files}
+\item
+Create a config file for the package.
 
-\mySubsubsection{12.4.4.}{Creating advanced config files}
+\item
+Generate a version file for the package.
+\end{enumerate}
 
-\mySubsubsection{12.4.5.}{Generating package version files}
+Let’s start from the beginning: why do targets need to be relocatable and how can we do this?
+
+\mySubsubsection{14.4.1.}{Understanding the issues with relocatable targets}
+
+Installation solves many problems but also introduces some complexity. The CMAKE\_INSTALL\_PREFIX is platform specific and can be set by the user at the installation stage with the -{}-installprefix command-line argument. The challenge is that target export files are generated before installation, during the build stage, when the final destination of the installed artifacts is unknown.
+Consider this code:
+
+\filename{ch14/03-install-targets-legacy/src/CMakeLists.txt}
+
+\begin{cmake}
+add_library(calc STATIC basic.cpp)
+target_include_directories(calc INTERFACE include)
+set_target_properties(calc PROPERTIES
+    PUBLIC_HEADER src/include/calc/basic.h
+)
+\end{cmake}
+
+In this example, we specifically add the include directory to the include directories of calc. Since this is a relative path, CMake’s exported target generation implicitly prepends this path with the contents of the CMAKE\_CURRENT\_SOURCE\_DIR variable, pointing to the directory where this listfile is located.
+
+Here’s the problem: after installation, the project mustn’t rely on files from the source or build tree. Everything, including library headers, is copied to a shared location, like /usr/lib/calc/ on Linux. The target that has been defined in this snippet isn’t suitable for use in another project since its include directory path still points to its source tree.
+
+CMake addresses this carriage-before-the-horse problem with generator expressions that are replaced with their argument or an empty string, depending on the context:
+
+\begin{itemize}
+\item
+\$<BUILD\_INTERFACE:...>: This evaluates to the ‘...' argument for regular builds but excludes it for installation.
+
+\item
+\$<INSTALL\_INTERFACE:...>: This evaluates to the ‘...' argument for installation but excludes it for regular builds.
+
+\item
+\$<BUILD\_LOCAL\_INTERFACE:...>: This evaluates to the ‘...' argument when used by another target in the same buildsystem (added in CMake 3.26).
+\end{itemize}
+
+These expressions allow the deferment of the decision of which path to use to the later stages of the process: building and installation. Here’s how to use them in practice:
+
+\filename{ch14/07-install-export-legacy/src/CMakeLists.txt (fragment)}
+
+\begin{cmake}
+add_library(calc STATIC basic.cpp)
+target_include_directories(calc INTERFACE
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+)
+set_target_properties(calc PROPERTIES
+    PUBLIC_HEADER "include/calc/basic.h"
+)
+\end{cmake}
+
+In target\_include\_directories(), we focus on the last two arguments. The used generator expressions are mutually exclusive, meaning only one of the arguments will be used in the final step, and the other will be erased.
+
+For regular builds, the INTERFACE\_INCLUDE\_DIRECTORIES property of the calc target will be expanded, using the first argument:
+
+\begin{cmake}
+"/root/examples/ch14/07-install-export/src/include" ""
+\end{cmake}
+
+On the other hand, when installing, the value will expand with the second argument:
+
+\begin{cmake}
+"" "/usr/lib/calc/include"
+\end{cmake}
+
+\begin{myNotic}{Note}
+Quotes are not present in the final value; they’re added here to express empty text values for clarity.
+\end{myNotic}
+
+Regarding CMAKE\_INSTALL\_PREFIX: it should not be used as a component in paths specified in targets. It would be evaluated during the build stage, making the path absolute and potentially different from the one provided during installation (if the -{}-install-prefix option is used). Instead, use the \$<INSTALL\_PREFIX> generator expression:
+
+\begin{cmake}
+target_include_directories(my_target PUBLIC
+    $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/MyTarget>
+)
+\end{cmake}
+
+Or, even better, you can use relative paths, which will be prepended with the correct installation prefix:
+
+\begin{cmake}
+target_include_directories(my_target PUBLIC
+    $<INSTALL_INTERFACE:include/MyTarget>
+)
+\end{cmake}
+
+For more examples and information, please consult the official documentation (a link to this can be found in the Further reading section).
+
+Now that our targets are installation compatible, we can safely generate and install their target export files.
+
+\mySubsubsection{14.4.2.}{Installing target export files}
+
+We previously touched on target export files in the Exporting without installation section. The process for installing target export files is quite similar, and so is the command syntax for creating them:
+
+\begin{cmake}
+install(EXPORT <export-name> DESTINATION <dir>
+        [NAMESPACE <namespace>] [[FILE <name>.cmake]|
+        [PERMISSIONS permissions...]
+        [CONFIGURATIONS [Debug|Release|...]]
+        [EXPORT_LINK_INTERFACE_LIBRARIES]
+        [COMPONENT <component>]
+        [EXCLUDE_FROM_ALL])
+\end{cmake}
+
+It’s a blend of the plain export(EXPORT) and other install() commands (its options function similarly). Remember, it will create and install a target export file for a named export that must be defined with the install(TARGETS) command. The key difference here is that the generated export file will contain target paths evaluated in the INSTALL\_INTERFACE generator expression, unlike export(EXPORT), which uses BUILD\_INTERFACE. This means we need to be careful about our include files and other relatively referenced files.
+
+Again, with CMake 3.23 or newer this won’t be a problem if FILE\_SET HEADERS is used correctly. Let’s see how we can generate and install the export file for the targets from the ch14/02-installexport example. To do this, we must call install(EXPORT) after the install(TARGETS)command:
+
+\filename{ch14/07-install-export/src/CMakeLists.txt}
+
+\begin{cmake}
+add_library(calc STATIC basic.cpp)
+target_sources(calc
+    PUBLIC FILE_SET HEADERS BASE_DIRS include
+    FILES "include/calc/basic.h"
+)
+
+include(GNUInstallDirs)
+install(TARGETS calc EXPORT CalcTargets ARCHIVE FILE_SET HEADERS)
+install(EXPORT CalcTargets
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/calc/cmake
+    NAMESPACE Calc::
+)
+\end{cmake}
+
+Note the reference to the CalcTargets export name in install(EXPORT). Running cmake -{}-install in the build tree will result in the export file being generated in the specified destination:
+
+\begin{shell}
+...
+-- Installing: /usr/local/lib/calc/cmake/CalcTargets.cmake
+-- Installing: /usr/local/lib/calc/cmake/CalcTargets-noconfig.cmake
+\end{shell}
+
+If you need to override the default target export filename (<export name>.cmake), add the FILE new-name.cmake argument to change it (the filename must end with .cmake).
+
+Don’t confuse this – the target export file isn’t a config file, so you can’t use find\_package() to consume installed targets just yet. However, it’s possible to include() export files directly if necessary. So, how do we define a package that can be consumed by other projects? Let’s find out!
+
+\mySubsubsection{14.4.3.}{Writing basic config files}
+
+A complete package definition consists of the target export files, the package’s config file, and the package’s version file. However, technically, all that’s needed for find\_package() to work is a config file. It acts as a package definition, responsible for providing any package functions and macros, checking requirements, finding dependencies, and including target export files.
+
+As we mentioned earlier, users can install your package anywhere on their system by using:
+
+\begin{shell}
+# cmake --install <build tree> --install-prefix=<path>
+\end{shell}
+
+This prefix determines where the installed files will be copied. To support this, you must ensure the following:
+
+\begin{itemize}
+\item
+The paths on the target properties are relocatable (as described in the Understanding the issues with relocatable targets section).
+
+\item
+The paths that are used in your config file are relative to it.
+\end{itemize}
+
+To use such packages that have been installed in non-default locations, the consuming projects need to provide <installation path> through the CMAKE\_PREFIX\_PATH variable during the configuration stage:
+
+\begin{shell}
+# cmake -B <build tree> -DCMAKE_PREFIX_PATH=<installation path>
+\end{shell}
+
+The find\_package() command will scan the list of paths that are outlined in the documentation (see the Further reading section) in a platform-specific manner. One pattern checked on Windows and Unix-like systems is:
+
+\begin{shell}
+<prefix>/<name>*/(lib/<arch>|lib*|share)/<name>*/(cmake|CMake)
+\end{shell}
+
+This indicates that installing the config file in a path such as lib/calc/cmake should work. Additionally, CMake requires that config files be named <PackageName>-config.cmake or <PackageName>Config.cmake to be found.
+
+Let’s add the installation of the config file to the 06-install-export example:
+
+\filename{ch14/09-config-file/CMakeLists.txt (fragment)}
+
+\begin{cmake}
+...
+install(EXPORT CalcTargets
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/calc/cmake
+    NAMESPACE Calc::
+)
+install(FILES "CalcConfig.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/calc/cmake
+)
+\end{cmake}
+
+This command installs CalcConfig.cmake from the same source directory (CMAKE\_INSTALL\_LIBDIR will be evaluated to the correct lib path for the platform).
+
+The simplest config file consists of a single line including the target export file:
+
+\filename{ch14/09-config-file/CalcConfig.cmake}
+
+\begin{cmake}
+include("${CMAKE_CURRENT_LIST_DIR}/CalcTargets.cmake")
+\end{cmake}
+
+CMAKE\_CURRENT\_LIST\_DIR refers to the directory where the config file resides. Since CalcConfig. cmake and CalcTargets.cmake are installed in the same directory in our example (as set by install(EXPORT)), the target export file will be included correctly.
+
+To verify our package’s usability, we’ll create a simple project with one listfile:
+
+\filename{ch14/10-find-package/CMakeLists.txt}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26)
+project(FindCalcPackage CXX)
+find_package(Calc REQUIRED)
+include(CMakePrintHelpers)
+message("CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
+message("CALC_FOUND: ${Calc_FOUND}")
+cmake_print_properties(TARGETS "Calc::calc" PROPERTIES
+    IMPORTED_CONFIGURATIONS
+    INTERFACE_INCLUDE_DIRECTORIES
+)
+\end{cmake}
+
+To test this, build and install the 09-config-file example to one directory, and then build 10-find-package while referencing it with the DCMAKE\_PREFIX\_PATH argument:
+
+\begin{shell}
+# cmake -S <source-tree-of-08> -B <build-tree-of-08>
+# cmake --build <build-tree-of-08>
+# cmake --install <build-tree-of-08>
+# cmake -S <source-tree-of-09> -B <build-tree-of-09>
+        -DCMAKE_PREFIX_PATH=<build-tree-of-08>
+\end{shell}
+
+This will produce the following output (all the <*\_tree-of\_> placeholders will be replaced with real paths):
+
+\begin{shell}
+CMAKE_PREFIX_PATH: <build-tree-of-08>
+CALC_FOUND: 1
+--
+Properties for TARGET Calc::calc:
+   Calc::calc.IMPORTED_CONFIGURATIONS = "NOCONFIG"
+   Calc::calc.INTERFACE_INCLUDE_DIRECTORIES = "<build-tree-of-08>/include"
+-- Configuring done
+-- Generating done
+-- Build files have been written to: <build-tree-of-09>
+\end{shell}
+
+This output indicates that the CalcTargets.cmake file was found and included correctly, and the path to the include directory follows the chosen prefix. This solution is suitable for basic packaging cases. Now, let’s learn how to handle more advanced scenarios.
+
+\mySubsubsection{14.4.4.}{Creating advanced config files}
+
+If you need to manage more than a single target export file, including a few macros in your config file can be useful. The CMakePackageConfigHelpers utility module provides access to the configure\_package\_config\_file() command. To use it, supply a template file that will be interpolated with CMake variables to generate a config file with two embedded macro definitions:
+
+\begin{itemize}
+\item
+set\_and\_check(<variable> <path>): This works like set(), but it checks that <path> actually exists and fails with FATAL\_ERROR otherwise. This is recommended for use in your config files to detect incorrect paths early.
+
+\item
+check\_required\_components(<PackageName>): This is added to the end of the config file. It verifies whether all components required by the user in find\_package(<package> REQUIRED <component>) have been found.
+\end{itemize}
+
+Paths for complex directory trees can be prepared for installation during config file generation. Here’s the command signature:
+
+\begin{shell}
+configure_package_config_file(<template> <output>
+    INSTALL_DESTINATION <path>
+    [PATH_VARS <var1> <var2> ... <varN>]
+    [NO_SET_AND_CHECK_MACRO]
+    [NO_CHECK_REQUIRED_COMPONENTS_MACRO]
+    [INSTALL_PREFIX <path>]
+)
+\end{shell}
+
+The <template> file will be interpolated with variables and stored in the <output> path. The INSTALL\_DESTINATION path is used to transform the paths stored in the PATH\_VARS to be relative to the install destination. The INSTALL\_PREFIX can be provided as a base path to indicate that INSTALL\_DESTINATION is relative to it.
+
+The NO\_SET\_AND\_CHECK\_MACRO and NO\_CHECK\_REQUIRED\_COMPONENTS\_MACRO options tell CMake not to add these macro definitions to the generated config file. Let’s see this generation in practice, extending the 07-install-export example:
+
+\filename{ch14/11-advanced-config/CMakeLists.txt (fragment)}
+
+\begin{cmake}
+...
+install(EXPORT CalcTargets
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/calc/cmake
+    NAMESPACE Calc::
+)
+include(CMakePackageConfigHelpers)
+set(LIB_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR}/calc)
+configure_package_config_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalcConfig.cmake.in
+    "${CMAKE_CURRENT_BINARY_DIR}/CalcConfig.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/calc/cmake
+    PATH_VARS LIB_INSTALL_DIR
+)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/CalcConfig.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/calc/cmake
+)
+\end{cmake}
+
+In the preceding code, we:
+
+\begin{enumerate}
+\item
+Use include() to include the utility module with helpers.
+
+\item
+Use set() to set a variable that will be used to make a relocatable path.
+
+\item
+Generate the CalcConfig.cmake config file for the build tree using the CalcConfig.cmake.
+in template, and provide LIB\_INSTALL\_DIR as a variable name to be computed as relative to INSTALL\_DESTINATION or \$\{CMAKE\_INSTALL\_LIBDIR\}/calc/cmake.
+
+\item
+Pass the config file that was generated for the build tree to install(FILE).
+\end{enumerate}
+
+Note that the path in DESTINATION in install(FILES) and the path in INSTALL\_DESTINATION in configure\_package\_config\_file() are equal, which ensures correct relative path computation inside of the configuration file.
+
+Finally, we’ll need a config file template (their names are usually suffixed with .in):
+
+\filename{ch14/11-advanced-config/CalcConfig.cmake.in}
+
+\begin{shell}
+@PACKAGE_INIT@
+set_and_check(CALC_LIB_DIR "@PACKAGE_LIB_INSTALL_DIR@")
+include("${CALC_LIB_DIR}/cmake/CalcTargets.cmake")
+check_required_components(Calc)
+\end{shell}
+
+This template begins with a @PACKAGE\_INIT@ placeholder. The generator will fill it with the definitions of the set\_and\_check and check\_required\_components macros.
+
+The next line sets CALC\_LIB\_DIR to the path passed in the @PACKAGE\_LIB\_INSTALL\_DIR@ placeholder. CMake will fill it with \$LIB\_INSTALL\_DIR, provided in the listfile, but calculated relative to the installation path. Subsequently, that path is used in the include() command to include the target export file. Finally, check\_required\_components() verifies whether all of the components required by the project using this package have been found. This command is recommended, even if the package doesn’t have any components to ensure the users are using only supported requirements. Otherwise, they may incorrectly think they’ve successfully added components (perhaps only present in newer versions of the package).
+
+The CalcConfig.cmake config file, when generated this way, looks like this:
+
+\begin{cmake}
+#### Expanded from @PACKAGE_INIT@ by
+    configure_package_config_file() #######
+#### Any changes to this file will be overwritten by the
+    next CMake run ####
+#### The input file was CalcConfig.cmake.in #####
+
+get_filename_component(PACKAGE_PREFIX_DIR
+    "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
+
+macro(set_and_check _var _file)
+    # ... removed for brevity
+endmacro()
+macro(check_required_components _NAME)
+    # ... removed for brevity
+endmacro()
+
+##################################################################
+set_and_check(CALC_LIB_DIR "${PACKAGE_PREFIX_DIR}/lib/calc")
+include("${CALC_LIB_DIR}/cmake/CalcTargets.cmake")
+check_required_components(Calc)
+\end{cmake}
+
+The following diagram, which shows how the various package files are related to each other, puts this into perspective:
+
+\myGraphic{0.8}{content/chapter14/images/1.png}{Figure 14.1: The file structure for advanced packages}
+
+All the required sub-dependencies of a package must also be found in the package config file. This can be done by calling the find\_dependency() macro from the CMakeFindDependencyMacro helper. We learned how to use it in Chapter 9, Managing Dependencies in CMake.
+
+Definitions for any macros or functions exposed to the consuming project should be in a separate file included from the package’s config file. Interestingly, CMakePackageConfigHelpers also helps generate package version files. Let’s explore this next.
+
+\mySubsubsection{14.4.5.}{Generating package version files}
+
+As your package evolves, gaining new features and phasing out older ones, it’s vital to track these changes in a changelog accessible to developers using your package. When a specific feature is required, a developer that is using your package can specify the minimum version that supports it in find\_package(), like so:
+
+\begin{cmake}
+find_package(Calc 1.2.3 REQUIRED)
+\end{cmake}
+
+CMake will then search for Calc's config file and check whether a version file named <configfile>-version.cmake or <config-file>Version.cmake is present in the same directory (e.g., CalcConfigVersion.cmake). This file contains version information and specifies compatibility with other versions. For instance, even if you don’t have the exact version 1.2.3 installed, you might have 1.3.5, which is marked as compatible with older versions. CMake will accept this package, knowing it’s backward compatible.
+
+You can use the CMakePackageConfigHelpers utility module to generate package version files by calling write\_basic\_package\_version\_file():
+
+\begin{shell}
+write_basic_package_version_file(
+    <filename> [VERSION <ver>]
+    COMPATIBILITY <AnyNewerVersion | SameMajorVersion |
+    SameMinorVersion | ExactVersion>
+    [ARCH_INDEPENDENT]
+)
+\end{shell}
+
+First, provide the <filename> for the artifact; ensure it follows the naming rules previously discussed. Optionally, you can pass an explicit VERSION (in major.minor.patch format). If not provided, the version specified in the project() command is used (an error will occur if the project doesn’t specify one).
+
+The COMPATIBILITY keyword indicates:
+
+\begin{itemize}
+\item
+ExactVersion must match all three components of the version and doesn’t support ranged versions: (e.g., find\_package(<package> 1.2.8...1.3.4)).
+
+\item
+SameMinorVersion matches if the first two components are the same (ignores patch).
+
+\item
+SameMajorVersion matches if the first component is the same (ignores minor and patch).
+
+\item
+AnyNewerVersion, contrary to its name, matches any older version (e.g., version 1.4.2 is compatible with find\_package(<package> 1.2.8)).
+\end{itemize}
+
+For architecture-dependent packages, an exact architecture match is required. However, for architecture-agnostic packages (like header-only libraries or macro packages), you can specify the ARCH\_INDEPENDENT keyword to skip this check.
+
+The following code shows a practical example of how to provide the version file for the project that we started in the 07-install-export:
+
+\filename{ch14/12-version-file/CMakeLists.txt (fragment)}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26)
+project(VersionFile VERSION 1.2.3 LANGUAGES CXX)
+...
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/CalcConfigVersion.cmake"
+    COMPATIBILITY AnyNewerVersion
+)
+install(FILES "CalcConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/CalcConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/calc/cmake
+)
+\end{cmake}
+
+For convenience, we configure the version of the package at the top of the file, in the project() command, switching from the short project(<name> <languages>) syntax to an explicit, full syntax by adding the LANGUAGE keyword.
+
+After including the helper module, we generate the version file and install it alongside CalcConfig.cmake. By skipping the VERSION keyword, we use the PROJECT\_VERSION variable. The package is marked as fully backward compatible with COMPATIBILITY AnyNewerVersion. This installs the package version file to the same destination as CalcConfig.cmake. That’s it – our package is fully configured.
+
+With this, we concluded the subject of package creation. We now know how to deal with relocation and why it is important, how to install target export files, and how to write config and version files.
+
+In the next section, we’ll explore components and their use with packages.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

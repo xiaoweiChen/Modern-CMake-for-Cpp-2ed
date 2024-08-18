@@ -1,0 +1,20 @@
+High-quality code is not only well written, working, and tested—it is also thoroughly documented. Documentation allows us to share information that might otherwise get lost, draw a bigger picture, give context, reveal intent, and—finally—educate both external users and maintainers.
+
+Do you remember the last time you joined a new project and got lost for hours in a maze of directories and files? This can be avoided. Truly excellent documentation leads a complete newcomer to the exact line of code they’re looking for in seconds. Sadly, the issue of missing documentation is often overlooked. No wonder—it takes considerable skill, and many of us aren’t very good at it. Furthermore, documentation and code can quickly become outdated. Unless a strict update and review process is implemented, it’s easy to forget that documentation needs attention too.
+
+Some teams (in the interest of time or because they are encouraged to do so by managers) follow a practice of writing self-documenting code. By choosing meaningful, readable identifiers for filenames, functions, variables, and so on, they hope to avoid the chore of documenting. Even the best function signatures don’t ensure that all necessary information is conveyed—for example, int removeDuplicates(); is descriptive, but it doesn’t reveal what is returned. It could be the number of duplicates found, the number of items remaining, or something else—it’s unclear. While the habit of good naming is absolutely correct, it cannot replace the act of conscientious documentation. Remember: there’s no such thing as a free lunch.
+
+To make things easier, professionals use automatic documentation generators that analyze code and comments in source files to produce comprehensive documentation in various formats. Adding such generators to a CMake project is very simple—let’s see how!
+
+In this chapter, we’re going to cover the following main topics:
+
+\begin{itemize}
+\item
+Adding Doxygen to your project
+
+\item
+Generating documentation with a modern look
+
+\item
+Enhancing output with custom HTML
+\end{itemize}

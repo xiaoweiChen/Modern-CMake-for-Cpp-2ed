@@ -1,0 +1,141 @@
+Having your project documented with a clean, fresh design is important. After all, if we put all this work into writing high-quality documentation for our cutting-edge project, it is imperative that the user perceives it as such. Although Doxygen is feature-rich, it isn’t renowned for adhering to the latest visual trends. However, revamping its appearance doesn’t require substantial effort.
+
+Luckily, a developer named jothepro created a theme called doxygen-awesome-css, which offers a modern, customizable design. This theme is presented in the following screenshot:
+
+\myGraphic{0.8}{content/chapter13/images/4.png}{Figure 13.4: HTML documentation in doxygen-awesome-css theme}
+
+The theme doesn’t require any additional dependencies and can be easily fetched from its GitHub page at \url{https://github.com/jothepro/doxygen-awesome-css}.
+
+\begin{myNotic}{Note}
+While some online sources recommend using a combination of applications, like transforming Doxygen’s output with Sphinx via Breathe and Exhale extensions, this method can be complex and dependency-heavy (requiring Python, for example). A simpler approach is usually more practical, particularly for teams where not all members are deeply familiar with CMake.
+\end{myNotic}
+
+We can efficiently implement this theme with an automated process. Let’s see how we can extend our Doxygen.cmake file to use it by adding a new macro:
+
+\filename{ch13/02-doxygen-nice/cmake/Doxygen.cmake (fragment)}
+
+\begin{cmake}
+macro(UseDoxygenAwesomeCss)
+    include(FetchContent)
+    FetchContent_Declare(doxygen-awesome-css
+        GIT_REPOSITORY
+            https://github.com/jothepro/doxygen-awesome-css.git
+        GIT_TAG
+            V2.3.1
+    )
+    FetchContent_MakeAvailable(doxygen-awesome-css)
+    set(DOXYGEN_GENERATE_TREEVIEW YES)
+    set(DOXYGEN_HAVE_DOT YES)
+    set(DOXYGEN_DOT_IMAGE_FORMAT svg)
+    set(DOXYGEN_DOT_TRANSPARENT YES)
+    set(DOXYGEN_HTML_EXTRA_STYLESHEET
+        ${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome.css)
+endmacro()
+\end{cmake}
+
+We already know all of these commands from previous chapters of the book, but let’s reiterate what happens for perfect clarity:
+
+\begin{enumerate}
+\item
+Fetching doxygen-awesome-css from Git using the FetchContent module
+
+\item
+Configuring extra options for Doxygen (these are specifically recommended by the theme’s README file)
+
+\item
+Copying the theme’s css file to Doxygen’s output directory
+\end{enumerate}
+
+As you can imagine, it’s best to call this macro in the Doxygen function right before doxygen\_add\_docs(), like this:
+
+\filename{ch13/02-doxygen-nice/cmake/Doxygen.cmake (fragment)}
+
+\begin{cmake}
+function(Doxygen input output)
+# ...
+UseDoxygenAwesomeCss()
+doxygen_add_docs (...)
+endfunction()
+
+macro(UseDoxygenAwesomeCss)
+# ...
+endmacro()
+\end{cmake}
+
+Remember, all variables in macros are set in the scope of the calling function.
+We can now enjoy a modern style in our generated HTML documentation and share it proudly with the world. However, our theme offers some JavaScript modules to enhance the experience.
+
+How do we include them?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

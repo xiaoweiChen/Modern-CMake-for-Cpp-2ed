@@ -1,0 +1,32 @@
+Our project has been built, tested, and documented. Now, it’s finally time to release it to our users. This chapter primarily focuses on the final two steps we need to take: installation and packaging. These are advanced techniques that build on top of everything we’ve learned so far: managing targets and their dependencies, transient usage requirements, generator expressions, and much more.
+
+Installation allows our project to be discoverable and accessible system-wide. We will cover how to export targets for use by other projects without needing installation and how to install our projects for easy system-wide accessibility. We’ll learn how to configure our project to automatically place various artifact types in their appropriate directories. To handle more advanced scenarios, we’ll introduce low-level commands for installing files and directories, as well as for executing custom scripts and CMake commands.
+
+Next, we’ll explore setting up reusable CMake packages that other projects can discover using the find\_package() command. We’ll explain how to ensure that targets and their definitions are not restricted to a specific file system location. We’ll also discuss how to write basic and advanced config files, along with the version files associated with packages. Then, to make things modular, we’ll briefly introduce the concept of components, both in terms of CMake packages and the install() command. All this preparation will pave the way for the final aspect we’ll be covering in this chapter: using CPack to generate archives, installers, bundles, and packages that are recognized by all kinds of package managers in different operating systems. These packages can distribute pre-built artifacts, executables, and libraries. It’s the easiest way for end users to start using our software.
+
+In this chapter, we’re going to cover the following main topics:
+
+\begin{itemize}
+\item
+Exporting without installation
+
+\item
+Installing projects on the system
+
+\item
+Creating reusable packages
+
+\item
+Defining components
+
+\item
+Packaging with CPack
+\end{itemize}
+
+
+
+
+
+
+
+
