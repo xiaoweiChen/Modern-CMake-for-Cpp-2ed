@@ -38,8 +38,7 @@ The provided <condition> expression is evaluated according to a very simple synt
 
 The same syntax is valid for if(), elseif(), and while() commands.
 
-\noindent
-\textbf{Logical operators}
+\mySamllsubsection{Logical operators}
 
 The if() conditions support the NOT, AND, and OR logical operators:
 
@@ -60,8 +59,7 @@ Also, the nesting of conditions is possible with matching pairs of parentheses (
 (<condition>) AND (<condition> OR (<condition>))
 \end{shell}
 
-\noindent
-\textbf{The evaluation of a string and a variable}
+\mySamllsubsection{The evaluation of a string and a variable}
 
 For legacy reasons (because the variable reference (\$\{\}) syntax wasn’t always around), CMake will try to evaluate unquoted arguments as if they are variable references. In other words, using a plain variable name (for example, QUX) inside a condition is equal to writing \$\{QUX\}. Here’s an example for you to consider, and a gotcha:
 
@@ -123,8 +121,7 @@ if(DEFINED CACHE{<name>})
 if(DEFINED ENV{<name>})
 \end{cmake}
 
-\noindent
-\textbf{Comparing values}
+\mySamllsubsection{Comparing values}
 
 Comparison operations are supported with the following operators:
 
@@ -160,8 +157,7 @@ We often need more advanced mechanisms than simple equality comparisons. Fortuna
 
 Any matched groups are captured in CMAKE\_MATCH\_<n> variables.
 
-\noindent
-\textbf{Simple checks}
+\mySamllsubsection{Simple checks}
 
 We already mentioned one simple check, DEFINED, but there are others that simply return true if a condition is met.
 
@@ -186,8 +182,7 @@ Whether a build target is defined: TARGET <target-name>
 
 We’ll explore build targets in Chapter 5, Working with Targets, but for now, let’s just say that targets are logical units of a build process in a project created with add\_executable(), add\_library(), or add\_custom\_target() commands.
 
-\noindent
-\textbf{Examining the filesystem}
+\mySamllsubsection{Examining the filesystem}
 
 CMake provides many ways of working with files. We rarely need to manipulate them directly, and normally, we’d rather use a high-level approach. For reference, this book will provide a short list of the file-related commands in the Appendix. But most often, only the following operators will be needed (behavior is well-defined only for absolute paths):
 

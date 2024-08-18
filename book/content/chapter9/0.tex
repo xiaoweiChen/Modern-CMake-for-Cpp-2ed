@@ -1,0 +1,34 @@
+It doesn’t really matter if your solution is large or small; as it grows, you’ll likely choose to rely on other projects. Avoiding the effort of creating and maintaining boilerplate code is crucial. This frees up your time for what truly matters: the business logic. External dependencies serve multiple purposes. They offer frameworks and features, solve complex issues, and play a key role in building and ensuring code quality. These dependencies can vary, ranging from specialized compilers like Protocol Buffers (Protobuf) to testing frameworks like Google Test.
+
+When working with open-source projects or in-house code, managing external dependencies efficiently is essential. Doing this manually would require a lot of setup time and ongoing support. Luckily, CMake excels at handling various approaches to dependency management while staying current with industry standards.
+
+We will first learn how to identify and utilize dependencies already present on the host system, thereby avoiding unnecessary downloads and extended compilation times. This task is relatively straightforward, as many packages are either CMake-compatible or supported by CMake right out of the box. We’ll also explore how to instruct CMake to locate and include dependencies that lack this native support. For legacy packages, an alternative approach can be beneficial in specific situations: we can employ the once-popular pkg-config tool to handle the more cumbersome tasks.
+
+Additionally, we will delve into managing dependencies that are available online but not yet installed on the system. We’ll examine how to fetch these from HTTP servers, Git, and other types of repositories. We will also discuss how to choose the optimal approach: first, searching within the system and then resorting to fetching if the package is not found. Finally, we’ll review an older technique for downloading external projects that may be applicable in special cases.
+
+In this chapter, we’re going to cover the following main topics:
+
+\begin{itemize}
+\item
+Using already installed dependencies
+
+\item
+Using dependencies not present in the system
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,6 @@
+In this chapter, we’ve delved into C++20 modules, clarifying that they are distinct from CMake modules and represent a significant advancement in C++ to streamline compilation and address challenges associated with redundant header compilation and problematic preprocessor macros.
+
+We demonstrated how to write and import a C++20 module using a simple example. We then explored setting up CMake for C++20 modules. Since this feature is experimental, specific variables need to be set, and we provided a series of conditional statements to ensure your project is configured correctly for the CMake version in use.
+Regarding the necessary tools, we emphasized that the buildsystem must support dynamic dependencies, with Ninja 1.11 or newer being the current option. For compiler support, Clang 16 and MSVC in Visual Studio 2022 17.4 (19.34) are suitable for full C++20 module support, while GCC support is still pending. We additionally guided you through configuring CMake to use the selected toolchain, involving choosing a buildsystem generator and setting the compiler version. After configuring and building the project, you can run your program to see the C++20 module in action.
+
+In the next chapter, we’ll learn about importance and application of automated testing, and the available CMake support for testing frameworks.

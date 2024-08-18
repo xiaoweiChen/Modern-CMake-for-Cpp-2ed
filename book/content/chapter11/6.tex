@@ -1,0 +1,435 @@
+
+The previous section shows that writing a small unit-testing driver isn’t overly complicated. It may not have been pretty, but believe it or not, some professional developers do like to reinvent the wheel, thinking their version will be better in every way. Avoid this pitfall: you’ll end up creating so much boilerplate code that it could become its own project. Using a popular unit-testing framework aligns your solution with a standard that’s recognized across multiple projects and companies, and often comes with free updates and extensions. You can’t lose.
+
+How do you incorporate a unit-testing framework into your project? Of course, by implementing tests according to the rules of the chosen framework, then linking these tests with a test runner provided by the framework. Test runners initiate the execution of selected tests and collect the results. Unlike the basic unit\_tests.cpp file we looked at earlier, many frameworks will automatically detect all the tests and make them visible for CTest. It’s a much smoother process.
+
+In this chapter, I’ve chosen to introduce two unit-testing frameworks for specific reasons:
+
+\begin{itemize}
+\item
+Catch2 is relatively easy to learn and comes with good support and documentation. While it offers basic test cases, it also includes elegant macros for behavior-driven development (BDD). While it may lack some features, it can be supplemented with external tools when needed. Visit its home page here: \url{https://github.com/catchorg/Catch2}.
+
+\item
+GoogleTest (GTest) is convenient but also more advanced. It offers a rich set of features like various assertions, death tests, as well as value- and type-parametrized tests. It even supports XML test report generation and mocking through its GMock module. Find it here: \url{https://github.com/google/googletest}.
+\end{itemize}
+
+The choice of framework depends on your learning preference and project size. If you like to ease into things and don’t require a full feature set, Catch2 is a good choice. Those who prefer to dive in headfirst and need a comprehensive toolset will find GoogleTest more suitable.
+
+\mySubsubsection{11.6.1.}{Catch2}
+
+This framework, maintained by Martin Hořeňovský, is well-suited for beginners and smaller projects. That’s not to say it can’t accommodate larger applications, but be aware that you may need additional tools in some areas (exploring this in detail would take us too far off-topic). To begin, let’s examine a simple unit test implementation for our Calc class:
+
+\filename{ch11/03-catch2/test/calc\_test.cpp}
+
+\begin{cpp}
+#include <catch2/catch_test_macros.hpp>
+#include "calc.h"
+
+TEST_CASE("SumAddsTwoInts", "[calc]") {
+    Calc sut;
+    CHECK(4 == sut.Sum(2, 2));
+}
+
+TEST_CASE("MultiplyMultipliesTwoInts", "[calc]") {
+    Calc sut;
+    CHECK(12 == sut.Multiply(3, 4));
+}
+\end{cpp}
+
+That’s it. These few lines are more powerful than our previous examples. The CHECK() macros do more than just verify expectations; they collect all failed assertions and present them together, helping you avoid constant recompilation.
+
+The best part? You don’t need to manually add these tests to listfiles to inform CMake about them. Forget about add\_test(); you won’t need it anymore. Catch2 will automatically register your tests with CTest if you allow it. Adding the framework is straightforward once you’ve configured your project as discussed in the previous section. Use FetchContent() to bring it into your project.
+
+You can choose between two major versions: Catch2 v2 and Catch2 v3. Version 2 is a legacy option available as a single-header library for C++11. Version 3 compiles as a static library and requires C++14. It’s recommended to opt for the latest release.
+
+When working with Catch2, make sure to pick a Git tag and pin it in your listfile. Upgrading through the main branch isn’t guaranteed to be seamless.
+
+\begin{myNotic}{Note}
+In a business setting, you’re likely to be running tests in a CI pipeline. In such cases, remember to set up your environment so it already has the dependencies installed in the system, and each build doesn’t need to fetch them every time it runs. As mentioned in the section Using the installed dependency where possible in Chapter 9, Managing Dependencies in CMake, you’ll want to extend your FetchContent\_Declare() command with the FIND\_PACKAGE\_ARGS keyword to use packages from the system.
+\end{myNotic}
+
+We’ll include version 3.4.0 in our listfile like so:
+
+\filename{ch11/03-catch2/test/CMakeLists.txt}
+
+\begin{cmake}
+include(FetchContent)
+FetchContent_Declare(
+    Catch2
+    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+    GIT_TAG v3.4.0
+)
+FetchContent_MakeAvailable(Catch2)
+\end{cmake}
+
+Then, we need to define our unit\_tests target and link it with sut and with a framework-provided entry point and Catch2::Catch2WithMain library. Since Catch2 provides its own main() function, we no longer use the unit\_tests.cpp file (this file can be removed). The code is illustrated in the following snippet:
+
+\filename{ch11/03-catch2/test/CMakeLists.txt (continued)}
+
+\begin{cmake}
+add_executable(unit_tests calc_test.cpp run_test.cpp)
+target_link_libraries(unit_tests PRIVATE
+                      sut Catch2::Catch2WithMain)
+\end{cmake}
+
+Lastly, we use a catch\_discover\_tests() command defined in the module provided by Catch2 to automatically detect all test cases from unit\_tests and register them with CTest, as follows:
+
+\filename{ch11/03-catch2/test/CMakeLists.txt (continued)}
+
+\begin{cmake}
+list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
+include(Catch)
+catch_discover_tests(unit_tests)
+\end{cmake}
+
+Done. We just added a unit-testing framework to our solution. Let’s now see it in practice. The output from the test runner looks like this:
+
+\begin{shell}
+# ./test/unit_tests
+unit_tests is a Catch2 v3.4.0 host application.
+Run with -? for options
+---------------------------------------------------------------------
+MultiplyMultipliesTwoInts
+---------------------------------------------------------------------
+/root/examples/ch11/03-catch2/test/calc_test.cpp:9
+.....................................................................
+/root/examples/ch11/03-catch2/test/calc_test.cpp:11: FAILED:
+  CHECK( 12 == sut.Multiply(3, 4) )
+with expansion:
+  12 == 9
+=====================================================================
+test cases: 3 | 2 passed | 1 failed
+assertions: 3 | 2 passed | 1 failed
+\end{shell}
+
+Catch2 was able to expand the sut.Multiply(3, 4) expression to 9, giving us more context, which is really helpful in debugging.
+
+Note that the direct execution of the runner binary (the compiled unit\_test executable) may be slightly faster than using ctest, but the additional advantages offered by CTest are worth the trade-off.
+
+This wraps up the Catch2 setup. If you need to add more tests in the future, simply create new implementation files and add their paths to the list of sources for the unit\_tests target.
+
+Catch2 offers various features like event listeners, data generators, and micro-benchmarking, but it lacks built-in mocking functionality. If you’re not familiar with mocks, we’ll cover that in the next section. You can add mocks to Catch2 with one of the following mocking frameworks:
+
+\begin{itemize}
+\item
+FakeIt (\url{https://github.com/eranpeer/FakeIt})
+
+\item
+Hippomocks (\url{https://github.com/dascandy/hippomocks})
+
+\item
+Trompeloeil (\url{https://github.com/rollbear/trompeloeil})
+\end{itemize}
+
+That said, for a more streamlined, advanced experience, there is another framework worth looking at, GoogleTest.
+
+\mySubsubsection{11.6.2.}{GoogleTest}
+
+There are several important advantages to using GoogleTest: it’s been around for a long time and is highly recognized in the C++ community, so multiple IDEs support it natively. The company behind the world’s largest search engine maintains and uses it extensively, making it unlikely to become obsolete or abandoned. It can test C++11 and up, which is good news if you’re working in an older environment.
+
+The GoogleTest repository contains two projects: GTest (the main testing framework) and GMock (a library that adds mocking functionality). This means you can download both with a single FetchContent() call.
+
+\mySamllsection{Using GTest}
+
+To use GTest, our project needs to follow the directions from the Structuring our projects for testing section. This is how we’d write a unit test in this framework:
+
+\filename{ch11/04-gtest/test/calc\_test.cpp}
+
+\begin{cpp}
+#include <gtest/gtest.h>
+#include "calc.h"
+
+class CalcTestSuite : public ::testing::Test {
+    protected:
+    Calc sut_;
+};
+
+TEST_F(CalcTestSuite, SumAddsTwoInts) {
+    EXPECT_EQ(4, sut_.Sum(2, 2));
+}
+
+TEST_F(CalcTestSuite, MultiplyMultipliesTwoInts) {
+    EXPECT_EQ(12, sut_.Multiply(3, 4));
+}
+\end{cpp}
+
+Because this example will also be used in GMock, I chose to place the tests in a single CalcTestSuite class. Test suites group related tests so they can reuse the same fields, methods, setup, and teardown steps. To create a test suite, declare a new class that inherits from ::testing::Test and place reusable elements in its protected section.
+
+Each test case within a test suite is declared with the TEST\_F() macro. A simpler TEST() macro exists for standalone tests. Since we defined Calc sut\_ in the class, each test case can access it as if test cases were methods of CalcTestSuite. In reality, each test case runs in its own instance that inherits from CalcTestSuite, which is why the protected keyword is necessary. Note that reusable fields aren’t meant to share data between consecutive tests; their purpose is to keep the code DRY.
+
+GTest does not offer the natural syntax for assertions like Catch2. Instead, you use explicit comparisons such as EXPECT\_EQ(). By convention, the expected value goes first, followed by the actual value. There are many other types of assertions, helpers, and macros worth exploring. For detailed information on GTest, see the official reference material (\url{https://google.github.io/googletest/}).
+
+To add this dependency to our project, we need to decide which version to use. Unlike Catch2, GoogleTest is leaning toward a “live at head” philosophy (originating from the Abseil project that GTest depends on). It states: “If you build our dependency from source and follow our API, you shouldn’t have any issues.” (Refer to the Further reading section for more details.) If you’re comfortable following this rule (and building from source isn’t an issue), set your Git tag to the master branch. Otherwise, pick a release from the GoogleTest repository.
+
+\begin{myNotic}{Note}
+In a business setting, you’re likely to be running tests in a CI pipeline. In such cases, remember to set up your environment so it already has the dependencies installed in the system, and each build doesn’t need to fetch them every time it runs. As mentioned in the section Using the installed dependency where possible in Chapter 9, Managing Dependencies in CMake, you’ll want to extend your FetchContent\_Declare() command with the FIND\_PACKAGE\_ARGS keyword to use packages from the system.
+\end{myNotic}
+
+In any case, adding a dependency on GTest looks like this:
+
+\filename{ch11/04-gtest/test/CMakeLists.txt}
+
+\begin{cmake}
+include(FetchContent)
+FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG v1.14.0
+)
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+\end{cmake}
+
+We’re following the same method as with Catch2 —— execute FetchContent() and build the framework from source. The only difference is the addition of the set(gtest...) command, as recommended by GoogleTest authors to prevent overriding the parent project’s compiler and linker settings on Windows.
+
+Finally, we can declare our test runner executable, link it with gtest\_main, and have our test cases automatically discovered thanks to the built-in CMake GoogleTest module, as illustrated here:
+
+\filename{ch11/04-gtest/test/CMakeLists.txt (continued)}
+
+\begin{cmake}
+add_executable(unit_tests
+               calc_test.cpp
+               run_test.cpp)
+target_link_libraries(unit_tests PRIVATE sut gtest_main)
+include(GoogleTest)
+gtest_discover_tests(unit_tests)
+\end{cmake}
+
+This completes the setup of GTest. The output of the directly executed test runner is much more verbose than that from Catch2, but we can pass -{}-gtest\_brief=1 to limit it to failures only, as follows:
+
+\begin{shell}
+# ./test/unit_tests --gtest_brief=1
+~/examples/ch11/04-gtest/test/calc_test.cpp:15: Failure
+Expected equality of these values:
+  12
+  sut_.Multiply(3, 4)
+    Which is: 9
+[ FAILED ] CalcTestSuite.MultiplyMultipliesTwoInts (0 ms)
+[==========] 3 tests from 2 test suites ran. (0 ms total)
+[ PASSED ] 2 tests
+\end{shell}
+
+Fortunately, even the noisy output will be suppressed when running from CTest (unless we explicitly enable it with the ctest -{}-output-on-failure command line).
+
+Now that we have the framework in place, let’s discuss mocking. After all, no test can be truly “unit test” when it’s tightly coupled with other elements.
+
+\mySamllsection{GMock}
+
+Writing pure unit tests is about executing a piece of code in isolation from other pieces of code. Such a tested unit has to be a self-contained element, either a class or a component. Of course, hardly any programs written in C++ have all of their units in clear isolation from others.
+
+Most likely, your code will rely heavily on some form of association relationship between classes. There’s only one problem with that: objects of such a class will require objects of another class, and those will require yet another. Before you know it, your entire solution is participating in a “unit test.” Even worse, your code might be coupled to an external system and be dependent on its state. For example, it might rely closely on specific records in a database, network packets coming in, or specific files stored on the disk.
+
+To decouple units for the purpose of testing, developers use test doubles or a special version of classes that are used by a unit under test. Some examples include fakes, stubs, and mocks. Here are some rough definitions of these terms:
+
+\begin{itemize}
+\item
+A fake is a limited implementation of a more complex mechanism. An example could be an in-memory map instead of an actual database client.
+
+\item
+A stub provides specific, canned answers to method calls, limited to responses used by tests. It can also record which methods were called and how many times this occurred.
+
+\item
+A mock is a slightly more extended version of a stub. It will additionally verify if methods were called during the test as expected.
+\end{itemize}
+
+Such a test double is created at the beginning of a test and provided as an argument to the constructor of a tested class to be used instead of a real object. This mechanism is called dependency injesction.
+
+The problem with simple test doubles is that they are too simple. To simulate behaviors for different test scenarios, we would have to provide many different doubles, one for every state in which the coupled object can be. This isn’t very practical and would scatter testing code across too many files. This is where GMock comes in: it allows developers to create a generic test double for a specific class and define its behavior for every test in line. GMock calls these doubles “mocks,” but in reality, they’re a mixture of all the aforementioned test doubles, depending on the occasion.
+
+Consider the following example: let’s add a functionality to our Calc class that would add a random number to the provided argument. It will be represented by an AddRandomNumber() method that returns this sum as an int. How would we confirm the fact that the returned value is really an exact sum of something random and the value provided to the class? As we know, randomly generated numbers are key to many important processes, and if we’re using them incorrectly, we might suffer all kinds of consequences. Checking all random numbers until we exhaust all possibilities isn’t very practical.
+
+
+To test it, we need to wrap a random number generator in a class that could be mocked (or, in other words, replaced with a mock). Mocks will allow us to force a specific response, which is used to “fake” the generation of a random number. Calc will use that value in AddRandomNumber() and allow us to check if the returned value from that method meets expectations. The clean separation of random number generation from another unit is an added value (as we’ll be able to exchange one type of generator for another).
+
+Let’s start with the public interface for the abstract generator. This header will allow us to implement it in the actual generator and a mock, enabling us to use them interchangeably:
+
+\filename{ch11/05-gmock/src/rng.h}
+
+\begin{cmake}
+#pragma once
+class RandomNumberGenerator {
+    public:
+    virtual int Get() = 0;
+    virtual ~RandomNumberGenerator() = default;
+};
+\end{cmake}
+
+Classes implementing this interface will provide us with a random number from the Get() method. Note the virtual keyword—it has to be on all methods to be mocked unless we’d like to get involved with more complex template-based mocking. We also need to remember to add a virtual destructor.
+
+Next, we have to extend our Calc class to accept and store the generator, so we can either provide the real generator for the release build or a mock for tests:
+
+\filename{ch11/05-gmock/src/calc.h}
+
+\begin{cmake}
+#pragma once
+#include "rng.h"
+class Calc {
+    RandomNumberGenerator* rng_;
+public:
+    Calc(RandomNumberGenerator* rng);
+    int Sum(int a, int b);
+    int Multiply(int a, int b);
+    int AddRandomNumber(int a);
+};
+\end{cmake}
+
+We included the header and added a method to provide random additions. Additionally, a field to store the pointer to the generator was created, along with a parameterized constructor. This is how dependency injection works in practice. Now, we implement these methods, as follows:
+
+\filename{ch11/05-gmock/src/calc.cpp}
+
+\begin{cpp}
+#include "calc.h"
+Calc::Calc(RandomNumberGenerator* rng) {
+    rng_ = rng;
+}
+int Calc::Sum(int a, int b) {
+    return a + b;
+}
+int Calc::Multiply(int a, int b) {
+    return a * b; // now corrected
+}
+int Calc::AddRandomNumber(int a) {
+    return a + rng_->Get();
+}
+\end{cpp}
+
+In the constructor, we’re assigning the provided pointer to a class field. We’re then using this field in AddRandomNumber() to fetch the generated value. The production code will use a real number generator; the tests will use mocks. Remember that we need to dereference pointers to enable polymorphism. As a bonus, we could possibly create different generator classes for different implementations. I just need one: a Mersenne Twister pseudo-random generator with uniform distribution, as illustrated in the following code snippet:
+
+\filename{ch11/05-gmock/src/rng\_mt19937.cpp}
+
+\begin{cpp}
+#include <random>
+#include "rng_mt19937.h"
+int RandomNumberGeneratorMt19937::Get() {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(1, 6);
+    return distrib(gen);
+}
+\end{cpp}
+
+Creating a new instance on every call isn’t very efficient, but it will suffice for this simple example. The purpose is to generate numbers from 1 to 6 and return them to the caller.
+
+The header for this class simply provides the signature of one method:
+
+\filename{ch11/05-gmock/src/rng\_mt19937.h}
+
+\begin{cpp}
+#include "rng.h"
+class RandomNumberGeneratorMt19937
+    : public RandomNumberGenerator {
+public:
+    int Get() override;
+};
+\end{cpp}
+
+And this is how we’re using it in the production code:
+
+\filename{ch11/05-gmock/src/run.cpp}
+
+\begin{cpp}
+#include <iostream>
+#include "calc.h"
+#include "rng_mt19937.h"
+using namespace std;
+int run() {
+    auto rng = new RandomNumberGeneratorMt19937();
+    Calc c(rng);
+    cout << "Random dice throw + 1 = "
+         << c.AddRandomNumber(1) << endl;
+    delete rng;
+    return 0;
+}
+\end{cpp}
+
+We have created a generator and passed a pointer to it to the constructor of Calc. Everything is ready and we can start writing our mock. To keep things organized, developers usually put mocks in a separate test/mocks directory. To prevent ambiguity, the header name has a \_mock suffix.
+
+Here is the code:
+
+\filename{ch11/05-gmock/test/mocks/rng\_mock.h}
+
+\begin{cpp}
+#pragma once
+#include "gmock/gmock.h"
+class RandomNumberGeneratorMock : public
+RandomNumberGenerator {
+public:
+    MOCK_METHOD(int, Get, (), (override));
+};
+\end{cpp}
+
+After adding the gmock.h header, we can declare our mock. As planned, it’s a class implementing the RandomNumberGenerator interface. Instead of writing methods ourselves, we need to use MOCK\_METHOD macros provided by GMock. These inform the framework which methods from the interface should be mocked. Use the following format (the extensive parentheses are required):
+
+\begin{shell}
+MOCK_METHOD(<return type>, <method name>,
+           (<argument list>), (<keywords>))
+\end{shell}
+
+We’re ready to use the mock in our test suite (previous test cases are omitted for brevity), as follows:
+
+\filename{ch11/05-gmock/test/calc\_test.cpp}
+
+\begin{cpp}
+#include <gtest/gtest.h>
+#include "calc.h"
+#include "mocks/rng_mock.h"
+using namespace ::testing;
+class CalcTestSuite : public Test {
+protected:
+    RandomNumberGeneratorMock rng_mock_;
+    Calc sut_{&rng_mock_};
+};
+TEST_F(CalcTestSuite, AddRandomNumberAddsThree) {
+    EXPECT_CALL(rng_mock_, Get()).Times(1).WillOnce(Return(3));
+    EXPECT_EQ(4, sut_.AddRandomNumber(1));
+}
+\end{cpp}
+
+Let’s break down the changes: we added the new header and created a new field for rng\_mock\_ in the test suite. Next, the mock’s address is passed to the constructor of sut\_. We can do that because fields are initialized in the order of declaration (rng\_mock\_ precedes sut\_).
+
+In our test case, we call GMock’s EXPECT\_CALL macro on the Get() method of rng\_mock\_. This tells the framework to fail the test if the Get() method isn’t called during execution. The chained Times call explicitly states how many calls must happen for the test to pass. WillOnce determines what the mocking framework does after the method is called (it returns 3).
+
+By virtue of using GMock, we’re able to express mocked behavior alongside the expected outcome. This greatly improves readability and eases the maintenance of tests. Most importantly, though, it provides flexibility in each test case, as we get to differentiate what happens with a single expressive statement.
+
+Finally, to build the project, we need to make sure that the gmock library is linked with a test runner. To achieve that, we add it to the target\_link\_libraries() list:
+
+\filename{ch11/05-gmock/test/CMakeLists�txt}
+
+\begin{cmake}
+include(FetchContent)
+FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG release-1.14.0
+)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+add_executable(unit_tests
+               calc_test.cpp
+               run_test.cpp)
+target_link_libraries(unit_tests PRIVATE sut gtest_main gmock)
+include(GoogleTest)
+gtest_discover_tests(unit_tests)
+\end{cmake}
+
+Now, we can enjoy all the benefits of the GoogleTest framework. Both GTest and GMock are advanced tools with a multitude of concepts, utilities, and helpers for different situations. This example (despite being a bit lengthy) only scratches the surface of what’s possible. I encourage you to incorporate them into your projects as they will greatly improve the quality of your work. A good place to start with GMock is the “Mocking for Dummies” page in the official documentation (you can find a link to this in the Further reading section).
+
+Having tests in place, we should somehow measure what’s tested and what isn’t and strive to improve the situation. It’s best to use automated tools that will collect and report this information.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

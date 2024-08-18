@@ -1,14 +1,486 @@
 
+CMake excels at managing dependencies, particularly when they’re not already installed on the system. There are several approaches you can take. If you’re using CMake version 3.14 or newer, the FetchContent module is your best choice for managing dependencies. Essentially, FetchContent is a user-friendly wrapper around another module called ExternalProject. It not only simplifies the process but also adds some extra features. We’ll dive deeper into ExternalProject later in this chapter. For now, just know that the main difference between the two is the order of execution:
 
+\begin{itemize}
+\item
+FetchContent brings dependencies in during the configuration stage.
+
+\item
+ExternalProject brings dependencies in during the build stage.
+\end{itemize}
+
+This order is significant, as targets defined by FetchContent during the configuration stage will be in the same namespace, and as such can be easily used by our project. We can link them with other targets, just as if we had defined them ourselves. There are rare cases when this is not desirable, and that’s when ExternalProject is the necessary choice.
+
+Let’s see how to deal with the majority of the cases first.
 
 \mySubsubsection{9.3.1.}{FetchContent}
 
+The FetchContent module is extremely useful; it offers the following features:
+
+\begin{itemize}
+\item
+Management of directory structure for an external project
+
+\item
+Downloading of sources from a URL (and extracting from archives if needed)
+
+\item
+Support for Git, Subversion, Mercurial, and CVS (Concurrent Versions System) repositories
+
+\item
+Fetching updates if needed
+
+\item
+Configuring and building the project with CMake, Make, or with a user-specified tool
+
+\item
+Providing nested dependencies on other targets
+\end{itemize}
+
+The usage of the FetchContent module involves three main steps:
+
+\begin{enumerate}
+\item
+Add the module to your project with include(FetchContent).
+
+\item
+Configure the dependencies with the FetchContent\_Declare() command. This will instruct FetchContent where the dependencies are and which version should be used.
+
+\item
+Complete the dependency setup using the FetchContent\_MakeAvailable() command. This will download, build, install, and add the listfiles to your main project for parsing.
+\end{enumerate}
+
+You might wonder why steps 2 and 3 are separate. The reason is to allow for configuration overrides in multi-layered projects. For example, consider a project that depends on external libraries, A and B. Library A also depends on B, but its authors are using an older version that differs from the parent project’s version (Figure 9.1):
+
+\myGraphic{0.5}{content/chapter9/images/1.png}{Figure 9.1: The hierarchical project}
+
+If configuration and download were to occur in the same command, the parent project wouldn’t be able to use a newer version, even if it’s backward compatible, because the dependency has already configured the imported targets for the older version introducing conflicts to target names and files of the library.
+
+To specify what version is needed, the top-most project has to call the FetchContent\_Declare() command and provide overridden configuration for B, before library A is fully set up. The subsequent call to FetchContent\_Declare() in A will be ignored, as the B dependency was already configured.
+
+Let’s take a look at the signature of the FetchContent\_Declare() command:
+
+\begin{shell}
+FetchContent_Declare(<depName> <contentOptions>...)
+\end{shell}
+
+The depName is a unique identifier of the dependency and will be later used by the FetchContent\_MakeAvailable() command.
+
+The contentOptions provides a detailed configuration of the dependency, which can get quite complex. It’s important to realize that, under the hood, FetchContent\_Declare() uses the older ExternalProject\_Add() command. As a matter of fact, many arguments provided to FetchContent\_Declare are directly forwarded to that internal call. Before explaining all the arguments in detail, let’s see a working example that downloads a dependency from GitHub.
+
 \mySamllsection{Basic example with a YAML reader}
+
+I’ve written a tiny program that reads a username from a YAML file and prints it out in a welcome message. YAML is a great, simple format to store human-readable configuration, but it’s quite complex to parse by machines. I’ve found a neat, small project that solves this problem called yaml-cpp by Jesse Beder (\url{https://github.com/jbeder/yaml-cpp}).
+
+The example is fairly straightforward. It’s a greeting program that prints a Welcome <name> message. The default value of name will be Guest, but we can specify a different name in a YAML configuration file. Here’s the C++ code:
+
+\filename{ch09/05-fetch-content/main.cpp}
+
+\begin{cpp}
+#include <string>
+#include <iostream>
+#include "yaml-cpp/yaml.h"
+
+using namespace std;
+int main() {
+    string name = "Guest";
+
+    YAML::Node config = YAML::LoadFile("config.yaml");
+    if (config["name"])
+        name = config["name"].as<string>();
+
+    cout << "Welcome " << name << endl;
+    return 0;
+}
+\end{cpp}
+
+The configuration file for this example is just a single line:
+
+\filename{ch09/05-fetch-content/config.yaml}
+
+\begin{shell}
+name: Rafal
+\end{shell}
+
+We’ll reuse this example in other sections, so take a second to understand how it works. Now that we have the code ready, let’s see how we can build it and get the dependency in:
+
+\filename{ch09/05-fetch-content/CMakeLists.txt}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26.0)
+project(ExternalProjectGit CXX)
+add_executable(welcome main.cpp)
+configure_file(config.yaml config.yaml COPYONLY)
+include(FetchContent)
+FetchContent_Declare(external-yaml-cpp
+    GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+    GIT_TAG 0.8.0
+)
+FetchContent_MakeAvailable(external-yaml-cpp)
+target_link_libraries(welcome PRIVATE yaml-cpp::yaml-cpp)
+\end{cmake}
+
+We can explicitly access the targets created by the yaml-cpp library. To prove it, we’ll use a CMakePrintHelpers helper module:
+
+\begin{cmake}
+include(CMakePrintHelpers)
+cmake_print_properties(TARGETS yaml-cpp::yaml-cpp
+                       PROPERTIES TYPE SOURCE_DIR)
+\end{cmake}
+
+When we build such a project, the configuration stage will print the following output:
+
+\begin{shell}
+Properties for TARGET yaml-cpp::yaml-cpp:
+    yaml-cpp.TYPE = "STATIC_LIBRARY"
+    yaml-cpp.SOURCE_DIR = "/tmp/b/_deps/external-yaml-cpp-src"
+\end{shell}
+
+This tells us that the target defined by the external-yaml-cpp dependency exists; it’s a static library, and its source directory resides inside the build tree. This printout isn’t necessary for real-life projects, but it helps to debug things if you’re not sure how to correctly include an imported target.
+
+Since we already copied the .yaml file to the output with the configure\_file() command, we can run the program:
+
+\begin{shell}
+~/examples/ch09/05-fetch-content$ /tmp/b/welcome
+Welcome Rafal
+\end{shell}
+
+Everything works like a charm! With hardly any work, we have introduced an external dependency and used it in our project.
+
+If we need more than one dependency, we should write multiple calls to the FetchContent\_Declare() command, each time selecting a unique identifier. But there’s no need to call FetchContent\_MakeAvailable() more than once because it supports multiple identifiers (these are case-insensitive):
+
+\begin{cmake}
+FetchContent_MakeAvailable(lib-A lib-B lib-C)
+\end{cmake}
+
+Now, we’ll learn how to write declarations of dependencies.
 
 \mySamllsection{Downloading the dependencies}
 
+The FetchContent\_Declare() command offers a wide range of options, which come from the ExternalProject module. Essentially, you can perform three main actions:
+
+\begin{itemize}
+\item
+Downloading dependencies
+
+\item
+Updating dependencies
+\item
+Patching dependencies
+\end{itemize}
+
+Let’s begin by looking at the most common scenario: fetching files from the internet. There are many download sources supported by CMake:
+
+\begin{itemize}
+\item
+HTTP Server (URL)
+
+\item
+Git
+
+\item
+Subversion
+
+\item
+Mercurial
+
+\item
+CVS
+\end{itemize}
+
+Going from the top of the list, we’ll first explore how to download dependencies from URLs and customize the process to fit our needs.
+
 \mySamllsection{Updating and patching}
+
+We can provide a list of URLs to be scanned in sequence until a download succeeds. CMake will recognize whether the downloaded file is an archive and will unpack it by default.
+
+Basic declaration:
+
+\begin{shell}
+FetchContent_Declare(dependency-id
+                     URL <url1> [<url2>...]
+)
+\end{shell}
+
+Here are some additional options to further customize this method:
+
+\begin{itemize}
+\item
+URL\_HASH <algo>=<hashValue>: This checks whether a downloaded file’s checksum generated by <algo> matches the provided <hashValue>. It is recommended to guarantee the integrity of downloads. The following algorithms are supported: MD5, SHA1, SHA224, SHA256, SHA384, SHA512, SHA3\_224, SHA3\_256, SHA3\_384, and SHA3\_512
+
+\item
+DOWNLOAD\_NO\_EXTRACT <bool>: This explicitly disables extraction after downloading. We may consume the filename of downloaded files in the follow-up steps by accessing the <DOWNLOADED\_FILE> variable.
+
+\item
+DOWNLOAD\_NO\_PROGRESS <bool>: This explicitly disables logging of the download progress.
+
+\item
+TIMEOUT <seconds> and INACTIVITY\_TIMEOUT <seconds>: These set timeouts to terminate the download after a fixed total time or period of inactivity.
+
+\item
+HTTP\_USERNAME <username> and HTTP\_PASSWORD <password>: These configure HTTP authentication. Be cautious not to hardcode credentials.
+
+\item
+HTTP\_HEADER <header1> [<header2>...]: This adds extra headers to your HTTP request, which is useful for AWS or custom tokens.
+
+\item
+TLS\_VERIFY <bool>: This verifies the SSL certificate. If this is not set, CMake will read this setting from the CMAKE\_TLS\_VERIFY variable, which is set to false by default. Skipping TLS verification is an unsafe, bad practice and should be avoided, especially in production environments.
+
+\item
+TLS\_CAINFO <file>: This provides a path to the authority file; if it isn’t specified, CMake will read this setting from the CMAKE\_TLS\_CAINFO variable. It is useful if your company is issuing self-signed SSL certificates.
+\end{itemize}
+
+The majority of programmers will refer to online repositories like GitHub to grab the latest versions of libraries. Here’s how.
+
+\mySamllsubsection{Downloading from Git}
+
+To download dependencies from Git, ensure that the host system has Git version 1.6.5 or later. The following options are essential for cloning the project from Git:
+
+\begin{shell}
+FetchContent_Declare(dependency-id
+                     GIT_REPOSITORY <url>
+                     GIT_TAG <tag>
+)
+\end{shell}
+
+Both <url> and <tag> should be compatible with the git command. In a production environment, it’s advisable to use a specific git hash (rather than tag) to ensure traceability of the produced binaries and to avoid unnecessary git fetch operations. If you prefer using a branch, stick to remote names such as origin/main. This ensures the proper synchronization of the local clone.
+
+Additional options include:
+
+\begin{itemize}
+\item
+GIT\_REMOTE\_NAME <name>: This sets the remote name (origin is the default).
+
+\item
+GIT\_SUBMODULES <module>...: This specifies which submodules to update; since 3.16, this value defaults to none (previously, all submodules were updated).
+
+\item
+GIT\_SUBMODULES\_RECURSE 1: This enables the recursive updating of submodules.
+
+\item
+GIT\_SHALLOW 1: This performs a shallow clone, which is faster as it skips downloading historical commits.
+
+\item
+TLS\_VERIFY <bool>: This verifies the SSL certificate. If this is not set, CMake will read this setting from the CMAKE\_TLS\_VERIFY variable, which is set to false by default; skipping TLS verification is an unsafe, bad practice and should be avoided, especially in production environments.
+\end{itemize}
+
+If your dependency is stored in Subversion, you can also fetch it with CMake.
+
+\mySamllsubsection{Downloading from Subversion}
+
+\begin{shell}
+FetchContent_Declare(dependency-id
+                     SVN_REPOSITORY <url>
+                     SVN_REVISION -r<rev>
+)
+\end{shell}
+
+Additionally, we may provide the following:
+
+\begin{itemize}
+\item
+SVN\_USERNAME <user> and SVN\_PASSWORD <password>: These provide credentials for checkout and update. Avoid hardcoding these in your projects.
+
+\item
+SVN\_TRUST\_CERT <bool>: This skips the verification of the Subversion server site certificate. Use this option only if the network path to the server and its integrity are trustworthy.
+\end{itemize}
+
+Subversion is very easy to use with CMake. So is Mercurial.
+
+\mySamllsubsection{Downloading from Mercurial}
+
+This mode is very straightforward. We need to provide two arguments and we’re done:
+
+\begin{shell}
+FetchContent_Declare(dependency-id
+                     HG_REPOSITORY <url>
+                     HG_TAG <tag>
+)
+\end{shell}
+
+Lastly, we can use CVS to provide dependencies.
+
+\mySamllsubsection{Downloading from CVS}
+
+To check out modules from CVS, we need to provide the following three arguments:
+
+\begin{shell}
+FetchContent_Declare(dependency-id
+                     CVS_REPOSITORY <cvsroot>
+                     CVS_MODULE <module>
+                     CVS_TAG <tag>
+)
+\end{shell}
+
+With that, we covered all the download options for FetchContent\_Declare(). CMake supports additional steps that can be executed after a successful download.
 
 \mySamllsection{Using the installed dependency where possible}
 
+By default, the update step will re-download the external project’s files if the download method supports updates, for example, if we configure the Git dependency pointing to the main or master branch. We can override this behavior in two ways:
+
+\begin{itemize}
+\item
+Provide a custom command to be executed during the update with UPDATE\_COMMAND <cmd>.
+
+\item
+Completely disable the update step (to allow building with a disconnected network) – UPDATE\_DISCONNECTED <bool>. Do note that dependency will still be downloaded during the first build.
+\end{itemize}
+
+Patch, on the other hand, is an optional step that will execute after the update is fetched. To enable it, we need to specify the exact command we want to execute with PATCH\_COMMAND <cmd>.
+
+CMake documentation warns that some patches may be more “sticky” than others. For example, in Git, changed files don’t get restored to the original state during the update, and we need to be careful to avoid incorrectly patching the file twice. Ideally, the patch command should be robust and idempotent.
+
+You can chain update and patch commands:
+
+\begin{shell}
+FetchContent_Declare(dependency-id
+                     GIT_REPOSITORY <url>
+                     GIT_TAG <tag>
+                     UPDATE_COMMAND <cmd>
+                     PATCH_COMMAND <cmd>
+)
+\end{shell}
+
+Downloading dependencies is helpful when they’re not already on the system. But what if they are? How can we use the local version instead?
+
+\mySamllsection{Using the installed dependency where possible}
+
+Starting with version 3.24, CMake introduced a feature that allows FetchContent to skip downloading if the dependencies are already available locally. To enable this, simply add the FIND\_PACKAGE\_ARGS keyword to your declaration:
+
+\begin{shell}
+FetchContent_Declare(dependency-id
+                     GIT_REPOSITORY <url>
+                     GIT_TAG <tag>
+                     FIND_PACKAGE_ARGS <args>
+)
+\end{shell}
+
+As you can guess, this keyword instructs the FetchContent module to use the find\_package() function before initiating any downloads. If the package is found locally, it will be used, and no download or build will occur. Note that this keyword should be the last one in the command, as it will consume all subsequent arguments.
+
+Here’s how to update the previous example:
+
+\filename{ch09/06-fetch-content-find-package/CMakeLists.txt}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26)
+project(ExternalProjectGit CXX)
+
+add_executable(welcome main.cpp)
+configure_file(config.yaml config.yaml COPYONLY)
+
+include(FetchContent)
+FetchContent_Declare(external-yaml-cpp
+    GIT_REPOSITORY    https://github.com/jbeder/yaml-cpp.git
+    GIT_TAG           0.8.0
+    FIND_PACKAGE_ARGS NAMES yaml-cpp
+)
+FetchContent_MakeAvailable(external-yaml-cpp)
+target_link_libraries(welcome PRIVATE yaml-cpp::yaml-cpp)
+include(CMakePrintHelpers)
+cmake_print_properties(TARGETS yaml-cpp::yaml-cpp
+                       PROPERTIES TYPE SOURCE_DIR
+                       INTERFACE_INCLUDE_DIRECTORIES
+)
+\end{cmake}
+
+We made two key changes:
+
+\begin{enumerate}
+\item
+We added FIND\_PACKAGE\_ARGS with the NAMES keyword to specify that we’re looking for the yaml-cpp package. Without NAMES, CMake would default to using the dependency-id, which, in this case, is external-yaml-cpp.
+
+\item
+We added INTERFACE\_INCLUDE\_DIRECTORIES in the printed properties. This is a one-off check so we can manually verify whether we’re using the installed package or if a new one was downloaded.
+\end{enumerate}
+
+Before testing, make sure the package is actually installed on your system. If it’s not, you can install it using the following commands:
+
+\begin{shell}
+git clone https://github.com/jbeder/yaml-cpp.git
+cmake -S yaml-cpp -B build-dir
+cmake --build build-dir
+cmake --install build-dir
+\end{shell}
+
+With this setup, we can now build our project. If all goes well, you should see debug output from the cmake\_print\_properties() command. This will indicate that we’re using the local version, as shown in the INTERFACE\_INCLUDE\_DIRECTORIES property. Keep in mind that this output is specific to your environment, your mileage may vary.
+
+\begin{shell}
+--
+    Properties for TARGET yaml-cpp::yaml-cpp:
+        yaml-cpp::yaml-cpp.TYPE = "STATIC_LIBRARY"
+        yaml-cpp::yaml-cpp.INTERFACE_INCLUDE_DIRECTORIES =
+                                                    "/usr/local/include
+\end{shell}
+
+If you’re not using CMake 3.24, or if you want to support users with older versions, you might consider running the find\_package() command manually. This way, you’ll only download packages that aren’t already installed:
+
+\begin{cmake}
+find_package(yaml-cpp QUIET)
+if (NOT TARGET yaml-cpp::yaml-cpp)
+    # download missing dependency
+endif()
+\end{cmake}
+
+Whichever method you choose, trying to use the local version first and downloading only if the dependency isn’t found is a thoughtful approach that offers the best user experience.
+
+Before the introduction of FetchContent, CMake had a simpler module called ExternalProject. Although FetchContent is the recommended choice for most situations, ExternalProject still has its own set of advantages and can be useful in certain cases.
+
 \mySubsubsection{9.3.2.}{ExternalProject}
+
+As mentioned, before FetchContent was introduced to CMake, another module was serving a similar purpose: ExternalProject (added in 3.0.0). As you can guess, it was used to fetch external projects from online repositories. Over the years, the module was gradually extended for different needs, resulting in quite a complicated command: ExternalProject\_Add().
+
+The ExternalProject module populates the dependencies during the build stage. That’s quite different from FetchContent, which executes in the configuration stage. Because of this difference, ExternalProject cannot import targets into the project like FetchContent does. On the other hand, ExternalProject can install dependencies directly into the system, execute their tests, and do other interesting things, like overriding the commands used for configuration and the build.
+
+There is a small set of use cases where this may be necessary. Since there’s a lot of overhead needed to use this legacy module effectively, treat it as a curiosity. We’re mostly introducing it here to show how the current method evolved from it.
+
+ExternalProject offers an ExternalProject\_Add command that configures the dependency.
+
+Here’s an example:
+
+\begin{cmake}
+include(ExternalProject)
+ExternalProject_Add(external-yaml-cpp
+    GIT_REPOSITORY   https://github.com/jbeder/yaml-cpp.git
+    GIT_TAG          0.8.0
+    INSTALL_COMMAND  ""
+    TEST_COMMAND     ""
+)
+\end{cmake}
+
+As mentioned, it closely resembles the FetchContent\_Declare from FetchContent. You’ll notice that there are two additional keywords in the example: INSTALL\_COMMAND and TEST\_COMMAND. In this case, they are used to suppress the installation and tests of the dependency, as they would normally execute during the build. ExternalProject executes many steps that are deeply configurable, and they execute in the following order:
+
+\begin{enumerate}
+\item
+mkdir: Create a subdirectory for the external project.
+
+\item
+download: Download the project files from a repository or URL.
+
+\item
+update: Download updates if supported by the fetch method.
+
+\item
+patch : Execute a patch command that alters downloaded files.
+
+\item
+configure: Execute the configure stage.
+
+\item
+build: Perform the build stage for CMake projects.
+
+\item
+install: Install CMake projects.
+
+\item
+test: Execute the tests.
+\end{enumerate}
+
+For each of the steps, excluding mkdir, you can override the default behavior by adding a <STEP>\_COMMAND keyword. There are plenty of other options – please refer to the online documentation for the full reference. If, for some reason, you’d like to use this method over the recommended FetchContent, there’s an ugly hack that can be applied to import the targets anyway by executing CMake within CMake. For more details, check out the ch09/05-external-project code example in the repository for this book.
+
+Typically, we would rely on the library being available in the system. If it’s not, we’d resort to FetchContent, an approach that is particularly suitable for dependencies that are small and quick to compile.
+
+However, for more substantial libraries like Qt, this method could be time consuming. In such cases, package managers offering precompiled libraries tailored to the user’s environment become advisable. While tools like Apt or Conan provide solutions, they are either too system-specific or complex to be covered in this book. The good news is that most users can install the dependencies your project may require, as long as clear installation instructions are provided.
+
+
+
+

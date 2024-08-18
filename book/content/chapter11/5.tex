@@ -1,0 +1,161 @@
+C++ has some limited introspection capabilities but can’t offer as powerful retrospection features as Java can. This could be why writing tests and unit-testing frameworks for C++ code is more challenging than in other, more feature-rich environments. One result of this limited approach is that the programmer needs to be more involved in crafting testable code. We’ll need to design our interfaces carefully and consider practical aspects. For example, how can we avoid compiling code twice and reuse artifacts between tests and production?
+
+Compilation time may not be a big issue for smaller projects, but as projects grow, the need for short compilation loops remains. In the previous example, we included all the SUT sources in the unit test executable except the main.cpp file. If you paid close attention, you would have noticed that some code in that file wasn’t tested (the contents of main() itself). Compiling the code twice introduces a slight chance that the produced artifacts won’t be identical. These discrepancies can gradually increase over time, particularly when adding compilation flags and preprocessor directives, and may be risky when contributors are rushed, inexperienced, or unfamiliar with the project.
+
+Multiple solutions exist for this problem, but the most straightforward is to build your entire solution as a library and link it with unit tests. You might wonder how to run it then. The answer is to create a bootstrap executable that links with the library and executes its code.
+
+Begin by renaming your current main() function to something like run() or start\_program(). Then, create another implementation file (bootstrap.cpp) containing only a new main() function. This function serves as an adapter: its only role is to provide an entry point and call run(), passing along any command-line arguments. After linking everything together, you end up with a testable project.
+
+By renaming main(), you can now link the SUT with tests and test its main functionality as well. Otherwise, you’d violate the One Definition Rule (ODR) discussed in Chapter 8, Linking Executables and Libraries, because the test runner also needs its own main() function. As we promised in the Separating main() for testing section of Chapter 8, we’ll delve into this topic in detail here.
+
+Note also that the testing framework might provide its own main() function by default, so writing one may not be necessary. Typically, it will automatically detect all linked tests and run them according to your configuration.
+
+Artifacts produced by this approach can be grouped into the following targets:
+
+\begin{itemize}
+\item
+A sut library with production code
+
+\item
+bootstrap with a main() wrapper calling run() from sut
+
+\item
+unit tests with a main() wrapper that runs all the tests on sut
+\end{itemize}
+
+The following diagram shows the symbol relations between targets:
+
+\myGraphic{0.8}{content/chapter11/images/1.png}{Figure 11.1: Sharing artifacts between test and production executables}
+
+We end up with six implementation files that will produce their respective (.o) object files, as follows:
+
+\begin{itemize}
+\item
+calc.cpp: The Calc class to be unit-tested. This is called a unit under test (UUT) because UUT is a specialization of SUT.
+
+\item
+run.cpp: Original entry point renamed run(), which can be now tested.
+
+\item
+bootstrap.cpp: New main() entry point calling run().
+
+\item
+calc\_test.cpp: Tests the Calc class.
+
+\item
+run\_test.cpp: New tests for run() can go here.
+
+\item
+unit\_tests.o: Entry point for unit tests, extended to call tests for run().
+\end{itemize}
+
+The library we’re about to build doesn’t necessarily have to be a static or shared library. By opting for an object library, we can avoid unnecessary archiving or linking. Technically, it’s possible to save some time by using dynamic linking for the SUT, but we often find ourselves making changes in both targets: tests and SUT, which negates any time saved.
+
+Let’s examine how our files have changed, starting with the file previously named main.cpp:
+
+\filename{ch11/02-structured/src/run.cpp}
+
+\begin{cpp}
+#include <iostream>
+#include "calc.h"
+using namespace std;
+int run() {
+    Calc c;
+    cout << "2 + 2 = " << c.Sum(2, 2) << endl;
+    cout << "3 * 3 = " << c.Multiply(3, 3) << endl;
+    return 0;
+}
+\end{cpp}
+
+The changes are minor: the file and function are renamed, and we’ve added a return statement because the compiler won’t add one implicitly for functions other than main().
+
+The new main() function looks like this:
+
+\filename{ch11/02-structured/src/bootstrap.cpp}
+
+\begin{cpp}
+int run(); // declaration
+int main() {
+    run();
+}
+\end{cpp}
+
+Keeping it simple, we declare that the linker will provide the run() function from another translation unit, and we call it.
+
+Next up is the src listfile:
+
+\filename{ch11/02-structured/src/CMakeLists.txt}
+
+\begin{cmake}
+add_library(sut STATIC calc.cpp run.cpp)
+target_include_directories(sut PUBLIC .)
+add_executable(bootstrap bootstrap.cpp)
+target_link_libraries(bootstrap PRIVATE sut)
+\end{cmake}
+
+First, we create a SUT library and mark . as a PUBLIC include directory so it will be propagated to all targets that link with SUT (i.e., bootstrap and unit\_tests). Note that include directories are relative to the listfile, allowing us to use a dot (.) to refer to the current <source\_tree>/src directory.
+
+Time to update our unit\_tests target. We’ll replace the direct reference to the ../src/calc.cpp file with a linking reference to sut for the unit\_tests target. We’ll also add a new test for the primary function in the run\_test.cpp file. We’ll skip discussing that for brevity, but if you’re interested, check out the examples in the repository for this book.
+
+Meanwhile, here’s the whole test listfile:
+
+\filename{ch11/02-structured/test/CMakeLists.txt}
+
+\begin{cmake}
+add_executable(unit_tests
+               unit_tests.cpp
+               calc_test.cpp
+               run_test.cpp)
+target_link_libraries(unit_tests PRIVATE sut)
+add_test(NAME SumAddsTwoInts COMMAND unit_tests 1)
+add_test(NAME MultiplyMultipliesTwoInts COMMAND unit_tests 2)
+add_test(NAME RunOutputsCorrectEquations COMMAND unit_tests 3)
+\end{cmake}
+
+Done! We registered the new test, as necessary. By following this practice, you can be sure that your tests are executed on the very machine code that will be used in production.
+
+\begin{myNotic}{Note}
+The target names we’re using here, sut and bootstrap, are chosen to make it very clear what they’re about from the perspective of testing. In real-life projects, you should pick names that match the context of the production code (rather than tests). For example, for a FooApp, name your target foo instead of bootstrap, and lib\_foo instead of sut.
+\end{myNotic}
+
+Now that we know how to structure a testable project in appropriate targets, let’s shift our focus to the testing frameworks themselves. We don’t want to add every test case to our listfiles manually, do we?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

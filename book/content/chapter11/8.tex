@@ -1,0 +1,11 @@
+On the surface, it may seem that the complexities associated with proper testing are so great that they aren’t worth the effort. It’s striking how much code out there is running without any tests at all, the primary argument being that testing your software is a daunting endeavor. I’ll add: even more so if done manually. Unfortunately, without rigorous automated testing, visibility of any issues in the code is incomplete or non-existent. Untested code is maybe quicker to write (but not always); however, it’s definitely much slower to read, refactor, and fix.
+
+In this chapter, we outlined some key reasons for working with tests from the get-go. One of the most compelling is mental health and a good night’s sleep. Not one developer lies in bed thinking: I can’t wait to be woken up in a few hours to put out some production fires and fix bugs. But seriously, catching errors before deploying them to production can be a lifesaver for you (and the company).
+
+When it comes to testing utilities, CMake really shows its true strength here. CTest can do wonders in detecting faulty tests: isolation, shuffling, repetition, and timeouts. All these techniques are extremely handy and available through a convenient command-line flag. We learned how we can use CTest to list tests, filter them, and control the output of test cases, but most importantly, we now know the true power of adopting a standard solution across the board. Any project built with CMake can be tested exactly the same, without investigating any details about its internals.
+
+Next, we structured our project to simplify the process of testing and reuse the same object files between production code and test runners. It was interesting to write our own test runner, but maybe let’s focus on the actual problem our program should solve and invest time in embracing a popular third-party testing framework.
+
+Speaking of which, we learned the very basics of Catch2 and GoogleTest. We further dove into details of the GMock library and understood how test doubles work to make true unit tests possible. Lastly, we set up some reporting with LCOV. After all, there’s nothing better than hard data to prove that our solution is, in fact, fully tested.
+
+In the next chapter, we’ll discuss more useful tooling to improve the quality of our source code and find issues we didn’t even know existed.

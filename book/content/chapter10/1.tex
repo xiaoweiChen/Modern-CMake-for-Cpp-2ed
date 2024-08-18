@@ -1,0 +1,54 @@
+You can find the code files that are present in this chapter on GitHub at \url{https://github.com/PacktPublishing/Modern-CMake-for-Cpp-2E/tree/main/examples/ch10}.
+
+The following toolchain utilities are required to try out the examples in this chapter:
+
+
+\begin{itemize}
+\item
+CMake 3.26 or newer (3.28 recommended)
+
+\item
+Any of the supported generators:
+\begin{itemize}
+\item
+Ninja 1.11 and newer (Ninja and Ninja Multi-Config)
+
+\item
+Visual Studio 17 2022 and newer
+\end{itemize}
+
+\item
+Any of the supported compilers:
+\begin{itemize}
+\item
+MSVC toolset 14.34 and newer
+
+\item
+Clang 16 and newer
+
+\item
+GCC 14 (for the in-development branch, after 2023-09-20) and newer
+\end{itemize}
+\end{itemize}
+
+If you’re familiar with Docker, you can use a fully tooled image introduced in the Installing CMake on different platforms section from Chapter 1, First Steps with CMake.
+
+To build the examples provided in this chapter, use the following command:
+
+\begin{shell}
+cmake -B <build tree> -S <source tree> -G "Ninja" -D CMAKE_CXX_COMPILER=clang++-18 && cmake --build <build tree>
+\end{shell}
+
+Be sure to replace the placeholders <build tree> and <source tree> with appropriate paths.
+
+
+
+
+
+
+
+
+
+
+
+

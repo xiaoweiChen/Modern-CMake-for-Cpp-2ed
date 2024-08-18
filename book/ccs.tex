@@ -153,6 +153,17 @@
 \setcounter{tocdepth}{4}
 \hypersetup{bookmarksdepth=4}
 
+% 去除minted代码块中的红框
+% https://tex.stackexchange.com/questions/343494/minted-red-box-around-greek-characters
+\AtBeginEnvironment{minted}{\dontdofcolorbox}
+\def\dontdofcolorbox{\renewcommand\fcolorbox[4][]{##4}}
+
+% minted中选中代码添加背景
+% https://stackoverflow.com/questions/66609265/highlighting-background-of-code-inside-a-minted-environment
+
+% minted中选中代码粗体
+% https://tex.stackexchange.com/questions/393526/bold-letters-within-minted-bash-text
+
 \makeatletter
 
 \newcommand{\toclevel@subsubsubsection}{4}
@@ -199,6 +210,11 @@
 \NewDocumentCommand { \mySamllsection } { m }
 {\vspace{ 0.2cm } \noindent \textbf { #1 } \vspace*{ 0.05cm } \nopagebreak[4]
  \addcontentsline{toc}{paragraph}{\hspace{0.5cm}{#1}}
+}
+
+\NewDocumentCommand { \mySamllsubsection } { m }
+{\vspace{ 0.2cm } \noindent \textbf { #1 } \vspace*{ 0.05cm } \nopagebreak[4]
+    \addcontentsline{toc}{subparagraph}{\hspace{0.5cm}{#1}}
 }
 
 \NewDocumentCommand { \myGraphic } { mmm }

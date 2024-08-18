@@ -1,0 +1,80 @@
+
+According to a blog post on Kitware’s page (see the Further reading section), CMake supports modules as early as version 3.25. Despite the fact that 3.28 makes the feature officially supported, this isn’t the only piece of the puzzle that we have to get right to enjoy the convenience of modules.
+
+The next requirement focuses on the buildsystem: it needs to support dynamic dependencies. As of now, you have only two choices:
+
+\begin{itemize}
+\item
+Ninja 1.11 and newer (Ninja and Ninja Multi-Config)
+
+\item
+Visual Studio 17 2022 and newer
+\end{itemize}
+
+Similarly, your compiler needs to produce files that map source dependencies for CMake in a specific format. This format is described in a paper written by Kitware developers known as p1589r5. This paper has been submitted to all major compilers for implementation. Currently, only three compilers have managed to implement the required format:
+
+\begin{itemize}
+\item
+Clang 16
+
+\item
+MSVC in Visual Studio 2022 17.4 (19.34)
+
+\item
+GCC 14 (for the in-development branch, after 2023-09-20) and newer
+\end{itemize}
+
+Assuming you have all the necessary tools in your environment (you may use the Docker image we’re providing for this book), and your CMake project is ready for building, all that remains is to configure CMake to use the required toolchain. As you may recall from the first chapter, you can select the buildsystem generator using the -G command-line argument:
+
+\begin{shell}
+cmake -B <build tree> -S <source tree> -G "Ninja"
+\end{shell}
+
+This command will configure the project to use the Ninja buildsystem. The next step is to set the compiler. If your default compiler doesn’t support the modules and you have another one installed to try things out, you can do this by defining the global variable CMAKE\_CXX\_COMPILER like this:
+
+\begin{shell}
+cmake -B <build tree> -S <source tree> -G "Ninja" -D CMAKE_CXX_ COMPILER=clang++-18
+\end{shell}
+
+We chose Clang 18 in our example because it’s the latest version available at the time of writing (bundled in the Docker image). After successfully configuring (you might see some warnings about experimental features), you need to build the project:
+
+\begin{shell}
+cmake --build <build tree>
+\end{shell}
+
+As always, be sure to replace the placeholders <build tree> and <source tree> with appropriate paths. If everything goes smoothly, you can run your program and observe the module function working as expected:
+
+\begin{shell}
+$ ./main
+Addition 2 + 2 = 4
+\end{shell}
+
+There you have it, C++20 modules working in practice.
+
+\begin{myNotic}{Note}
+The Further reading section includes a blog post from Kitware and a proposal on the source dependency format for C++ compilers, providing more insights into the implementation and usage of C++20 modules.
+\end{myNotic}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

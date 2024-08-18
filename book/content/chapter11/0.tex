@@ -1,0 +1,45 @@
+Tenured professionals know that testing must be automated. Someone explained this to them years ago or they learned it the hard way. This practice isn’t as obvious to inexperienced programmers; it seems like unnecessary, extra work that doesn’t bring much value. It’s understandable: when someone is just starting to write code, they have yet to create really complex solutions and work on large code bases. Most likely, they are the sole developer of their pet project. These early projects rarely take more than a few months to complete, so there’s little chance to see how code deteriorates over a longer period.
+
+All these factors contribute to the belief that writing tests is a waste of time and effort. The programming novice may tell themselves that they actually do test their code each time they go through the build-and-run routine. After all, they have manually confirmed that their code works and does what’s expected. So, it’s time to move on to the next task, right? Automated testing ensures that new changes don’t unintentionally break our program. In this chapter, we’ll learn why tests are important and how to use CTest, a tool bundled with CMake, to coordinate test execution. CTest can query available tests, filter execution, shuffle, repeat, and set time limits. We’ll explore how to use these features, control CTest’s output, and handle test failures.
+Next, we’ll modify our project’s structure to accommodate testing and create our own test runner.
+
+After covering the basic principles, we’ll proceed to add popular testing frameworks: Catch2 and GoogleTest, also known as GTest, along with its mocking library. Finally, we’ll introduce detailed test coverage reporting with LCOV.
+
+In this chapter, we’re going to cover the following main topics:
+
+\begin{itemize}
+\item
+Why are automated tests worth the trouble?
+
+\item
+Using CTest to standardize testing in CMake
+
+\item
+Creating the most basic unit test for CTest
+
+\item
+Unit testing frameworks
+
+\item
+Generating test coverage reports
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -78,8 +78,7 @@ Do not use the second or third form of the cmake <directory> command, because th
 As hinted in the syntax snippet, the same command behaves differently if a previous build already exists in <directory>: it will use the cached path to the sources and rebuild from there. Since we often invoke the same commands from the Terminal command history, we might get into trouble here; before using this form, always check whether your shell is currently working in the right directory.
 \end{myNotic}
 
-\noindent
-\textbf{Examples}
+\mySamllsubsection{Examples}
 
 Generate the build tree in the current directory using the source from one directory up:
 
@@ -93,8 +92,7 @@ Generate the build tree in the ./build directory using the source from the curre
 cmake -B build
 \end{shell}
 
-\noindent
-\textbf{Choosing a generator}
+\mySamllsubsection{Choosing a generator}
 
 As discussed earlier, you can specify a few options during the generation stage. Selecting and configuring a generator decides which build tool from our system will be used for building in the subsequent Building a project section, what build files will look like, and what the structure of the build tree will be.
 
@@ -168,8 +166,7 @@ Sublime Text 2 - Unix Makefiles
 
 As you can see, CMake supports a lot of different generator flavors and IDEs.
 
-\noindent
-\textbf{Managing the project cache}
+\mySamllsubsection{Managing the project cache}
 
 CMake queries the system for all kinds of information during the configuration stage. Because these operations can take a bit of time, the collected information is cached in the CMakeCache.txt file in the build tree directory. There are a few command-line options that allow you to manage the behavior of the cache more conveniently.
 
@@ -228,8 +225,7 @@ Here, the globbing expression supports the * (wildcard) and ? (any character) sy
 
 Both the -U and -D options can be repeated multiple times.
 
-\noindent
-\textbf{Debugging and tracing}
+\mySamllsubsection{Debugging and tracing}
 
 The cmake command can be run with a multitude of options that allow you to peek under the hood. To get general information about variables, commands, macros, and other settings, run the following:
 
@@ -269,8 +265,7 @@ cmake --trace
 
 As you can imagine, it’s not recommended for everyday use, as the output is very long.
 
-\noindent
-\textbf{Configuring presets}
+\mySamllsubsection{Configuring presets}
 
 There are many, many options that users can specify to generate a build tree from your project. When dealing with the build tree path, generator, cache, and environmental variable, it’s easy to get confused or miss something. Developers can simplify how users interact with their projects and provide a CMakePresets.json file that specifies some defaults.
 
@@ -288,8 +283,7 @@ cmake --preset=<preset> -S <source> -B <build tree>
 
 To learn more, please refer to the Navigating the project files section of this chapter and Chapter 16, Writing CMake Presets.
 
-\noindent
-\textbf{Cleaning the build tree}
+\mySamllsubsection{Cleaning the build tree}
 
 Every now and then, we might need to erase generated files. This may be due to some changes in the environment that were made between builds, or just to ensure that we are working on a clean slate. We can go ahead and delete the build tree directory manually, or just add the --fresh parameter to the command line:
 
@@ -329,8 +323,7 @@ cmake --build <build tree> -- <build tool options>
 
 Let’s see what other options are available.
 
-\noindent
-\textbf{Running parallel builds}
+\mySamllsubsection{Running parallel builds}
 
 By default, many build tools will use multiple concurrent processes to leverage modern processors and compile your sources in parallel. Builders know the structure of project dependencies, so they can simultaneously process steps that have their dependencies met to save users’ time.
 
@@ -345,8 +338,7 @@ cmake --build <build tree> -j [<number of jobs>]
 
 The alternative is to set it with the CMAKE\_BUILD\_PARALLEL\_LEVEL environment variable. The command-line option will override this variable.
 
-\noindent
-\textbf{Selecting targets to build and clean }
+\mySamllsubsection{Selecting targets to build and clean }
 
 Every project is made up of one or more parts, called targets (we’ll discuss these in the second part of the book). Usually, we’ll want to build all available targets; however, on occasion, we might be interested in skipping some or explicitly building a target that was deliberately excluded from normal builds. We can do this as follows:
 
@@ -356,8 +348,7 @@ cmake --build <build tree> --target <target1> --target <target2> …
 
 We can specify multiple targets to build by repeating the –target argument. Also, there’s a shorthand version, -t <target>, that can be used instead.
 
-\noindent
-\textbf{Cleaning the build tree }
+\mySamllsubsection{Cleaning the build tree }
 
 One special target that isn’t normally built is called clean. Building it has the special effect of removing all artifacts from the build directory, so everything can be created from scratch later.
 You can start this process like this:
@@ -374,8 +365,7 @@ cmake --build <build tree> --clean-first
 
 This action is different from cleaning mentioned in the Cleaning the build tree section, as it only affects target artifacts and nothing else (like the cache).
 
-\noindent
-\textbf{Configuring the build type for multi-configuration generators}
+\mySamllsubsection{Configuring the build type for multi-configuration generators}
 
 So, we already know a bit about generators: they come in different shapes and sizes. Some of them offer the ability to build both Debug and Release build types in a single build tree. Generators that support this feature include Ninja Multi-Config, Xcode, and Visual Studio. Every other generator is a single-configuration generator, and they require a separate build tree for every config type we want to build.
 
@@ -387,8 +377,7 @@ cmake --build <build tree> --config <cfg>
 
 Otherwise, CMake will use Debug as the default.
 
-\noindent
-\textbf{Debugging the build process}
+\mySamllsubsection{Debugging the build process}
 
 When things go bad, the first thing we should do is check the output messages. However, veteran developers know that printing all the details all the time is confusing, so they often hide them by default. When we need to peek under the hood, we can ask for far more detailed logs by telling CMake to be verbose:
 
@@ -417,8 +406,7 @@ cmake --install <build tree>
 
 The install action also has plenty of additional options. Let’s see what they can do.
 
-\noindent
-\textbf{Choosing the installation directory}
+\mySamllsubsection{Choosing the installation directory}
 
 We can prepend the installation path with a prefix of our choice (for example, when we have limited write access to some directories). The /usr/local path that is prefixed with /home/user becomes /home/user/usr/local.
 
@@ -436,8 +424,7 @@ cmake --install <build tree> --prefix <prefix>
 
 Note that this won’t work on Windows, as paths on this platform usually start with the drive letter.
 
-\noindent
-\textbf{Installation for multi-configuration generators}
+\mySamllsubsection{Installation for multi-configuration generators}
 
 Just like in the build stage, we can specify which build type we want to use for our installation (for more details, please refer to the Building a project section). The available types include Debug, Release, MinSizeRel, and RelWithDebInfo. The signature is as follows:
 
@@ -445,8 +432,7 @@ Just like in the build stage, we can specify which build type we want to use for
 cmake --install <build tree> --config <cfg>
 \end{shell}
 
-\noindent
-\textbf{Selecting components to install}
+\mySamllsubsection{Selecting components to install}
 
 As a developer, you might choose to split your project into components that can be installed independently. We’ll discuss the concept of components in further detail in Chapter 14, Installing and Packaging. For now, let’s just assume they represent sets of artifacts that don’t need to be used in every case. This might be something like application, docs, and extra-tools.
 
@@ -456,8 +442,7 @@ To install a single component, use the following option:
 cmake --install <build tree> --component <component>
 \end{shell}
 
-\noindent
-\textbf{Setting file permissions}
+\mySamllsubsection{Setting file permissions}
 
 If the installation is performed on a Unix-like platform, you can specify default permissions for the installed directories with the following option, using the format of u=rwx,g=rx,o=rx:
 
@@ -466,8 +451,7 @@ cmake --install <build tree>
       --default-directory-permissions <permissions>
 \end{shell}
 
-\noindent
-\textbf{Debugging the installation process}
+\mySamllsubsection{Debugging the installation process}
 
 Similarly to the build stage, we can also choose to view a detailed output of the installation stage.
 

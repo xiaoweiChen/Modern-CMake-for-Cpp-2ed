@@ -152,8 +152,7 @@ There are plenty of other warning flags that may be useful depending on your pro
 
 Occasionally, the compilation will break. This usually happens when we try to refactor a significant amount of code or clean up our buildsystem. At times, issues can be resolved easily; however, there are more complex problems that require a thorough investigation into the configuration steps. We already know how to print more verbose CMake outputs (as discussed in Chapter 1, First Steps with CMake), but how do we analyze what actually happens under the hood at each stage?
 
-\noindent
-\textbf{Debugging individual stages}
+\mySamllsubsection{Debugging individual stages}
 
 The -save-temps, which can be passed to both GCC and Clang compilers, allows us to debug individual stages of compilation. This flag will instruct the compilers to store the output of certain compilation stages in files, rather than in memory.
 
@@ -210,8 +209,7 @@ Depending on the type of problem, we can often uncover the actual issue. For ins
 
 Meanwhile, the output of the linguistic analysis is particularly beneficial for targeting specific processors and resolving critical optimization problems.
 
-\noindent
-\textbf{Debugging issues with header file inclusion}
+\mySamllsubsection{Debugging issues with header file inclusion}
 
 Debugging incorrectly included files can be a challenging task. I should know – in my first corporate job, I had to port an entire code base from one buildsystem to another. If you ever find yourself in a situation that requires a precise understanding of the paths used to include a requested header, consider using the -H compile option:
 

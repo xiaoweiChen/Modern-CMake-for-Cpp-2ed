@@ -1,7 +1,565 @@
 
+When our project depends on a popular library, it’s likely that the operating system already has the right package installed. We just have to connect it to our project’s build process. How do we do that? We need to find out where the package is on the system so CMake can use its files. Doing this by hand is possible, but every environment is a little different. A path that works on one system might not work on another. So, we should automatically find these paths when building. There are different ways to do this, but the best method is usually CMake’s built-in find\_package() command, which knows how to find many commonly used packages.
+
+If our package isn’t supported, we have two options:
+
+\begin{itemize}
+\item
+We can write a small plugin called a find-module to help find\_package()
+
+\item
+We can use an older method called pkg-config
+\end{itemize}
+
+Let’s start with the recommended option first.
 
 \mySubsubsection{9.2.1.}{Finding packages with CMake’s find\_package()}
 
+Let’s start by looking at the following scenario: you want to improve the way you’re doing network communication or data storage. Simple plain-text files or open-text formats like JSON and XML are too verbose in terms of size. Using a binary format would help things, and a well-known library like Google’s Protobuf looks like the answer.
+
+You’ve read the instructions and installed what you need on your system. Now what? How do you get CMake’s find\_package() to find and use this new library?
+
+To execute this example, we have to install the dependencies we want to use because the find\_package() command only looks for packages that are already on your system. It assumes you’ve got everything installed, or that users know how to install what’s needed if they’re told to. If you want to handle other situations, you’ll need a backup plan. You can find more about this in the Using dependencies not present in the system section.
+
+In the case of Protobuf, the situation is fairly straightforward: you can either download, compile, and install the library yourself from the official repository (\url{https://github.com/protocolbuffers/protobuf}) or use the package manager in your operating system. If you’re following these examples using the Docker image mentioned in Chapter 1, First Steps with CMake, your dependencies are already installed and you don’t need to do anything. However, if you’d like to try installing by yourself, the commands to install the Protobuf library and compiler for Debian Linux are as follows:
+
+\begin{shell}
+$ apt update
+$ apt install protobuf-compiler libprotobuf-dev
+\end{shell}
+
+Many projects these days choose to support CMake. They do this by creating a config file and putting it in the appropriate system directory during installation. Config files are an inherent part of projects opting in to support CMake.
+
+If you want to use a library that doesn’t have a config file, don’t worry. CMake supports an external mechanism to find such libraries called find modules. Unlike config files, find modules are not part of the project they’re helping to locate. In fact, CMake itself often comes with these find modules for many popular libraries.
+
+If you’re stuck and without either a config file or a find module, you have other choices:
+
+\begin{itemize}
+\item
+Write your own find modules for the specific package and include them in your project
+
+\item
+Use a FindPkgConfig module to leverage legacy Unix package definition files
+
+\item
+Write a config file and ask package maintainers to include it
+\end{itemize}
+
+You might think that you’re not quite ready to create such merge requests yourself. That’s okay because you most likely won’t have to. CMake comes with over 150 find modules that can find libraries such as Boost, bzip2, curl, curses, GIF, GTK, iconv, ImageMagick, JPEG, Lua, OpenGL, OpenSSL, PNG, PostgreSQL, Qt, SDL, Threads, XML-RPC, X11, and zlib, as well as the Protobuf file that we’re going to use in this example. A full list is available in the CMake documentation (see the Further reading section).
+
+Both find modules and config files can be used with CMake’s find\_package() command. CMake starts by checking its built-in find modules. If it doesn’t find what it needs, it moves on to checking the config files provided by different packages. CMake scans paths where packages are usually installed (depending on the operating system). It looks for files that match these patterns:
+
+\begin{itemize}
+\item
+<CamelCasePackageName>Config.cmake
+
+\item
+<kebab-case-package-name>-config.cmake
+\end{itemize}
+
+If you want to add external find modules to your project, set the CMAKE\_MODULE\_PATH variable. CMake will scan this directory first.
+
+Going back to our example, the goal is simple: I want to show that I can build a project that uses Protobuf effectively. Don’t worry, you don’t need to know Protobuf to understand what happens. In basic terms, Protobuf is a library that saves data in a specific binary format. This makes it easy to write and read C++ objects to and from files or over a network. To set this up, we use a .proto file to give Protobuf the data structure:
+
+\filename{ch09/01-find-package-variables/message.proto}
+
+\begin{shell}
+syntax = "proto3";
+message Message {
+    int32 id = 1;
+}
+\end{shell}
+
+This code is a simple schema definition that includes a single 32-bit integer. The Protobuf package comes with a binary that will compile these .proto files into C++ sources and headers that our application can use. We’ll need to add this compilation step to our build process, but we’ll get back to that later. For now, let’s see how our main.cpp file uses the output generated by Protobuf:
+
+\filename{ch09/01-find-package-variables/main.cpp}
+
+\begin{cpp}
+#include "message.pb.h"
+#include <fstream>
+using namespace std;
+int main()
+{
+    Message m;
+    m.set_id(123);
+    m.PrintDebugString();
+    fstream fo("./hello.data", ios::binary | ios::out);
+    m.SerializeToOstream(&fo);
+    fo.close();
+    return 0;
+}
+\end{cpp}
+
+I’ve included a message.pb.h header that I expect Protobuf to generate. This header will have the definition for the Message object, as configured in message.proto. In the main() function, I’m creating a simple Message object. I set its id field to 123 as a random example and then print its debug information to the standard output. Next, a binary version of this object is written to the file stream. This is the most basic use case for a serialization library like Protobuf.
+
+The message.pb.h header has to be generated before main.cpp is compiled. This is done by protoc, the Protobuf compiler, which takes message.proto as input. Managing this process sounds complicated, but it’s really not!
+
+ This is where the CMake magic happens:
+
+\filename{ch09/01-find-package-variables/CMakeLists.txt}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26.0)
+project(FindPackageProtobufVariables CXX)
+find_package(Protobuf REQUIRED)
+protobuf_generate_cpp(GENERATED_SRC GENERATED_HEADER
+                      message.proto)
+add_executable(main main.cpp ${GENERATED_SRC} ${GENERATED_HEADER})
+target_link_libraries(main PRIVATE ${Protobuf_LIBRARIES})
+target_include_directories(main PRIVATE
+    ${Protobuf_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR}
+)
+\end{cmake}
+
+Let’s break this down:
+
+\begin{itemize}
+\item
+The first two lines are straightforward: they set up the project and specify that it will use the C++ language.
+
+\item
+find\_package(Protobuf REQUIRED) tells CMake to find the Protobuf library (by executing the bundled FindProtobuf.cmake find module) and prepare it for use in our project. If it can’t find the library, the build will stop because we used the REQUIRED keyword.
+
+\item
+protobuf\_generate\_cpp is a custom function defined in the Protobuf find module. It automates the process of invoking the protoc compiler. After successful compilation, it will store paths to the generated sources in variables provided as the first two arguments: GENERATED\_SRC and GENERATED\_HEADER. All subsequent arguments will be treated as a list of files to compile (message.proto).
+
+\item
+add\_executable creates our executable using main.cpp and Protobuf-generated files.
+
+\item
+target\_link\_libraries tells CMake to link the Protobuf libraries to our executable.
+
+\item
+target\_include\_directories() adds to include paths the necessary INCLUDE\_DIRS provided by the package and CMAKE\_CURRENT\_BINARY\_DIR. The latter tells the compiler where to find the message.pb.h header.
+\end{itemize}
+
+The Protobuf find module provides the following functionalities:
+
+\begin{itemize}
+\item
+It finds the Protobuf library and its compiler.
+
+\item
+It provides helper functions to compile the .proto files.
+
+\item
+It sets variables with paths for inclusion and linking.
+\end{itemize}
+
+While not every module comes with convenient helper functions like Protobuf, most modules do set up a few key variables for you. These are useful for managing the dependency in your project. Whether you’re using a built-in find module or a config file, after the package is successfully found, you can expect some or all of the following variables to be set:
+
+\begin{itemize}
+\item
+<PKG\_NAME>\_FOUND: This indicates whether the package was successfully found.
+
+\item
+<PKG\_NAME>\_INCLUDE\_DIRS or <PKG\_NAME>\_INCLUDES: This points to the directories where the package’s header files are located.
+
+\item
+<PKG\_NAME>\_LIBRARIES or <PKG\_NAME>\_LIBS: These are lists of libraries that you’ll need to link against.
+
+\item
+<PKG\_NAME>\_DEFINITIONS: This contains any compiler definitions needed for the package.
+\end{itemize}
+
+After running find\_package(), you can immediately check the <PKG\_NAME>\_FOUND variable to see whether CMake was successful in locating the package.
+
+If a package module is written for CMake 3.10 or newer, it will also likely provide target definitions. These targets will be designated as IMPORTED targets to distinguish them as originating from an external dependency.
+
+Protobuf is a great example to explore when learning about dependencies in CMake, as it defines module-specific variables and IMPORTED targets. Such targets allow us to write even more concise code:
+
+\filename{ch09/02-find-package-targets/CMakeLists.txt}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26.0)
+project(FindPackageProtobufTargets CXX)
+find_package(Protobuf REQUIRED)
+protobuf_generate_cpp(GENERATED_SRC GENERATED_HEADER
+    message.proto)
+add_executable(main main.cpp ${GENERATED_SRC} ${GENERATED_HEADER})
+target_link_libraries(main PRIVATE protobuf::libprotobuf)
+target_include_directories(main PRIVATE
+                                ${CMAKE_CURRENT_BINARY_DIR})
+\end{cmake}
+
+Look at how the highlighted code compares with the previous version of this example: instead of using variables that listfiles and directories, it’s a good idea to use IMPORTED targets. This approach simplifies the listfile. It also automatically takes care of transient usage requirements, or propagated properties, as illustrated here with protobuf::libprotobuf target.
+
+\begin{myNotic}{Note}
+If you want to know exactly what a specific find module provides, your best resource is its online documentation. For example, you can find detailed information for Protobuf on the CMake official website at this link: \url{https://cmake.org/cmake/help/latest/module/FindProtobuf.html}.
+\end{myNotic}
+
+To keep things simple, examples in this section will simply fail if the Protobuf library is not found in the user’s system. But a really robust solution should verify the Protobuf\_FOUND variable, and present a clear diagnostic message for the user (so they can install it) or perform the installation automatically. We’ll learn how to do this later in this chapter.
+
+The find\_package() command has several arguments you can use. While there’s a longer list of them, we’ll focus on the key ones here. The basic format of the command is:
+
+\begin{shell}
+find_package(<Name> [version] [EXACT] [QUIET] [REQUIRED])
+\end{shell}
+
+Let’s break down what each of these optional arguments means:
+
+\begin{itemize}
+\item
+[version] This specifies the minimum version of the package you need in the major.minor.
+patch.tweak format (such as 1.22). You can also specify a range, like 1.22...1.40.1, using three dots as a separator.
+
+\item
+EXACT: Use this with a non-range [version] to tell CMake you want an exact version and not a newer one.
+
+\item
+QUIET: This suppresses all messages about whether the package was found or not.
+
+\item
+REQUIRED: This will stop the build if a package is not found and a diagnostic message will be shown even if QUIET is used.
+\end{itemize}
+
+If you’re pretty sure that a package should be on your system but find\_package() isn’t locating it, there’s a way to dig deeper. Starting with CMake 3.24, you can run the configure stage in debug mode to get more information. Use the following command:
+
+\begin{shell}
+cmake -B <build tree> -S <source tree> --debug-find-pkg=<pkg>
+\end{shell}
+
+Be cautious with this command. Make sure you type the package name exactly as it is because it’s case-sensitive.
+
+More information on the find\_package() command can be found on the documentation page here: \url{https://cmake.org/cmake/help/latest/command/find_package.html}.
+
+Find modules are meant as a very convenient way of providing CMake with information on installed dependencies. Most popular libraries are widely supported by CMake on all major platforms. What can we do, though, when we want to use a third-party library that doesn’t have a dedicated find module yet?
+
 \mySamllsection{Writing your own find modules}
 
+On a rare occasion, the library that you really want to use in your project doesn’t provide a config file and there’s no find module readily available in CMake yet. You can then write a custom find module for that library and ship it with your project. This situation is not ideal, but in the interest of taking care of the users of your project, it has to be done.
+
+We can try writing a custom find module for the libpqxx library, a client for the PostgreSQL database. libpqxx is preinstalled in the Docker image for this book, so there’s no need to worry if you’re using that. Debian users can install it using the libpqxx-dev package (other operating systems may require different commands):
+
+\begin{shell}
+apt-get install libpqxx-dev
+\end{shell}
+
+We’ll begin by writing a new file named FindPQXX.cmake and storing it in the cmake/module directory within our project’s source tree. To ensure that CMake discovers this find module when find\_package() is called, we’ll add its path to the CMAKE\_MODULE\_PATH variable in our CMakeLists. txt using list(APPEND). Just a quick reminder: CMake will first check the directories listed in CMAKE\_MODULE\_PATH to find the find modules before searching in other locations. Your complete listfile should look like this:
+
+\filename{ch09/03-find-package-custom/CMakeLists.txt}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26.0)
+project(FindPackageCustom CXX)
+list(APPEND CMAKE_MODULE_PATH
+            "${CMAKE_SOURCE_DIR}/cmake/module/")
+find_package(PQXX REQUIRED)
+add_executable(main main.cpp)
+target_link_libraries(main PRIVATE PQXX::PQXX)
+\end{cmake}
+
+With that in place, let’s move on to writing the actual find module. If the FindPQXX.cmake file is empty, CMake won’t raise any errors, even if you use find\_package() with REQUIRED. It’s the responsibility of the find module’s author to set the correct variables and follow best practices (like raising errors). According to CMake’s guidelines, here are some key points to note:
+
+\begin{itemize}
+\item
+When find\_package(<PKG\_NAME> REQUIRED) is called, CMake sets a <PKG\_NAME>\_FIND\_REQUIRED variable to 1. The find module should then use message(FATAL\_ERROR) if the library isn’t found.
+
+\item
+When find\_package(<PKG\_NAME> QUIET) is used, CMake sets <PKG\_NAME>\_FIND\_QUIETLY to 1. The find module should avoid displaying any extra messages.
+
+\item
+CMake sets a <PKG\_NAME>\_FIND\_VERSION variable to the version specified in the listfiles. If the find module can’t locate the right version, it should trigger a FATAL\_ERROR.
+\end{itemize}
+
+Of course, it’s best to follow the preceding rules for consistency with other find modules.
+
+To create an elegant find module for PQXX, let’s follow these steps:
+
+\begin{enumerate}
+\item
+If the paths to the library and headers are already known (supplied by the user or retrieved from the cache of a previous run), use these paths to create an IMPORTED target. If this is done, you can stop here.
+
+\item
+If the paths are not known, begin by finding the library and headers for the underlying dependency, which, in this case, is PostgreSQL.
+
+\item
+Next, search the well-known paths to locate the binary version of the PostgreSQL client library.
+
+\item
+Similarly, scan the known paths to find the PostgreSQL client’s include headers.
+
+\item
+Finally, confirm whether both the library and include headers are located. If they are, create an IMPORTED target.
+\end{enumerate}
+
+To create a robust find module for PQXX, let’s focus on a couple of important tasks. First, the creation of an IMPORTED target can happen in two scenarios – either the user specifies the library’s paths or the paths are automatically detected. To keep our code clean and avoid duplication, we’ll write a function that manages the outcome of our search process.
+
+\mySamllsubsection{Defining IMPORTED targets}
+
+To set up an IMPORTED target, all we really need is a library defined with the IMPORTED keyword.This will enable us to use the target\_link\_libraries() command in the calling CMakeLists.txt listfile. We need to specify the type of the library, and for simplicity, we’ll mark it as UNKNOWN. This means we’re not concerned about whether the library is static or dynamic; we just want to pass an argument to the linker.
+
+Next, we set the essential properties for our target – namely, IMPORTED\_LOCATION and INTERFACE\_INCLUDE\_DIRECTORIES. We use the arguments provided to the function for these settings. It’s possible to specify additional properties like COMPILE\_DEFINITIONS, but they are not needed for PQXX.
+
+After that, to make our find module more efficient, we’ll store the found paths in cache variables.
+
+This way, we won’t have to repeat the search in future runs. It’s worth noting that we explicitly set PQXX\_FOUND in the cache, making it globally accessible and allowing the user’s CMakeLists.txt to reference it.
+
+Finally, we mark these cache variables as advanced, hiding them in the CMake GUI unless the advanced option is activated. This is a common best practice that we’ll also adopt.
+Here’s how the code looks for these operations:
+
+\filename{ch09/03-find-package-custom/cmake/module/FindPQXX.cmake}
+
+\begin{cmake}
+# Defining IMPORTED targets
+function(define_imported_target library headers)
+    add_library(PQXX::PQXX UNKNOWN IMPORTED)
+    set_target_properties(PQXX::PQXX PROPERTIES
+        IMPORTED_LOCATION ${library}
+        INTERFACE_INCLUDE_DIRECTORIES ${headers}
+    )
+    set(PQXX_FOUND 1 CACHE INTERNAL "PQXX found" FORCE)
+    set(PQXX_LIBRARIES ${library}
+        CACHE STRING "Path to pqxx library" FORCE)
+    set(PQXX_INCLUDES ${headers}
+        CACHE STRING "Path to pqxx headers" FORCE)
+    mark_as_advanced(FORCE PQXX_LIBRARIES)
+    mark_as_advanced(FORCE PQXX_INCLUDES)
+endfunction()
+\end{cmake}
+
+Now, we’ll discuss how to use custom or previously stored paths for quicker setup.
+
+\mySamllsubsection{Accepting user-provided paths and reusing cached values}
+
+Let’s address the situation where a user has installed PQXX in a non-standard location and provides the needed paths via command-line arguments using -D. If that’s the case, we immediately call the function we defined earlier and stop the search by using return(). We assume that the user has provided accurate paths to both the library and its dependencies, like PostgreSQL:
+
+\filename{ch09/03-find-package-custom/cmake/module/FindPQXX.cmake (continued)}
+
+\begin{cmake}
+...
+
+# Accepting user-provided paths and reusing cached values
+if (PQXX_LIBRARIES AND PQXX_INCLUDES)
+    define_imported_target(${PQXX_LIBRARIES} ${PQXX_INCLUDES})
+    return()
+endif()
+\end{cmake}
+
+This condition will hold true if a configuration was carried out previously, as the variables PQXX\_LIBRARIES and PQXX\_INCLUDES are stored in the cache.
+
+It’s time to see how to handle finding the additional libraries that PQXX relies on.
+
+\mySamllsubsection{Searching for nested dependencies}
+
+To utilize PQXX, the host system must also have PostgreSQL installed. While it’s perfectly fine to use another find module within our current find module, we should pass along the REQUIRED and QUIET flags to ensure consistent behavior between the nested search and the main search. To do so, we’ll set two helper variables to store the keywords we need to pass and fill them according to arguments received from CMake: PQXX\_FIND\_QUIETLY and PQXX\_FIND\_REQUIRED.
+
+\begin{cmake}
+# Searching for nested dependencies
+set(QUIET_ARG)
+if(PQXX_FIND_QUIETLY)
+    set(QUIET_ARG QUIET)
+endif()
+
+set(REQUIRED_ARG)
+if(PQXX_FIND_REQUIRED)
+    set(REQUIRED_ARG REQUIRED)
+endif()
+find_package(PostgreSQL ${QUIET_ARG} ${REQUIRED_ARG})
+\end{cmake}
+
+Having this done, we’ll dive into the specifics of pinpointing where the PQXX library resides in the operating system.
+
+\mySamllsubsection{Searching for library files}
+
+CMake offers the find\_library() command to help find library files. This command will accept the filenames to look for and a list of possible paths, formatted in CMake’s path style:
+
+\begin{shell}
+find_library(<VAR_NAME> NAMES <NAMES> PATHS <PATHS> <...>)
+\end{shell}
+
+<VAR\_NAME> will serve as the name for variables that store the command’s output. If a matching file is found, its path will be stored in the <VAR\_NAME> variable. Otherwise, the <VAR\_NAME>- NOTFOUND variable will be set to 1. We’ll use PQXX\_LIBRARY\_PATH as our VAR\_NAME, so we’ll end up with either a path in PQXX\_LIBRARY\_PATH or 1 in PQXX\_LIBRARY\_PATH-NOTFOUND.
+
+The PQXX library often exports its location to an \$ENV\{PQXX\_DIR\} environment variable, meaning the system may already know its whereabouts. We can include this path in our search by first formatting it using file(TO\_CMAKE\_PATH):
+
+\filename{ch09/03-find-package-custom/cmake/module/FindPQXX.cmake (continued)}
+
+\begin{cmake}
+...
+
+# Searching for library files
+file(TO_CMAKE_PATH "$ENV{PQXX_DIR}" _PQXX_DIR)
+find_library(PQXX_LIBRARY_PATH NAMES libpqxx pqxx
+    PATHS
+        ${_PQXX_DIR}/lib/${CMAKE_LIBRARY_ARCHITECTURE}
+        # (...) many other paths - removed for brevity
+        /usr/lib
+    NO_DEFAULT_PATH
+)
+\end{cmake}
+
+The NO\_DEFAULT\_PATH keyword instructs CMake to bypass its standard list of search paths.
+While you generally wouldn’t want to do this (since the default paths are often correct), using NO\_DEFAULT\_PATH allows you to explicitly specify your own search locations if needed.
+
+Let’s move on to finding the required header files that can be included by users of the library.
+
+\mySamllsubsection{Searching for header files}
+
+To search for all known header files, we’ll use the find\_path() command, which works very similarly to find\_library(). The main difference is that find\_library() automatically appends system-specific extensions for libraries, whereas with find\_path(), we need to specify exact names.
+
+Also, don’t get confused here with pqxx/pqxx. It’s an actual header file, but its extension was intentionally left off by the library creators to align with C++ \#include directives. This allows it to be used with angle brackets, like so: \#include <pqxx/pqxx>.
+
+Here’s the snippet:
+
+\filename{ch09/03-find-package-custom/cmake/module/FindPQXX.cmake (continued)}
+
+\begin{cmake}
+...
+# Searching for header files
+find_path(PQXX_HEADER_PATH NAMES pqxx/pqxx
+    PATHS
+        ${_PQXX_DIR}/include
+        # (...) many other paths - removed for brevity
+        /usr/include
+    NO_DEFAULT_PATH
+)
+\end{cmake}
+
+Next, we’ll look at how to finalize the search process, handle any missing paths, and call the function defining imported targets.
+
+\mySamllsubsection{Returning the final results}
+
+Now, it’s time to check whether we have any PQXX\_LIBRARY\_PATH-NOTFOUND or PQXX\_HEADER\_PATHNOTFOUND variables set. We can either manually print diagnostic messages and halt the build, or we can use the find\_package\_handle\_standard\_args() helper function from CMake. This function sets the <PKG\_NAME>\_FOUND variable to 1 if the path variables are correctly filled. It also provides appropriate diagnostic messages (it will respect the QUIET keyword) and will halt execution with a FATAL\_ERROR if a REQUIRED keyword is provided in the find\_package() invocation.
+
+If a library is found, we’ll call the function we wrote earlier to define the IMPORTED targets and store the paths in the cache:
+
+\filename{ch09/03-find-package-custom/cmake/module/FindPQXX.cmake (continued)}
+
+\begin{cmake}
+...
+
+# Returning the final results
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(
+    PQXX DEFAULT_MSG PQXX_LIBRARY_PATH PQXX_HEADER_PATH
+)
+if (PQXX_FOUND)
+    define_imported_target(
+        "${PQXX_LIBRARY_PATH};${POSTGRES_LIBRARIES}"
+        "${PQXX_HEADER_PATH};${POSTGRES_INCLUDE_DIRECTORIES}"
+    )
+elseif(PQXX_FIND_REQUIRED)
+    message(FATAL_ERROR "Required PQXX library not found")
+endif()
+\end{cmake}
+
+That’s it! This find module will find PQXX and create the appropriate PQXX::PQXX targets. The complete file is available in the book’s examples repository.
+
+For libraries that are well supported and likely already installed, this method is very effective. But what if you’re dealing with older, less-supported packages? Unix-like systems have a tool called pkg-config, and CMake has a useful wrapper module to support it as well.
+
 \mySubsubsection{9.2.2.}{Discovering legacy packages with FindPkgConfig}
+
+Managing dependencies and figuring out the necessary compile flags is a challenge as old as C++ libraries themselves. Various tools have been developed to tackle this issue, from simple mechanisms to comprehensive solutions integrated into buildsystems and IDEs. PkgConfig (\url{freedesktop.org/wiki/Software/pkg-config}) is one such tool, once very popular and commonly found on Unix-like systems, although it’s also available on macOS and Windows.
+
+However, PkgConfig is gradually being replaced by more modern solutions. So, should you still consider supporting it? Chances are, you probably don’t need to. Here’s why:
+
+\begin{itemize}
+\item
+If your library doesn’t provide the .pc PkgConfig files, there’s little value in writing definition files for an aging tool; opt for newer alternatives instead
+
+\item
+If you can pick a newer version of the library that supports CMake (we’ll discuss how to download dependencies from the internet later in this chapter)
+
+\item
+If the package is widely used, the latest version of CMake might already include a find module for it
+
+\item
+If a community-created find module is available online and its license allows you to use it, that’s another good option
+
+\item
+If you can write and maintain a find module yourself
+\end{itemize}
+
+Use PkgConfig only if you’re working with a library version that already provides a PkgConfig .pc file, and no config module or find module is available. Also, there should be a strong reason why creating a find module yourself isn’t a viable option. If you’re convinced that you don’t need PkgConfig, go ahead and skip this section.
+
+Sadly, not all environments can be quickly updated to the latest versions of a library. Many companies are still using legacy systems in production, which are no longer receiving the latest packages. If you have a .pc file for a specific library in your system, it will look something like the one for foobar shown here:
+
+\begin{shell}
+prefix=/usr/local
+exec_prefix=${prefix}
+includedir=${prefix}/include
+libdir=${exec_prefix}/lib
+Name: foobar
+Description: A foobar library
+Version: 1.0.0
+Cflags: -I${includedir}/foobar
+Libs: -L${libdir} -lfoobar
+\end{shell}
+
+The format of PkgConfig is simple, and many developers familiar with this tool prefer using it out of habit over learning more advanced systems like CMake. Despite its simplicity, PkgConfig can check whether a specific library and its version are available, and it can also get linking flags and directory information for the library.
+
+To use it with CMake, you need to find the pkg-config tool on your system, run specific commands, and then store the results for later use by the compiler. Doing all these steps each time you use PkgConfig can feel like a lot of work. Luckily, CMake provides a FindPkgConfig find module. If PkgConfig is found, PKG\_CONFIG\_FOUND will be set. We can then use pkg\_check\_modules() to look for the package we need.
+
+We have already become familiar with libpqxx in the previous section, and since it offers a .pc file, let’s try and find it using PkgConfig. To put this in action, let’s write a simple main.cpp file, which utilizes a placeholder connection class:
+
+\filename{ch09/04-find-pkg-config/main.cpp}
+
+\begin{cpp}
+#include <pqxx/pqxx>
+int main()
+{
+    // We're not actually connecting, but
+    // just proving that pqxx is available.
+    pqxx::nullconnection connection;
+}
+\end{cpp}
+
+In a typical listfile, we usually start with the find\_package() function and switch to PkgConfig if the library isn’t detected. This approach is useful when the environment gets updated, as we can keep using the main method without altering the code. We’ll skip this part for this example to keep it short.
+
+\filename{ch09/04-find-pkg-config/CMakeLists.txt}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26.0)
+project(FindPkgConfig CXX)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(PQXX REQUIRED IMPORTED_TARGET libpqxx)
+message("PQXX_FOUND: ${PQXX_FOUND}")
+add_executable(main main.cpp)
+target_link_libraries(main PRIVATE PkgConfig::PQXX)
+\end{cmake}
+
+Let’s break down what happens:
+
+\begin{enumerate}
+\item
+The find\_package() command is used to locate PkgConfig. If pkg-config is missing, the process stops due to the REQUIRED keyword.
+
+\item
+The pkg\_check\_modules() custom macro from the FindPkgConfig find module sets up a new IMPORTED target named PQXX. The find module looks for a libpqxx dependency and will fail if it’s not there, again because of the REQUIRED keyword. The IMPORTED\_TARGET keyword is crucial; otherwise, we’d need to define the target manually.
+
+\item
+We validate the setup with a message() function, displaying PQXX\_FOUND. If we hadn’t used REQUIRED earlier, this is where we could check whether the variable was set, maybe to activate other fallbacks.
+
+\item
+The main executable is declared with add\_executable().
+
+\item
+Finally, we use target\_link\_libraries() to link the PkgConfig::PQXX target, imported by pkg\_check\_modules(). Note that PkgConfig:: is a fixed prefix and PQXX is derived from the first argument we passed to the macro.
+\end{enumerate}
+
+Using this option is faster than creating a find module for dependencies that don’t have CMake support. However, it does come with some downsides. One issue is that it relies on the older pkg-config tool, which may not be available in the operating system that builds the project. Additionally, this approach creates a special case that needs to be maintained differently from other methods.
+
+We’ve discussed how to work with dependencies that are already installed on your computer. However, that’s only part of the story. Many times, your project will go to users who might not have all the required dependencies on their systems. Let’s see how to handle this situation.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

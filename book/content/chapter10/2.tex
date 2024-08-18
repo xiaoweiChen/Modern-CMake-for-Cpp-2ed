@@ -1,0 +1,97 @@
+I wanted to write about how to use C++ modules over three years ago. Despite the fact that modules were already accepted as part of the C++20 specification, the support of the C++ ecosystem was still nowhere near ready to use this feature. Fortunately, a lot has changed since the first edition of this book, and with the release of CMake 3.28, the C++20 modules are officially supported (although experimental support has been available since 3.26).
+
+Three years may seem like a long time to implement a single feature, but we need to remember that it’s not only up to CMake. Many pieces of the puzzle have to come together and work well. First, we need compilers to understand how to deal with modules, then buildsystems like GNU Make or Ninja have to be able to work with modules, and only then can CMake use these new mechanisms to provide its support for modules.
+
+This tells us one thing: not everyone will have the latest compatible tooling, and even then, the current support is still in an early phase. These limitations make modules unsuitable for a wide audience. So maybe don’t build production-grade projects depending on them just yet.
+
+Nevertheless, if you are an enthusiast of cutting-edge solutions, you’re in for a treat! If you can strictly control the build environment of your project, for example, with dedicated machines or build containerization (Docker et al.), you can effectively use modules internally. Just proceed with caution and understand that your mileage may vary. There may be a point at which you’ll need to back out of the modules altogether because of a missing or incorrectly implemented feature in any of the utilities.
+
+“Module” is quite an overloaded word in the context of C++ builds. We previously discussed modules in this book in the context of CMake: find modules, utility modules, and such. To clarify, C++ modules have nothing to do with CMake modules. Instead, they are a native feature of the language added in the C++20 version.
+
+At its core, a C++ module is a single source file that encapsulates the functionality of headers and implementation files into one coherent unit of code. It comprises two primary components:
+
+\begin{itemize}
+\item
+The Binary Module Interface (BMI) serves a similar purpose to a header file but is in a binary format, significantly reducing the need for recompilation when consumed by other translation units.
+
+\item
+The Module Implementation Unit provides the implementation, definitions, and internal details of the module. Its contents are not directly accessible from outside the module, effectively encapsulating the implementation details.
+\end{itemize}
+
+Modules were introduced to reduce compilation time and address some problematic aspects of the preprocessor and traditional header files. Let’s see how multiple translation units are glued together in a typical, legacy project.
+
+\myGraphic{0.3}{content/chapter10/images/1.png}{Figure 10.1: Project structure using traditional headers}
+
+The preceding figure shows how the preprocessor would traverse the project tree to build the program. As we learned in Chapter 7, Compiling C++ Sources with CMake, to build each translation unit, the preprocessor mechanically stitches files together. This means producing a long file containing all the headers included by preprocessor directives. That way, main.cpp would first include its own source, then the contents of lib.h, a.h, 1.h, and 2.h. Only then will the compiler kick in and start parsing every single character to produce binary object files. There’s nothing wrong with that until we realize that to compile lib.cpp, headers included in main.cpp have to be compiled again. And this redundancy keeps growing with every translation unit added.
+
+There are other complications with traditional headers:
+
+\begin{itemize}
+\item
+Include guards are required, leading to problems when forgotten.
+
+\item
+Symbols with circular references need forward declarations�
+
+\item
+Small changes to headers are required for the recompilation of all translation units.
+
+\item
+Preprocessor macros can be difficult to debug and maintain.
+\end{itemize}
+
+Modules solve many of these problems right off the bat, but some still remain relevant: modules, like headers, can depend on each other. When one module imports another, we still need to compile them in the right order, starting from the most nested one first. This usually isn’t a significant issue, as modules tend to be much larger in size. In many cases, an entire library can be stored in a single module.
+
+Let’s take a look at how modules are written and used in practice. In this simple example, we’ll just return the sum of two arguments:
+
+\filename{ch10/01-cxx-modules/math.cppm}
+
+\begin{cpp}
+export module math;
+export int add(int a, int b) {
+    return a + b;
+}
+\end{cpp}
+
+Such a module is self-explanatory: we start with a statement that tells the rest of the program that this is indeed a module called math. We then follow with a regular function definition that has been designated with the export keyword as available from outside the module.
+
+\begin{myNotic}{Note}
+You’ll notice the extension of module files is different than of regular C++ source code. This is a matter of convention and shouldn’t affect how this code is treated. My advice is to pick based on the toolchain you’ll be using:
+
+\begin{itemize}
+\item
+.ixx is an MSVC extension.
+
+\item
+.cppm is a Clang extension.
+
+\item
+.cxx is a GCC extension.
+\end{itemize}
+\end{myNotic}
+
+To use this module, we need to import it in our program:
+
+\filename{ch10/01-cxx-modules/main�cpp}
+
+\begin{cpp}
+import math;
+
+#include <iostream>
+
+int main() {
+    std::cout << "Addition 2 + 2 = " << add(2, 2) << std::endl;
+    return 0;
+}
+\end{cpp}
+
+The import math statement is enough to bring the symbols exported from the module directly into the main program. We can now use the add() function in the body of the main() function. On the surface, modules look very similar to headers. But if we tried to write our CMake listfile as usual, we wouldn’t have much success with building the project. Time to introduce the necessary steps to use the C++ modules.
+
+
+
+
+
+
+
+
+

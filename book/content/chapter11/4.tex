@@ -1,0 +1,244 @@
+Writing unit tests is technically possible without any kind of framework. All we have to do is create an instance of the class we want to test, execute one of its methods, and check if the new state or value returned meets our expectations. Then, we report the result and delete the object under test. Let’s try it out.
+
+We’ll use the following structure:
+
+\begin{shell}
+- CMakeLists.txt
+- src
+  |- CMakeLists.txt
+  |- calc.cpp
+  |- calc.h
+  |- main.cpp
+- test
+  |- CMakeLists.txt
+  |- calc_test.cpp
+\end{shell}
+
+Starting from main.cpp, we see that it uses a Calc class:
+
+\filename{ch11/01-no-framework/src/main.cpp}
+
+\begin{cpp}
+#include <iostream>
+#include "calc.h"
+using namespace std;
+int main() {
+    Calc c;
+    cout << "2 + 2 = " << c.Sum(2, 2) << endl;
+    cout << "3 * 3 = " << c.Multiply(3, 3) << endl;
+}
+\end{cpp}
+
+Nothing too fancy —— main.cpp simply includes the calc.h header and calls two methods of the Calc object. Let’s quickly glance at the interface of Calc, our SUT:
+
+\filename{ch11/01-no-framework/src/calc.h}
+
+\begin{cpp}
+#pragma once
+class Calc {
+    public:
+    int Sum(int a, int b);
+    int Multiply(int a, int b);
+};
+\end{cpp}
+
+The interface is as simple as possible. We’re using \#pragma once here—it works exactly like common preprocessor include guards and is understood by almost all modern compilers, despite not being part of the official standard.
+
+\begin{myNotic}{Note}
+Include guards are short lines in header files that prevent multiple inclusions in the same parent file.
+\end{myNotic}
+
+Let’s see the class implementation:
+
+\filename{ch11/01-no-framework/src/calc.cpp}
+
+\begin{cpp}
+#include "calc.h"
+int Calc::Sum(int a, int b) {
+    return a + b;
+}
+int Calc::Multiply(int a, int b) {
+    return a * a; // a mistake!
+}
+\end{cpp}
+
+Uh-oh! We introduced a mistake! Multiply is ignoring the b argument and returning a square of a instead. That should be detected by correctly written unit tests. So, let’s write some! Here we go:
+
+\filename{ch11/01-no-framework/test/calc\_test.cpp}
+
+\begin{cpp}
+#include "calc.h"
+#include <cstdlib>
+void SumAddsTwoIntegers() {
+    Calc sut;
+    if (4 != sut.Sum(2, 2))
+        std::exit(1);
+}
+void MultiplyMultipliesTwoIntegers() {
+    Calc sut;
+    if(3 != sut.Multiply(1, 3))
+    std::exit(1);
+}
+\end{cpp}
+
+We start our calc\_test.cpp file by writing two test methods, one for each tested method of SUT. If the value returned from the called method doesn’t match expectations, each function will call std::exit(1). We could use assert(), abort(), or terminate() here, but that would result in a less explicit Subprocess aborted message in the output of ctest, instead of the more readable Failed message.
+
+Time to create a test runner. Ours will be as simple as possible to avoid introducing ridiculous amounts of work. Just look at the main() function we had to write in order to run just two tests:
+
+\filename{ch11/01-no-framework/test/unit\_tests.cpp}
+
+\begin{cpp}
+#include <string>
+void SumAddsTwoIntegers();
+void MultiplyMultipliesTwoIntegers();
+int main(int argc, char *argv[]) {
+    if (argc < 2 || argv[1] == std::string("1"))
+        SumAddsTwoIntegers();
+    if (argc < 2 || argv[1] == std::string("2"))
+        MultiplyMultipliesTwoIntegers();
+}
+\end{cpp}
+
+Here’s a breakdown of what happens:
+
+\begin{enumerate}
+\item
+We declare two external functions that will be linked from another translation unit.
+
+\item
+If no arguments were provided, execute both tests (the zeroth element in argv[] is always the program name).
+
+\item
+If the first argument is an identifier of the test, execute it.
+
+\item
+If any of the tests fail, it internally calls exit() and returns with a 1 exit code.
+
+\item
+If no tests were executed or all passed, it implicitly returns with a 0 exit code.
+\end{enumerate}
+
+To run the first test, execute:
+
+\begin{shell}
+./unit_tests 1
+\end{shell}
+
+To run the second, execute:
+
+\begin{shell}
+./unit_tests 2
+\end{shell}
+
+We simplified the code as much as possible, but it’s still hard to read. Anyone who might need to maintain this section isn’t going to have an easy time after adding a few more tests. The functionality is pretty raw —— debugging such a test suite will be difficult. Nevertheless, let’s see how we can use it with CTest:
+
+\filename{ch11/01-no-framework/CMakeLists.txt}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26.0)
+project(NoFrameworkTests CXX)
+include(CTest)
+add_subdirectory(src bin)
+add_subdirectory(test)
+\end{cmake}
+
+We start with the usual header and include(CTest). This enables CTest and should be always done in the top-level CMakeLists.txt. Next, we include two nested listfiles in each of the subdirectories: src and test. The specified bin value indicates that we want the binary output from the src subdirectory to be placed in <build\_tree>/bin. Otherwise, binary files would end up in <build\_tree>/src, which could be confusing for the user, since build artifacts are not source files.
+
+For the src directory, the listfile is straightforward and contains a simple main target definition:
+
+\filename{ch11/01-no-framework/src/CMakeLists.txt}
+
+\begin{cmake}
+add_executable(main main.cpp calc.cpp)
+\end{cmake}
+
+We also need a listfile for the test directory:
+
+\filename{ch11/01-no-framework/test/CMakeLists.txt}
+
+\begin{cmake}
+add_executable(unit_tests
+               unit_tests.cpp
+               calc_test.cpp
+               ../src/calc.cpp)
+target_include_directories(unit_tests PRIVATE ../src)
+add_test(NAME SumAddsTwoInts COMMAND unit_tests 1)
+add_test(NAME MultiplyMultipliesTwoInts COMMAND unit_tests 2)
+\end{cmake}
+
+We have now defined a second unit\_tests target that also uses the src/calc.cpp implementation file and its respective header. Finally, we explicitly add two tests:
+
+\begin{itemize}
+\item
+SumAddsTwoInts
+
+\item
+MultiplyMultipliesTwoInts
+\end{itemize}
+
+Each provides its ID as an argument to the add\_test() command. CTest will simply take anything provided after the COMMAND keyword and execute it in a subshell, collecting the output and exit code. Don’t get too attached to the add\_test() method; in the Unit-testing frameworks section later, we’ll discover a much better way of dealing with test cases.
+
+To run the tests, execute ctest in the build tree:
+
+\begin{shell}
+# ctest
+Test project /tmp/b
+    Start 1: SumAddsTwoInts
+1/2 Test #1: SumAddsTwoInts ................... Passed 0.00 sec
+    Start 2: MultiplyMultipliesTwoInts
+2/2 Test #2: MultiplyMultipliesTwoInts ........***Failed 0.00 sec
+50% tests passed, 1 tests failed out of 2
+Total Test time (real) = 0.00 sec
+The following tests FAILED:
+          2 - MultiplyMultipliesTwoInts (Failed)
+Errors while running CTest
+Output from these tests are in: /tmp/b/Testing/Temporary/LastTest.log
+Use "--rerun-failed --output-on-failure" to re-run the failed cases
+verbosely
+\end{shell}
+
+CTest executed both tests and reported that one of them is failing —— the returned value from Calc::Multiply didn’t meet expectations. Very good. We now know that our code has a bug, and someone should fix it.
+
+\begin{myNotic}{Note}
+You may have noticed that in most examples so far, we didn’t necessarily employ the project structure described in Chapter 4, Setting Up Your First CMake Project. This was done to keep things brief. This chapter discusses more advanced concepts; therefore, using a full structure is warranted. In your projects (no matter how small), it’s best to follow this structure from the start. As a wise man once said: “You step onto the road, and if you don’t keep your feet, there’s no knowing where you might be swept off to.”
+\end{myNotic}
+
+I hope it’s now clear that building a testing framework from scratch for your own project is not advisable. Even the most basic example is hard on the eyes, has a lot of overhead, and doesn’t add any value. However, before we can adopt a unit-testing framework, we’ll need to rethink the structure of the project.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

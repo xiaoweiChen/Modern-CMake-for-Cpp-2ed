@@ -1,0 +1,8 @@
+This chapter has equipped you with the knowledge to identify system-installed packages using CMake’s find modules and how to utilize the config files that come with the library. For older libraries that don’t support CMake but include .pc files, the PkgConfig tool and CMake’s bundled FindPkgConfig find module can be used.
+
+We also explored the capabilities of the FetchContent module. This module allows us to download dependencies from various sources while configuring CMake to first scan the system, thereby avoiding unnecessary downloads. We touched upon the historical context of these modules and discussed the option of using the ExternalProject module for special cases.
+CMake is designed to automatically generate build targets when a library is located through most of the methods we’ve discussed. This adds a layer of convenience and elegance to the process.
+
+With this foundation in place, you’re ready to incorporate standard libraries into your projects.
+
+In the next chapter, we’ll learn how to provide reusable code on a smaller scale with C++20 modules.

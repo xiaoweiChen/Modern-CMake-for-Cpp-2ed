@@ -1,0 +1,33 @@
+Imagine a factory line where a machine puts holes in sheets of steel. These holes need to be a specific size and shape to house bolts for the finished product. The designer of the factory line will set up the machine, test the holes, and move on. Eventually, something will change: the steel might be thicker, a worker could adjust the hole size, or more holes may need to be punched because the design has changed. A smart designer will install quality control checks at key points to ensure that the product meets the specifications. It doesn’t matter how the holes are made: drilled, punched, or laser cut, they must meet certain requirements.
+
+The same principle applies to software development. It’s hard to predict which code will remain stable for years and which will undergo multiple revisions. As software functionality expands, we must ensure that we don’t inadvertently break things. And we will make mistakes. Even the best programmers can’t foresee the implications of every change. Developers often work on code they didn’t originally write and may not understand all the assumptions behind it. They’ll read the code, form a mental model, make changes, and hope for the best. When this doesn’t work, fixing the bug can take hours or days and will negatively impact the product and its users.
+
+At times, you’ll find code that’s hard to understand. You might even start blaming others for the mess, only to discover you’re the culprit. This happens when code is written quickly, without fully grasping the problem.
+
+As developers, we’re not just under pressure from project deadlines or limited budgets; sometimes we’re awakened at night to fix a critical issue. It’s surprising how some less obvious errors can slip through code review.
+
+Automated tests can prevent most of these issues. They are code snippets that verify whether another piece of code behaves correctly. As the name suggests, these tests run automatically whenever someone makes a change, typically as part of the build process. They’re often added as a step to ensure code quality before merging it into the repository.
+
+You might be tempted to skip creating automated tests to save time, but that’s a costly mistake. As Steven Wright said, “Experience is something you don’t get until just after you need it.” Unless you’re writing a one-use script or experimenting, don’t skip tests. You might initially be frustrated that your carefully crafted code keeps failing tests. But remember that a failed test means that you just avoided introducing a major issue into the production environment. The time spent on tests now will save you time on bug fixes later—and let you sleep better at night. Tests are not as difficult to add and maintain as you might think.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

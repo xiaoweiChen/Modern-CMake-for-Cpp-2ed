@@ -1,0 +1,257 @@
+
+Ultimately, automated testing is simply about running an executable that puts your System Under Test (SUT) in a specific state, performs the operations you want to test, and checks whether the results meet expectations. You can think of them as a structured way to complete the sentence GIVEN\_<CONDITION>\_WHEN\_<SCENARIO>\_THEN\_<EXPECTED-OUTCOME> and verify whether it holds true for the SUT. Some resources suggest naming your test functions in this very fashion: for example, GIVEN\_4\_and\_2\_WHEN\_Sum\_THEN\_returns\_6.
+
+There are many ways to implement and execute these tests, depending on the framework you choose, how you connect it to your SUT, and its exact setup. For a user who is interacting with your project for the first time, even small details like the filename of your testing binary will impact their experience. Because there’s no standard naming convention, one developer might name their test executable test\_my\_app, another might choose unit\_tests, and a third might opt for something less straightforward or skip tests entirely. Figuring out which file to run, which framework is in use, what arguments to pass, and how to collect results are hassles that users would rather avoid.
+
+CMake addresses this with a separate ctest command-line tool. Configured by the project’s author through listfiles, it offers a standardized way to run tests. This uniform interface applies to every project built with CMake. By following this standard, you’ll enjoy other benefits: integrating the project into a Continuous Integration/Continuous Deployment (CI/CD) pipeline becomes easier, and tests will show up more conveniently in IDEs like Visual Studio or CLion. Most importantly, you get a robust test-running utility with minimal effort.
+
+So, how do you run tests with CTest in an already configured project? You’ll need to choose one of the following three modes of operation:
+
+\begin{itemize}
+\item
+Dashboard
+
+\item
+Test
+
+\item
+Build-and-test
+\end{itemize}
+
+The Dashboard mode allows you to send the test results to a separate tool called CDash, also from Kitware. CDash collects and presents software quality test results in an easy-to-navigate dashboard. It’s a topic useful for very large projects, but outside of the scope of this book.
+
+The command line for Test mode is as follows:
+
+\begin{shell}
+ctest [<options>]
+\end{shell}
+
+In this mode, CTest should be run in the build tree after you’ve built the project with CMake. There are many options available, but before we dive into them, there’s a minor inconvenience to address: the ctest binary must be run in the build tree, and only after the project has been built. This can be a bit awkward during the development cycle as you’ll need to run multiple commands and toggle between directories.
+
+To make things easier, CTest offers a Build-and-Test mode. We’ll explore this mode first, so we can give our full attention to the Test mode later.
+
+\mySubsubsection{11.3.1.}{Build-and-test mode}
+
+To use this mode, we need to execute ctest followed with -{}-build-and-test:
+
+\begin{shell}
+ctest --build-and-test <source-tree> <build-tree>
+      --build-generator <generator> [<options>...]
+      [--build-options <opts>...]
+      [--test-command <command> [<args>...]]
+\end{shell}
+
+Essentially, this is a simple wrapper around the Test mode. It accepts build configuration options and a test command after the -{}-test-command argument. It’s important to note that no tests will be run unless you include the ctest keyword after -{}-test-command, as shown here:
+
+\begin{shell}
+ctest --build-and-test project/source-tree /tmp/build-tree --buildgenerator "Unix Makefiles" --test-command ctest
+\end{shell}
+
+In this command, we specify source and build paths, and select a build generator. All three are required and follow the rules for the cmake command, described in detail in Chapter 1, First Steps with CMake.
+
+You can add more arguments, which generally fall into one of three categories: configuration control, build process, or test settings.
+
+Arguments for the configuration stage are as follows:
+
+\begin{itemize}
+\item
+-{}-build-options —— Include extra options for the cmake configuration. Place them just before -{}-test-command, which must be last.
+
+\item
+-{}-build-two-config —— Run the configuration stage for CMake twice.
+
+\item
+-{}-build-nocmake —— Skip the configuration stage.
+
+\item
+-{}-build-generator-platform —— Provide a generator-specific platform.
+
+\item
+-{}-build-generator-toolset —— Provide a generator-specific toolset.
+
+\item
+-{}-build-makeprogram —— Specify a make executable for Make- or Ninja-based generators.
+\end{itemize}
+
+Arguments for the build stage are as follows:
+
+\begin{itemize}
+\item
+-{}-build-target —— Specify which target to build.
+
+\item
+-{}-build-noclean —— Build without building the clean target first.
+
+\item
+-{}-build-project —— Name the project that is being built.
+\end{itemize}
+
+The argument for the test stage is as follows:
+
+\begin{itemize}
+\item
+-{}-test-timeout —— Set a time limit for the tests, in seconds.
+\end{itemize}
+
+Now we can configure Test mode, either by adding arguments after the -{}-test-command cmake or by running Test mode directly.
+
+\mySubsubsection{11.3.2.}{test mode}
+
+After building your project, you can use the ctest command within the build directory to run your tests. If you’re using Build-and-test mode, this will be done for you. Running ctest without any extra flags is usually sufficient for most situations. If all tests are successful, ctest will return an exit code of 0 (on Unix-like systems), which you can verify in your CI/CD pipeline to prevent merging faulty changes into your production branch.
+
+Writing good tests can be as challenging as writing the production code itself. We set up our SUT to be in a specific state, run a single test, and then tear down the SUT instance. This process is rather complex and can generate all sorts of issues: cross-test pollution, timing and concurrency disruptions, resource contention, frozen execution due to deadlocks, and many others.
+
+Fortunately, CTest offers various options to mitigate these issues. You can control aspects like which tests to run, their execution order, the output they generate, time constraints, and repetition rates, among other things. The following sections will provide the necessary context and a brief overview of the most useful options.
+
+\mySamllsection{Querying tests}
+
+The first thing we might need to do is to understand which tests are actually written for the project. CTest offers the -N option, which disables execution and only prints a list, as follows:
+
+\begin{shell}
+# ctest -N
+Test project /tmp/b
+  Test #1: SumAddsTwoInts
+  Test #2: MultiplyMultipliesTwoInts
+Total Tests: 2
+\end{shell}
+
+You might want to use -N with the filters described in the next section to check which tests would be executed when a filter is applied.
+
+If you need a JSON format that can be consumed by automated tooling, execute ctest with -{}-show-only=json-v1.
+
+CTest also offers a mechanism to group tests with the LABELS keyword. To list all available labels (without actually executing any tests), use -{}-print-labels. This option is helpful when tests are defined manually with the add\_test(<name> <test-command>) command in your listfile, as you are then able to specify individual labels through test properties, like this:
+
+\begin{cmake}
+set_tests_properties(<name> PROPERTIES LABELS "<label>")
+\end{cmake}
+
+However, keep in mind that automated test discovery methods from various frameworks may not support this level of labeling detail.
+
+\mySamllsection{Filtering tests}
+
+Sometimes you may want to run only specific tests instead of the entire suite. For example, if you’re debugging a single failing test, there’s no need to run all the others. You can also use this mechanism to distribute tests across multiple machines for large projects.
+
+These flags will filter tests according to the provided <r> regular expression (regex), as follows:
+
+\begin{itemize}
+\item
+-R <r>, -{}-tests-regex <r> - Only run tests with names matching <r>
+
+\item
+-E <r>, -{}-exclude-regex <r> - Skip tests with names matching <r>
+
+\item
+-L <r>, -{}-label-regex <r> - Only run tests with labels matching <r>
+
+\item
+ -LE <r>, -{}-label-exclude <regex> - Skip tests with labels matching <r>
+\end{itemize}
+
+Advanced scenarios can be achieved with the -{}-tests-information option (or the shorter form, -I). This option takes a range in the comma-separated format <start>,<end>,<step>,<test-IDs>. You can omit any field but keep the commas. The <Test IDs> option is a comma-separated list of an ordinal number of tests to run. For example:
+
+\begin{itemize}
+\item
+-I 3,, will skip tests 1 and 2 (execution starts from the third test)
+
+\item
+-I ,2, will only run the first and second test
+
+\item
+-I 2,,3 will run every third test, starting from the second test in the row
+
+\item
+-I ,0,,3,9,7 will only run the third, ninth, and seventh test
+\end{itemize}
+
+You can also specify these ranges in a file to execute tests on multiple machines in a distributed fashion for really large test suites. When using -I along with -R, only tests that meet both criteria will run. If you want to run tests that meet either condition, use the -U option. As mentioned before, you can use the -N option to check the outcome of filtering.
+
+\mySamllsection{Shuffling tests}
+
+Writing unit tests can be tricky. One of the more surprising problems to encounter is test coupling, which is a situation where one test affects another by incompletely setting or clearing the state of the SUT. In other words, the first test to execute can “leak” its state and pollute the second test. Such coupling is bad news because it introduces unknown, implicit relations between tests.
+
+What’s worse, this kind of error is known to hide really well in the complexities of testing scenarios. We might detect it when it causes one of the tests to randomly fail, but the opposite is equally possible: an incorrect state causes the test to pass when it shouldn’t. Such falsely passing tests give developers an illusion of security, which is even worse than not having tests at all. The assumption that the code is correctly tested may encourage bolder actions, leading to unexpected outcomes.
+
+One way of discovering such problems is by running each test in isolation. Usually, this is not the case when executing test runners straight from the testing framework without CTest. To run a single test, you’ll need to pass a framework-specific argument to the test executable. This allows you to detect tests that are passing in the suite but are failing when executed on their own.
+
+CTest, on the other hand, effectively removes all memory-based cross-contamination of tests by implicitly executing every test case in a child CTest instance. You may even go further and add the -{}-force-new-ctest-process option to enforce separate processes.
+
+Unfortunately, this alone won’t work if your tests are using external, contested resources such as GPUs, databases, or files. An additional precaution we can take is to simply randomize the order of test execution. Introducing such variation is often enough to eventually detect spuriously passing tests. CTest supports this strategy with the -{}-schedule-random option.
+
+\mySamllsection{Handling failures}
+
+Here’s a famous quote from John C. Maxwell: “Fail early, fail often, but always fail forward.” Failing forward means learning from our mistakes. This is exactly what we want to do when running unit tests (and perhaps in other areas of life). Unless you’re running your tests with a debugger attached, it’s not easy to detect where you made a mistake, as CTest will keep things brief and only list tests that failed, without actually printing any of their output.
+
+Messages printed to stdout by the test case or the SUT might be invaluable to determine exactly what was wrong. To see them, we can run ctest with -{}-output-on-failure. Alternatively, setting the CTEST\_OUTPUT\_ON\_FAILURE environment variable will have the same effect.
+
+Depending on the size of the solution, it might make sense to stop execution after any of the tests fail. This can be done by providing the -{}-stop-on-failure argument to ctest.
+
+CTest stores the names of failed tests. To save time in lengthy test suites, we can focus on these failed tests and skip running the passing tests until the problem is solved. This feature is enabled with the -{}-rerun-failed option (any other filters will be ignored). Remember to run all tests after solving all issues to make sure that no regression has been introduced in the meantime.
+
+When CTest doesn’t detect any tests, it may mean two things: either tests aren’t there or there’s an issue with the project. By default, ctest will print a warning message and return a 0 exit code, to avoid muddying the waters. Most users will have enough context to understand which case they encountered and what to do next. However, in some environments, ctest will always be executed as part of an automated pipeline. Then, we might need to explicitly say that a lack of tests should be interpreted as an error (and return a nonzero exit code). We can configure this behavior by providing the -{}-no-tests=error argument. For the opposite behavior (no warning), use the -{}-no-tests=ignore option.
+
+\mySamllsection{Repeating tests}
+
+Sooner or later in your career, you’ll encounter tests that work correctly most of the time. I want to emphasize the word “most.” Once in a blue moon, these tests will fail for environmental reasons: because of incorrectly mocked time, issues with event loops, poor handling of asynchronous execution, parallelism, hash collisions, and other really complicated scenarios that don’t occur on every run. These unreliable tests are called flaky tests.
+
+Such inconsistency seems a not-so-important problem. We might say that tests aren’t a real production environment and this is the ultimate reason why they sometimes fail. There is a grain of truth in this: tests aren’t meant to replicate every little detail, because it’s not viable. Tests are a simulation, an approximation of what might happen, and that’s usually good enough. Does it hurt to rerun tests if they’ll pass on the next execution? Actually, it does.
+
+There are three main concerns, as outlined here:
+
+\begin{itemize}
+\item
+If you have gathered enough flaky tests in your code base, they will become a serious obstacle to the smooth delivery of code changes. It’s especially frustrating when you’re in a hurry: either getting ready to go home on a Friday afternoon or delivering a critical fix to a severe issue impacting your customers.
+
+\item
+You can’t be truly sure that your flaky tests are failing because of the inadequacy of the testing environment. It may be the opposite: they fail because they replicated a rare scenario that already occurs in production. It’s just not obvious enough to raise an alert… yet.
+
+\item
+It’s not the test that’s flaky —— it’s your code! The environment is wonky from time to time— as programmers, we deal with that in a deterministic manner. If the SUT behaves this way, it’s a sign of a serious error —— for example, the code might be reading from uninitialized memory.
+\end{itemize}
+
+There isn’t a perfect way to address all of the preceding cases—the multitude of possible reasons is simply too great. However, we might increase our chance of identifying flaky tests by running them repeatedly with the –repeat <mode>:<\#>option. Three modes are available, as outlined here:
+
+\begin{itemize}
+\item
+until-fail —— Run test <\#> times; all runs have to pass.
+
+\item
+until-pass —— Run test up to <\#> times; it has to pass at least once. This is useful when dealing with tests that are known to be flaky but are too difficult and important to debug or disable.
+
+\item
+after-timeout —— Run test up to <\#> times but retry only if the test is timing out. Use it in busy test environments.
+\end{itemize}
+
+A general recommendation is to debug flaky tests as quickly as possible or get rid of them if they can’t be trusted to produce consistent results.
+
+\mySamllsection{Controlling output}
+
+Printing every piece of information to the screen every time would get incredibly busy. CTest reduces the noise and collects the outputs of tests it executes to the log files, providing only the most useful information on regular runs. When things go bad and tests fail, you can expect a summary and possibly some logs if you enabled -{}-output-on-failure, as mentioned earlier.
+
+I know from experience that “enough information” is enough until it isn’t. Sometimes, we may want to see the output of passed tests too, perhaps to check if they’re truly working (and not just silently stopping without an error). To get access to more verbose output, add the -V option (or -{}-verbose if you want to be explicit in your automated pipelines). If that’s not enough, you might want -VV or -{}-extra-verbose. For extremely in-depth debugging, use --debug (but be prepared for walls of text with all the details).
+
+If you’re looking for the opposite, CTest also offers “Zen mode,” enabled with -Q or -{}-quiet. No output will be printed then (you can stop worrying and learn to love the bug). It seems that this option has no other use than to confuse people, but be aware that the output will still be stored in test files (in ./Testing/Temporary by default). Automated pipelines can check if the exit code is a nonzero value and collect the log files for further processing without littering the main output with details that may confuse developers not familiar with the product.
+
+To store the logs in a specific path, use the -O <file>, -{}-output-log <file> option. If you’re suffering from lengthy outputs, there are two limit options to cap them to the given number of bytes per test: -{}-test-output-size-passed <size> and -{}-test-output-size-failed <size>.
+
+\mySamllsection{Miscellaneous}
+
+There are a few other options that can be useful for your everyday testing needs, as outlined here:
+
+\begin{itemize}
+\item
+-C <cfg>, -{}-build-config <cfg> —— Specify which configuration to test. The Debug configuration usually has debugging symbols, making things easier to understand, but Release should be tested too, as heavy optimization options could potentially affect the behavior of SUT. This option is for multi-configuration generators only.
+
+\item
+-j <jobs>, -{}-parallel <jobs> —— Sets the number of tests executed in parallel. It’s very useful to speed up the execution of long tests during development. Be mindful that in a busy environment (on a shared test runner), it might have an adverse effect due to scheduling. This can be slightly mitigated with the next option.
+
+\item
+-{}-test-load <level> —— Schedule parallel tests in a fashion that CPU load doesn’t exceed the <level> value (on a best-effort basis).
+
+\item
+-{}-timeout <seconds> —— Specify the default limit of time for a single test.
+\end{itemize}
+
+Now that we understand how to execute ctest in many different scenarios, let’s learn how to add a simple test.
+
+
+

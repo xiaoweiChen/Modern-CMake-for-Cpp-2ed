@@ -1,0 +1,147 @@
+
+This book mainly discusses CMake 3.26, but it’s worth noting that CMake frequently updates, and version 3.28 was released just before this chapter went to press. If you’re using this version or newer, you can access the latest features by setting the cmake\_minimum\_required() command to VERSION 3.28.0.
+
+On the other hand, if you need to stick with an older version or want to cater to a broader audience who might not have upgraded, you’ll need to enable experimental support to use C++20 modules in CMake.
+
+Let’s explore how to do that.
+
+\mySubsubsection{10.3.1.}{Enabling the experimental support in CMake 3.26 and 3.27}
+
+Experimental support represents a form of agreement: you, as the developer, acknowledge that this feature is not yet production-ready and should be used solely for testing purposes. To sign such an agreement, you’ll need to set the CMAKE\_EXPERIMENTAL\_CXX\_MODULE\_CMAKE\_API variable in the project’s listfile to a specific value for the CMake version you’re using.
+
+\begin{myNotic}{Note}
+The official Kitware repository for CMake hosts an issue tracker, where you can search for the label area:cxxmodules. Until 3.28 was released, only one issue was reported (in 3.25.0), which is a good indicator of a potentially stable feature. If you decide to enable the experiment, build your project to confirm it will work for your users.
+\end{myNotic}
+
+Here are flags that can be found in the repository and documentation of CMake:
+
+\begin{itemize}
+\item
+3c375311-a3c9-4396-a187-3227ef642046 for 3.25 (undocumented)
+
+\item
+2182bf5c-ef0d-489a-91da-49dbc3090d2a for 3.26
+
+\item
+aa1f7df0-828a-4fcd-9afc-2dc80491aca7 for 3.27
+\end{itemize}
+
+Unfortunately, if you don’t have access to at least CMake 3.25, you’re out of luck. Modules weren’t available before that version. Additionally, if CMake is older than 3.27, you’ll need to set one more variable to enable dynamic dependencies for modules:
+
+\begin{cmake}
+set(CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP 1)
+\end{cmake}
+
+Here’s how you might automatically pick the correct API key for the current version, and explicitly disable builds for versions you don’t support (in this example, we’ll only support CMake 3.26 and above).
+
+\filename{ch10/01-cxx-modules/CMakeLists.txt}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26.0)
+project(CXXModules CXX)
+
+# turn on the experimental API
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.28.0)
+    # Assume that C++ sources do import modules
+    cmake_policy(SET CMP0155 NEW)
+elseif(CMAKE_VERSION VERSION_GREATER_EQUAL 3.27.0)
+    set(CMAKE_EXPERIMENTAL_CXX_MODULE_CMAKE_API
+        "aa1f7df0-828a-4fcd-9afc-2dc80491aca7")
+elseif(CMAKE_VERSION VERSION_GREATER_EQUAL 3.26.0)
+    set(CMAKE_EXPERIMENTAL_CXX_MODULE_CMAKE_API
+        "2182bf5c-ef0d-489a-91da-49dbc3090d2a")
+    set(CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP 1)
+else()
+    message(FATAL_ERROR "Version lower than 3.26 not supported")
+endif()
+\end{cmake}
+
+Let’s break it down statement by statement:
+
+\begin{enumerate}
+\item
+First, we check if the version is 3.28 or newer. This allows us to enable the CMP0155 policy, with cmake\_policy(). This is required if we want to support versions older than 3.28.
+
+\item
+If that’s not the case, we’ll check if the version is above 3.27. If so, we’ll set the appropriate API key.
+
+\item
+If it’s not above 3.27, we’ll check if it’s above 3.26. If that’s the case, set the appropriate API key and enable the experimental C++20 module dynamic dependency flag.
+
+\item
+If the version is lower than 3.26, it’s not supported by our project, and a fatal error message will be printed informing the user.
+\end{enumerate}
+
+This allows us to support the range of CMake versions, starting from 3.26. If we have the benefit of running CMake 3.28 in every environment the project is going to be built in, the above if() block is not necessary. So, what is?
+
+\mySubsubsection{10.3.2.}{Enabling support for CMake 3.28 and up}
+
+To use C++20 modules since 3.28, you explicitly have to declare this version as minimal. Use a project header like this:
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.28.0)
+project(CXXModules CXX)
+\end{cmake}
+
+It will enable the CMP0155 policy by default if the minimum required version is set to 3.28 or above. Read on to learn what other aspects we need to configure before defining a module. If you require 3.27 or lower, your build will likely fail, even if the project is being built with CMake 3.28 or newer.
+
+The next thing to consider is the compiler requirements.
+
+\mySubsubsection{10.3.3.}{Setting the compiler requirements}
+
+Regardless of whether we’re building with CMake 3.26, 3.27, 3.28, or newer, to create solutions using C++ modules, there are two global variables that we need to set. The first disables unsupported C++ extensions, and the second ensures that the compiler supports the required standard.
+
+\filename{ch10/01-cxx-modules/CMakeLists�txt (continued)}
+
+\begin{cmake}
+# Libc++ has no support compiler extensions for modules.
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD 20)
+\end{cmake}
+
+Setting the standard may seem redundant, given that there’s a very limited number of compilers that support modules. Nonetheless, it’s good practice for future-proofing projects.
+
+The general configuration is quite straightforward and concludes here. We can now proceed to define a module within CMake.
+
+\mySubsubsection{10.3.4.}{Declaring a C++ module}
+
+CMake module definition leverages the target\_sources() command and the FILE\_SET keyword:
+
+\begin{cmake}
+target_sources(math
+    PUBLIC FILE_SET CXX_MODULES TYPE CXX_MODULES FILES math.cppm
+)
+\end{cmake}
+
+In the highlighted line above, we introduce a new file set type: CXX\_MODULES. This type is supported by default only since CMake 3.28. For 3.26, the experimental API has to be enabled. Without proper support, an error message like the following will occur:
+
+\begin{shell}
+CMake Error at CMakeLists.txt:25 (target_sources):
+target_sources File set TYPE may only be "HEADERS"
+\end{shell}
+
+If you see this in the build output, check if your code is correct. This message will also appear if the API key value is incorrect for the version used.
+
+Defining modules within the same binary where they are used offers benefits, as discussed earlier.
+
+However, the advantages are more pronounced when creating a library. Such libraries can be utilized in other projects or within the same project by other libraries, further enhancing modularity.
+
+To declare the module and link it with the main program, the following CMake configuration is used:
+
+\filename{ch10/01-cxx-modules/CMakeLists.txt (continued)}
+
+\begin{cmake}
+add_library(math)
+target_sources(math
+    PUBLIC FILE_SET CXX_MODULES FILES math.cppm
+)
+target_compile_features(math PUBLIC cxx_std_20)
+set_target_properties(math PROPERTIES CXX_EXTENSIONS OFF)
+
+add_executable(main main.cpp)
+target_link_libraries(main PRIVATE math)
+\end{cmake}
+
+To ensure that this library can be used in other projects, we must use the target\_compile\_features() command and explicitly require cxx\_std\_20. Additionally, we have to repeat setting the CXX\_EXTENSIONS OFF on the target level. Without this, CMake will generate an error and halt the build. This seems redundant and will likely be solved in future versions of CMake.
+
+With the project setup complete, it’s time to finally build it.
