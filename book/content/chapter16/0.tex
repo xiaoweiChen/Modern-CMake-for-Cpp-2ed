@@ -1,0 +1,24 @@
+Presets were added to CMake in version 3.19 to make it easier to manage project settings. Before presets, users had to memorize lengthy command-line configurations or set overrides directly in the project files, which could become complicated and prone to mistakes. Presets let users handle settings such as the generator used for configuring the project, the number of concurrent build tasks, and the project components to build or test in a more straightforward manner. With presets, CMake becomes simpler to use. Users can set up presets once and use them whenever needed, making each CMake execution more consistent and easier to understand. They also help standardize settings across different users and computers, simplifying collaborative project work.
+
+Presets are compatible with four primary modes of CMake: configuring the buildsystem, building, running tests, and packaging. They allow users to link these parts together in workflows, making the whole process more automatic and organized. Additionally, presets offer features like conditions and macro expressions (or simply macros), granting users greater control.
+
+In this chapter, we’re going to cover the following main topics:
+
+\begin{itemize}
+\item
+Using presets defined in a project
+
+\item
+Writing a preset file
+
+\item
+Defining stage-specific presets
+
+\item
+Defining workflow presets
+
+\item
+Adding conditions and macros
+\end{itemize}
+
+

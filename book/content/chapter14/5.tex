@@ -1,8 +1,156 @@
 
+We’ll begin by addressing potential confusion surrounding the term component. Consider the full signature for find\_package():
 
+\begin{shell}
+find_package(<PackageName>
+            [version] [EXACT] [QUIET] [MODULE] [REQUIRED]
+            [[COMPONENTS] [components...]]
+            [OPTIONAL_COMPONENTS components...]
+            [NO_POLICY_SCOPE]
+)
+\end{shell}
+
+It’s important not to confuse the components mentioned here with the COMPONENT keyword that’s used in the install() command. Despite sharing the same name, they are distinct concepts and must be understood separately. We’ll explore this further in the following subsections.
 
 \mySubsubsection{14.5.1.}{How to use components in find\_package()}
 
+When calling find\_package() with a list of COMPONENTS or OPTIONAL\_COMPONENTS, we indicate to CMake that we are only interested in packages that provide these components. However, it’s crucial to understand that verifying this requirement is the responsibility of the package. If the package vendor doesn’t implement the necessary checks in the config file, as mentioned in the Creating advanced config files section, the process will not proceed as expected.
+
+Requested components are passed to the config file via the <package>\_FIND\_COMPONENTS variable (both optional and non-optional). For every non-optional component, a <package>\_FIND\_REQUIRED\_<component> variable is set. Package authors could write a macro to scan this list and verify the provision of all required components, but this is unnecessary. The check\_required\_components() function serves this purpose. The config file should set the <package>\_<component>\_FOUND variable when a necessary component is found. A macro at the file’s end will then verify whether all required variables are set.
+
 \mySubsubsection{14.5.2.}{How to use components in the install() command}
 
+Not all produced artifacts need installation in every scenario. For instance, a project might install static libraries and public headers for development, but by default, it may only need to install a shared library for runtime. To enable this dual behavior, artifacts can be grouped under a common name using the COMPONENT keyword, available in all install() commands. Users interested in limiting installation to specific components can do so by executing the following case-sensitive command:
+
+\begin{shell}
+cmake --install <build tree>
+      --component=<component1 name> --component=<component2 name>
+\end{shell}
+
+Assigning the COMPONENT keyword to an artifact doesn’t automatically exclude it from the default installation. To achieve this exclusion, the EXCLUDE\_FROM\_ALL keyword must be added.
+
+Let’s explore this concept in a code example:
+
+\filename{ch14/13-components/CMakeLists.txt (fragment)}
+
+\begin{cmake}
+install(TARGETS calc EXPORT CalcTargets
+    ARCHIVE
+        COMPONENT lib
+    FILE_SET HEADERS
+        COMPONENT headers
+)
+install(EXPORT CalcTargets
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/calc/cmake
+    NAMESPACE Calc::
+    COMPONENT lib
+)
+install(CODE "MESSAGE(\"Installing 'extra' component\")"
+    COMPONENT extra
+    EXCLUDE_FROM_ALL
+)
+\end{cmake}
+
+The preceding install commands define the following components:
+
+\begin{itemize}
+\item
+lib: This contains the static library and target export files. It’s installed by default.
+
+\item
+headers: This contains C++ header files. Also installed by default.
+
+\item
+extra: This executes a piece of code to print a message. Not installed by default.
+\end{itemize}
+
+Let’s reiterate:
+
+\begin{itemize}
+\item
+cmake -{}-installwithout the -{}-componentargument will install both the liband headers components.
+
+\item
+cmake -{}-install -{}-component headers will only install public headers.
+
+\item
+cmake -{}-install -{}-component extra will print a message that’s inaccessible otherwise (the EXCLUDE\_FROM\_ALL keyword prevents that).
+\end{itemize}
+
+If the COMPONENT keyword isn’t specified for an installed artifact, it defaults to Unspecified, as defined by the CMAKE\_INSTALL\_DEFAULT\_COMPONENT\_NAME variable.
+
+\begin{myNotic}{Note}
+Since there’s no way to list all available components from the cmake command line, thoroughly documenting your package’s components can be extremely helpful for users. An INSTALL “READM” file is a good place for this information.
+\end{myNotic}
+
+If cmake is invoked with the -{}-component argument for a non-existent component, the command will complete successfully without warnings or errors, but it won’t install anything.
+
+Partitioning our installation into components allows users to selectively install parts of the package. Let’s now turn to managing symbolic links for versioned shared libraries, a useful feature for optimizing your installation processes.
+
 \mySubsubsection{14.5.3.}{Managing symbolic links for versioned shared libraries}
+
+The target platform for your installation may use symbolic links to help linkers discover the currently installed version of a shared library. After creating a lib<name>.so symlink to the lib<name>.
+
+so.1 file, it’s possible to link this library by passing the -l<name> argument to the linker.
+CMake’s install(TARGETS <target> LIBRARY) block handles the creation of such symlinks when needed. However, we may decide to move that step to another install() command by adding NAMELINK\_SKIP to this block:
+
+\begin{shell}
+install(TARGETS <target> LIBRARY
+        COMPONENT cmp NAMELINK_SKIP)
+\end{shell}
+
+To assign symlinking to another component (instead of disabling it altogether), we can repeat the install() command for the same target and specify a different component, followed by the NAMELINK\_ONLY keyword:
+
+\begin{shell}
+install(TARGETS <target> LIBRARY
+        COMPONENT lnk NAMELINK_ONLY)
+\end{shell}
+
+The same effect can be achieved with the NAMELINK\_COMPONENT keyword:
+
+\begin{shell}
+install(TARGETS <target> LIBRARY
+        COMPONENT cmp NAMELINK_COMPONENT lnk)
+\end{shell}
+
+Now that we have configured automatic installation, we can provide pre-built artifacts for our users using the CPack tool, which is included with CMake.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

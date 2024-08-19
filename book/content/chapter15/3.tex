@@ -1,6 +1,122 @@
 
+To build any project, we should start with a clear understanding of what logical targets are going to be created within it. In this case, we’ll follow the structure shown in the following figure:
+
+\myGraphic{0.8}{content/chapter15/images/2.png}{Figure 15.2: A structure of logical targets}
+
+Let’s explore the structure by following the build order. First, we compile calc\_obj, an object library. For a refresher on object libraries, please check Chapter 5, Working with Targets. We should then turn our attention to static libraries and shared libraries.
 
 \mySubsubsection{15.3.1.}{Shared libraries versus static libraries}
 
+In Chapter 8, Linking Executables and Libraries, we introduced both shared and static libraries. We noted that shared libraries can reduce overall memory usage when multiple programs use the same library. Also, it’s common for users to already have popular libraries installed or to know how to install them quickly.
+
+More importantly, shared libraries are separate files that must be placed in specific paths for the dynamic linker to locate them. In contrast, static libraries are embedded directly into the executable file, which leads to faster usage as there are no additional steps required to locate the code in memory.
+
+As library authors, we can decide whether we’re providing a static or a shared version of the library, or we can simply ship both versions and leave this decision to the programmer using our library in their project. Since we’re exercising our knowledge, we will deliver two versions.
+
+The calc\_test target, which includes unit tests to verify the library’s core functionality, will utilize the static library. Although we are building both types of libraries from the same object files, testing with either library type is acceptable since their functionalities should be identical. The console app associated with calc\_console\_static target will use the shared library. This target also links against an external dependency, the Functional Terminal (X) User Interface (FTXUI) library by Arthur Sonzogni (there is a link to the GitHub project in the Further reading section).
+
+The last two targets, calc\_console and calc\_console\_test, are designed to tackle a common issue in testing executables: the clash of multiple entry points provided by both the test frameworks and the executables. To circumvent this, we have intentionally isolated the main() function into a bootstrap target, calc\_console, which merely invokes the primary function from calc\_console\_static.
+
+With an understanding of the necessary targets and their interrelations, our next step is to organize the project’s structure with appropriate files and directories.
+
 \mySubsubsection{15.3.2.}{Project file structure}
+
+The project consists of two key elements: the calc libraries and the calc\_console executable. To organize our project effectively, we will employ the following directory structure:
+
+\begin{itemize}
+\item
+src contains sources for all released targets and library header files.
+
+\item
+test contains tests for the above libraries and executables.
+
+\item
+cmake contains utility modules and helper files used by CMake to build and install the project.
+
+\item
+root directory contains top-level configuration and documentation files.
+\end{itemize}
+
+This structure (shown in Figure 15.3) ensures a clear separation of concerns, facilitating easier navigation and maintenance of the project:
+
+\myGraphic{0.8}{content/chapter15/images/3.png}{Figure 15.3: The directory structure of the project}
+
+Here’s the full list of files in each of the four main directories:
+
+% Please add the following required packages to your document preamble:
+% \usepackage{longtable}
+% Note: It may be necessary to compile the document several times to get a multi-page table to line up properly
+\begin{longtable}{|l|l|}
+\hline
+\textbf{Root directory} &
+\textbf{./test} \\ \hline
+\endfirsthead
+%
+\endhead
+%
+CHANGELOG &
+CMakeLists.txt \\ \hline
+\textbf{CMakeLists.txt} &
+\textbf{calc/CMakeLists.txt} \\ \hline
+\begin{tabular}[c]{@{}l@{}}INSTALL\\ LICENSER\\ EADME.md\end{tabular} &
+\begin{tabular}[c]{@{}l@{}}calc/calc\_test.cpp\\ calc\_console/CMakeLists.txt\\ calc\_console/tui\_test.cpp\end{tabular} \\ \hline
+\textbf{./src} &
+\textbf{./cmake} \\ \hline
+\begin{tabular}[c]{@{}l@{}}CMakeLists.txt\\ calc/CMakeLists.txt\\ calc/CalcConfig.cmake\\ calc/basic.cpp\\ calc/include/calc/basic.h\\ calc\_console/CMakeLists.txt\\ calc\_console/bootstrap.cpp\\ calc\_console/include/tui.h\\ calc\_console/tui.cpp\end{tabular} &
+\begin{tabular}[c]{@{}l@{}}BuildInfo.cmake\\ Coverage.cmake\\ CppCheck.cmake\\ Doxygen.cmake\\ Format.cmake\\ GetFTXUI.cmake\\ Packaging.cmake\\ Memcheck.cmake\\ NoInSourceBuilds.cmake\\ Testing.cmake\\ buildinfo.h.in\\ doxygen\_extra\_headers\end{tabular} \\ \hline
+\end{longtable}
+
+\begin{center}
+Table 15.1: File structure of the project
+\end{center}
+
+While it may appear that CMake introduces considerable overhead, with the cmake directory initially containing more content than the actual business code, this dynamic will shift as the project expands in functionality. The initial effort to establish a clean and organized project structure is substantial, but rest assured, this investment will yield significant benefits in the future.
+
+We’ll go through all the files mentioned in Table 15.1 throughout the chapter and see in detail what they do and what role they play in the project. This will happen in four steps: building, testing, installing, and providing documentation.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -1,9 +1,417 @@
 
+Program analysis and testing are essential components that work together to ensure the quality of our solutions. For instance, using Valgrind is more effective when running test code (because of its consistency and coverage). Therefore, we will configure testing and program analysis in the same place. Figure 15.5 illustrates the execution flow and files needed to set them up:
+
+\myGraphic{0.8}{content/chapter15/images/5.png}{Figure 15.5: Files used to enable testing and program analysis}
+
+The numbers in parentheses represent the sequence in which listfiles are processed. Start from the top-level listfile and add the src and test directories:
+
+\begin{itemize}
+\item
+In src, include Coverage, Format, and CppCheck modules, and add the src/calc and src/ calc\_console directories.
+
+\item
+In src/calc, define targets and configure them with included modules.
+
+\item
+In src/calc\_console, define targets and configure them with included modules.
+
+\item
+In test, include Testing (which includes Memcheck) and add the test/calc and test/ calc\_console directories.
+
+\item
+In test/calc, define test targets and configure them with included modules.
+
+\item
+In test/calc\_console, define test targets and configure them with included modules.
+\end{itemize}
+
+Let’s examine the listfile for the test directory:
+
+\filename{ch15/01-full-project/test/CMakeLists.txt}
+
+\begin{cmake}
+include(Testing)
+add_subdirectory(calc)
+add_subdirectory(calc_console)
+\end{cmake}
+
+At this level, the Testing utility module is included to provide functionality for both target groups (from the calc and calc\_console directories):
+
+\filename{ch15/01-full-project/cmake/Testing.cmake (fragment)}
+
+\begin{cmake}
+include(FetchContent)
+FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG v1.14.0
+)
+# For Windows: Prevent overriding the parent project's
+# compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+option(INSTALL_GMOCK "Install GMock" OFF)
+option(INSTALL_GTEST "Install GTest" OFF)
+FetchContent_MakeAvailable(googletest)
+
+# ...
+\end{cmake}
+
+We enabled testing and included the FetchContent module to obtain GTest and GMock. Although GMock isn’t used in this project, it’s included with GTest in the same repository, so we configure it as well. The key configuration step is preventing the installation of these frameworks from affecting our project’s installation by using the option() command.
+
+In the same file, we define an AddTests() function to facilitate comprehensive testing of business targets:
+
+\filename{ch15/01-full-project/cmake/Testing.cmake (continued)}
+
+\begin{cmake}
+# ...
+include(GoogleTest)
+include(Coverage)
+include(Memcheck)
+macro(AddTests target)
+    message("Adding tests to ${target}")
+    target_link_libraries(${target} PRIVATE gtest_main gmock)
+    gtest_discover_tests(${target})
+    AddCoverage(${target})
+    AddMemcheck(${target})
+endmacro()
+\end{cmake}
+
+First, we include the necessary modules: GoogleTest is bundled with CMake, and Coverage and Memcheck are custom utility modules included in the project. The AddTests macro is then provided to prepare a target for testing, applying coverage instrumentation, and memory checking. The AddCoverage() and AddMemcheck() functions are defined in their respective utility modules. Now, we can proceed to implement them.
 
 \mySubsubsection{15.5.1.}{Preparing the Coverage module}
 
+Adding coverage across various targets involves several steps. The Coverage module provides a function that defines the coverage target for a specified targ
+
+\filename{ch15/01-full-project/cmake/Coverage.cmake (fragment)}
+
+\begin{cmake}
+function(AddCoverage target)
+    find_program(LCOV_PATH lcov REQUIRED)
+    find_program(GENHTML_PATH genhtml REQUIRED)
+    add_custom_target(coverage-${target}
+        COMMAND ${LCOV_PATH} -d . --zerocounters
+        COMMAND $<TARGET_FILE:${target}>
+        COMMAND ${LCOV_PATH} -d . --capture -o coverage.info
+        COMMAND ${LCOV_PATH} -r coverage.info '/usr/include/*'
+            -o filtered.info
+        COMMAND ${GENHTML_PATH} -o coverage-${target}
+            filtered.info --legend
+        COMMAND rm -rf coverage.info filtered.info
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    )
+endfunction()
+
+# ...
+\end{cmake}
+
+This implementation differs slightly from the one introduced in Chapter 11, Testing Frameworks, as it now includes the target name in the output path to prevent name conflicts. Next, we need a function to clear previous coverage results:
+
+\filename{ch15/01-full-project/cmake/Coverage.cmake (continued)}
+
+\begin{cmake}
+# ...
+
+function(CleanCoverage target)
+    add_custom_command(TARGET ${target} PRE_BUILD COMMAND
+        find ${CMAKE_BINARY_DIR} -type f
+        -name '*.gcda' -exec rm {} +)
+endfunction()
+
+# ...
+\end{cmake}
+
+Additionally, we have a function to prepare a target for coverage analysis:
+
+\filename{ch15/01-full-project/cmake/Coverage.cmake (fragment)}
+
+\begin{cmake}
+# ...
+function(InstrumentForCoverage target)
+    if (CMAKE_BUILD_TYPE STREQUAL Debug)
+        target_compile_options(${target}
+                               PRIVATE --coverage -fno-inline)
+        target_link_options(${target} PUBLIC --coverage)
+    endif()
+endfunction()
+\end{cmake}
+
+The InstrumentForCoverage() function is applied to src/calc and src/calc\_console, enabling the generation of the coverage data files when targets calc\_obj and calc\_console\_static are executed.
+
+To generate reports for both test targets, execute the following cmake commands after configuring the project with the Debug build type:
+
+\begin{shell}
+cmake --build <build-tree> -t coverage-calc_test
+cmake --build <build-tree> -t coverage-calc_console_test
+\end{shell}
+
+Next, we want to perform dynamic program analysis on multiple targets we defined, so to apply the Memcheck module, introduced in Chapter 12, Program Analysis Tools, we need to tweak it slightly to scan more than one target.
+
 \mySubsubsection{15.5.2.}{Preparing the Memcheck module}
+
+The generation of Valgrind memory management reports is initiated by AddTests(). We begin the Memcheck module with its initial setup:
+
+\filename{ch15/01-full-project/cmake/Memcheck.cmake (fragment)}
+
+\begin{cmake}
+include(FetchContent)
+FetchContent_Declare(
+    memcheck-cover
+    GIT_REPOSITORY https://github.com/Farigh/memcheck-cover.git
+    GIT_TAG release-1.2
+)
+FetchContent_MakeAvailable(memcheck-cover)
+\end{cmake}
+
+This code is already familiar to us. Now, let’s examine the function that creates the necessary targets for generating reports:
+
+\filename{ch15/01-full-project/cmake/Memcheck.cmake (continued)}
+
+\begin{cmake}
+function(AddMemcheck target)
+    set(MEMCHECK_PATH ${memcheck-cover_SOURCE_DIR}/bin)
+    set(REPORT_PATH "${CMAKE_BINARY_DIR}/valgrind-${target}")
+    add_custom_target(memcheck-${target}
+        COMMAND ${MEMCHECK_PATH}/memcheck_runner.sh -o
+            "${REPORT_PATH}/report"
+            -- $<TARGET_FILE:${target}>
+        COMMAND ${MEMCHECK_PATH}/generate_html_report.sh
+            -i ${REPORT_PATH}
+            -o ${REPORT_PATH}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    )
+endfunction()
+\end{cmake}
+
+We slightly improved the AddMemcheck() function from Chapter 12 to handle multiple targets. We made the REPORT\_PATH variable target-specific.
+
+To generate Memcheck reports, use the following commands (note that generating reports is more effective when using the Debug build type for configuration):
+
+\begin{shell}
+cmake --build <build-tree> -t memcheck-calc_test
+cmake --build <build-tree> -t memcheck-calc_console_test
+\end{shell}
+
+Okay, we defined our Coverage and Memcheck modules (they are used in the Testing module), so let’s see how the actual test targets are configured.
 
 \mySubsubsection{15.5.3.}{Applying testing scenarios}
 
+To implement testing, we’ll follow this scenario:
+
+\begin{enumerate}
+\item
+Write unit tests.
+
+\item
+Define and configure executable targets for tests with AddTests().
+
+\item
+Instrument the Software Under Test (SUT) to enable coverage collection.
+
+\item
+Ensure that coverage data is cleared between the builds to prevent segmentation faults.
+\end{enumerate}
+
+Let’s start with the unit tests we have to write. To keep things brief, we’ll provide the simplest (and perhaps a bit incomplete) unit tests possible. First, test the library:
+
+\filename{ch15/01-full-project/test/calc/basic\_test.cpp}
+
+\begin{cmake}
+#include "calc/basic.h"
+#include <gtest/gtest.h>
+
+TEST(CalcTest, SumAddsTwoInts) {
+    EXPECT_EQ(4, Calc::Add(2, 2));
+}
+
+TEST(CalcTest, SubtractsTwoInts) {
+    EXPECT_EQ(6, Calc::Subtract(8, 2));
+}
+\end{cmake}
+
+Follow with the tests for the console – for this purpose, we’ll use the FXTUI library. Again, understanding the source code completely isn’t necessary; these tests are for illustrative purposes:
+
+\filename{ch15/01-full-project/test/calc\_console/tui\_test.cpp}
+
+\begin{cmake}
+#include "tui.h"
+
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
+#include <ftxui/screen/screen.hpp>
+
+using namespace ::ftxui;
+
+TEST(ConsoleCalcTest, RunWorksWithDefaultValues) {
+    auto component = getTui();
+    auto document = component->Render();
+    auto screen = Screen::Create(Dimension::Fit(document));
+    Render(screen, document);
+    auto output = screen.ToString();
+    ASSERT_THAT(output, testing::HasSubstr("Sum: 102"));
+}
+\end{cmake}
+
+This test renders the UI to a static Screen object and checks if the string output contains the expected sum. Not really a great test, but at least it’s a short one.
+
+Now, let’s configure our tests with two nested listfiles. First, for the library:
+
+\filename{ch15/01-full-project/test/calc/CMakeLists.txt}
+
+\begin{cmake}
+add_executable(calc_test basic_test.cpp)
+target_link_libraries(calc_test PRIVATE calc_static)
+AddTests(calc_test)
+\end{cmake}
+
+And then for the executable:
+
+\filename{ch15/01-full-project/test/calc\_console/CMakeLists.txt}
+
+\begin{cmake}
+add_executable(calc_console_test tui_test.cpp)
+target_link_libraries(calc_console_test
+                      PRIVATE calc_console_static)
+AddTests(calc_console_test)
+\end{cmake}
+
+These configurations enable CTest to execute the tests. We also need to prepare the business logic targets for coverage analysis and ensure that the coverage data is refreshed between builds.
+
+Let’s add the necessary instructions to the calc library target:
+
+\filename{ch15/01-full-project/src/calc/CMakeLists.txt (continued)}
+
+\begin{cmake}
+# ... calc_obj target definition
+
+InstrumentForCoverage(calc_obj)
+
+# ... calc_shared target definition
+# ... calc_static target definition
+
+CleanCoverage(calc_static)
+\end{cmake}
+
+Instrumentation is added to the calc\_obj with the extra -{}-coverage flag, but CleanCoverage() is called for the calc\_static target. Normally, you’d apply it on the calc\_obj for consistency, but we’re using the PRE\_BUILD keyword in CleanCoverage(), and CMake doesn’t allow PRE\_BUILD, PRE\_LINK, or POST\_BUILD hooks to the object libraries.
+
+Finally, we’ll instrument and clean the console target as well:
+
+\filename{ch15/01-full-project/src/calc\_console/CMakeLists.txt (continued)}
+
+\begin{cmake}
+# ... calc_console_test target definition
+# ... BuildInfo
+
+InstrumentForCoverage(calc_console_static)
+CleanCoverage(calc_console_static)
+\end{cmake}
+
+With these steps, CTest is now set up to run our tests and collect coverage. Next, we’ll add instructions for enabling static analysis, as we want our project to be of high quality during the first build and all of the subsequent builds.
+
 \mySubsubsection{15.5.4.}{Adding static analysis tools}
+
+We’re nearing the completion of configuring quality assurance for our targets. The final step involves enabling automatic formatting and integrating CppCheck:
+
+\filename{ch15/01-full-project/src/calc/CMakeLists.txt (continued)}
+
+\begin{cmake}
+# ... calc_static target definition
+# ... Coverage instrumentation and cleaning
+
+Format(calc_static .)
+
+AddCppCheck(calc_obj)
+\end{cmake}
+
+We face a minor issue here: calc\_obj cannot have a PRE\_BUILD hook, so we apply formatting to calc\_static instead. We also make sure that the calc\_console\_static target is formatted and checked:
+
+\filename{ch15/01-full-project/src/calc\_console/CMakeLists.cmake (continued)}
+
+\begin{cmake}
+# ... calc_console_test target definition
+# ... BuildInfo
+# ... Coverage instrumentation and cleaning
+
+Format(calc_console_static .)
+
+AddCppCheck(calc_console_static)
+\end{cmake}
+
+We still need to define the Format and CppCheck functions. Starting with Format(), we’re borrowing the code described in Chapter 12, Program Analysis Tools:
+
+\filename{ch15/01-full-project/cmake/Format.cmake}
+
+\begin{cmake}
+function(Format target directory)
+    find_program(CLANG-FORMAT_PATH clang-format REQUIRED)
+    set(EXPRESSION h hpp hh c cc cxx cpp)
+    list(TRANSFORM EXPRESSION PREPEND "${directory}/*.")
+    file(GLOB_RECURSE SOURCE_FILES FOLLOW_SYMLINKS
+        LIST_DIRECTORIES false ${EXPRESSION}
+    )
+    add_custom_command(TARGET ${target} PRE_BUILD COMMAND
+        ${CLANG-FORMAT_PATH} -i --style=file ${SOURCE_FILES}
+    )
+endfunction()
+\end{cmake}
+
+To integrate CppCheck with our sources, we use:
+
+\filename{ch15/01-full-project/cmake/CppCheck.cmake}
+
+\begin{cmake}
+function(AddCppCheck target)
+    find_program(CPPCHECK_PATH cppcheck REQUIRED)
+    set_target_properties(${target}
+    PROPERTIES CXX_CPPCHECK
+        "${CPPCHECK_PATH};--enable=warning;--error-exitcode=10"
+    )
+endfunction()
+\end{cmake}
+
+This is simple and convenient. You may see some resemblance to the Clang-Tidy module (from Chapter 12, Program Analysis Tools) showcasing CMake’s consistency in functionality.
+
+The arguments for cppcheck are as follows:
+
+\begin{itemize}
+\item
+-{}-enable=warning: Activates warning messages. To enable additional checks, refer to the Cppcheck manual (see the Further reading section).
+
+\item
+-{}-error-exitcode=1: Sets the error code returned when cppcheck detects an issue. This can be any number from 1 to 255 (as 0 indicates success), although some numbers can be reserved by the system.
+\end{itemize}
+
+With all files in the src and test directories created, our solution is now buildable and fully tested. We can proceed to the installation and packaging steps.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

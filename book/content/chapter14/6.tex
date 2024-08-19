@@ -1,0 +1,138 @@
+While building projects from source has its benefits, it can be time-consuming and complex, which isn’t ideal for end users, especially non-developers. A more convenient distribution method is using binary packages, containing compiled artifacts and other necessary static files. CMake supports generating such packages with a command-line tool called cpack.
+
+
+To generate a package, select an appropriate package generator for your target platform and package type. Don’t confuse package generators with buildsystem generators like Unix Makefiles or Visual Studio.
+
+The following table lists the available package generators:
+
+% Please add the following required packages to your document preamble:
+% \usepackage{longtable}
+% Note: It may be necessary to compile the document several times to get a multi-page table to line up properly
+\begin{longtable}{|l|l|l|}
+\hline
+\textbf{Generator Name} & \textbf{Produced File Types}              & \textbf{Platform}     \\ \hline
+\endfirsthead
+%
+\endhead
+%
+Archive &
+\begin{tabular}[c]{@{}l@{}}7Z, 7zip - (.7z)\\ TBZ2 (.tar.bz2)\\ TGZ (.tar.gz)\\ TXZ (.tar.xz)\\ TZ (.tar.Z)\\ TZST (.tar.zst)\\ ZIP (.zip)\end{tabular} &
+Cross-platform \\ \hline
+Bundle                  & macOs Bundle (.bundle)                    & macOS                 \\ \hline
+Cygwin                  & Cygwin packages                           & Cygwin                \\ \hline
+DEB                     & Debian packages (.deb)                    & Linux                 \\ \hline
+External                & JSON (.json) file for 3rd party packagers & Cross-platform        \\ \hline
+FreeBSD                 & PKG (.pkg)                                & *BSD, Linux, macOS    \\ \hline
+IFW                     & QT installer binary                       & Linux, Windows, macOS \\ \hline
+NSIS                    & Binary (.exe)                             & Windows               \\ \hline
+NuGet                   & NuGet package (.nupkg)                    & Windows               \\ \hline
+productbuild            & PKG (.pkg)                                & macOS                 \\ \hline
+RPM                     & RPM (.rpm)                                & Linux                 \\ \hline
+WIX                     & Microsoft Installer (.msi)                & Windows               \\ \hline
+\end{longtable}
+
+\begin{center}
+Table 14.3: Available package generators
+\end{center}
+
+Most of these generators have extensive configurations. While it’s beyond this book’s scope to delve into all their details, you can find more information in the Further reading section. We’ll focus on a general use case.
+
+To use CPack, configure your project’s installation with the necessary install() commands and build your project. The resulting cmake\_install.cmake in the build tree is used by CPack to prepare binary packages based on the CPackConfig.cmake file. While you can create this file manually, using include(CPack) in your project’s listfile is easier. It generates the configuration in the build tree and supplies default values where needed.
+
+Let’s extend the 13-components example for CPack use:
+
+\filename{ch14/14-cpack/CMakeLists.txt (fragment)}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26)
+project(CPackPackage VERSION 1.2.3 LANGUAGES CXX)
+include(GNUInstallDirs)
+add_subdirectory(src bin)
+install(...)
+install(...)
+install(...)
+set(CPACK_PACKAGE_VENDOR "Rafal Swidzinski")
+set(CPACK_PACKAGE_CONTACT "email@example.com")
+set(CPACK_PACKAGE_DESCRIPTION "Simple Calculator")
+include(CPack)
+\end{cmake}
+
+The CPack module extracts the following variables from the project() command:
+
+\begin{itemize}
+\item
+CPACK\_PACKAGE\_NAME
+
+\item
+CPACK\_PACKAGE\_VERSION
+
+\item
+CPACK\_PACKAGE\_FILE\_NAME
+\end{itemize}
+
+The CPACK\_PACKAGE\_FILE\_NAME stores the structure of the package name:
+
+\begin{shell}
+$CPACK_PACKAGE_NAME-$CPACK_PACKAGE_VERSION-$CPACK_SYSTEM_NAME
+\end{shell}
+
+Here, CPACK\_SYSTEM\_NAME is the target OS name, like Linux or win32. For example, by executing a ZIP generator on Debian, CPack will generate a file named CPackPackage-1.2.3-Linux.zip.
+
+To generate packages after building your project, go to the build tree of your project and run:
+
+\begin{shell}
+cpack [<options>]
+\end{shell}
+
+CPack reads options from the CPackConfig.cmake file, but you can override these settings:
+
+\begin{itemize}
+\item
+-G <generators>: Semicolon-separated list of package generators. The default value can be specified in the CPackConfig.cmake in the CPACK\_GENERATOR variable.
+
+\item
+-C <configs>: Semicolon-separated list of build configurations (debug, release) to generate packages for (required for multi-configuration buildsystem generators).
+
+\item
+-D <var>=<value>: This overrides a variable that’s set in the CPackConfig.cmake file.
+
+\item
+-{}-config <config-file>: This uses a specified config file instead of the default CPackConfig.
+cmake.
+
+\item
+-{}-verbose, -V: This provides verbose output.
+
+\item
+-P <packageName>: This overrides the package name.
+
+\item
+-R <packageVersion>: This overrides the package version.
+
+\item
+-{}-vendor <vendorName>: This overrides the package vendor.
+
+\item
+ -B <packageDirectory>: This specifies the output directory for cpack (by default, this will be the current working directory).
+\end{itemize}
+
+Let’s try generating packages for our 14-cpack example project. We’re going to use ZIP, 7Z, and the Debian package generator:
+
+\begin{shell}
+cpack -G "ZIP;7Z;DEB" -B packages
+\end{shell}
+
+You should get these packages:
+
+\begin{itemize}
+\item
+CPackPackage-1.2.3-Linux.7z
+
+\item
+CPackPackage-1.2.3-Linux.deb
+
+\item
+CPackPackage-1.2.3-Linux.zip
+\end{itemize}
+
+These binary packages are ready for publication on your project’s website, a GitHub release, or a package repository for end users.

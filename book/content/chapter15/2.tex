@@ -1,0 +1,145 @@
+The software we’ll be building in this chapter isn’t meant to be extremely complex – we’ll create a simple calculator that adds two numbers together (Figure 15.1). It will be a console application with a text user interface, utilizing a third-party library and a separate calculation library that could be used in other projects. Although this project may not have significant practical applications, its simplicity is perfect for demonstrating the application of various techniques discussed throughout the book.
+
+\myGraphic{0.8}{content/chapter15/images/1.png}{Figure 15.1: The text user interface of our project executed in a terminal with mouse support}
+
+Usually, projects either generate a user-facing executable or a library for developers. It’s less common for projects to produce both, though it does happen. For instance, some applications come with standalone SDKs or libraries to help develop plugins. Another example is a library bundled with usage examples. Our project falls into the latter category, showcasing the library’s functionalities.
+
+We’ll start planning by reviewing the chapter list, recalling the contents of each chapter, and selecting the techniques and tools described that we’ll use to build our application:
+
+\begin{itemize}
+\item
+Chapter 1, First Steps with CMake:
+
+This chapter provided basic details about CMake, including installation and command-line usage for building projects. It also covered essential information about project files, such as their roles, typical naming conventions, and peculiarities.
+
+\item
+Chapter 2, The CMake Language:
+
+We introduced the necessary tools for writing correct CMake listfiles and scripts, covering code basics like comments, command invocations, and arguments. We explained variables, lists, and control structures, introducing several useful commands. This foundation will be crucial throughout our project.
+
+\item
+Chapter 3, Using CMake in Popular IDEs:
+
+We discussed three IDEs – CLion, VS Code, and Visual Studio IDE – highlighting their strengths. In our final project, choosing an IDE (or not) is up to you. Once decided, you can start this project in a Dev container to enjoy a fully prepared environment with just a few steps to build a Docker image (or just get it from the Docker Hub). Running the image in a container ensures that the development environment mirrors production.
+
+\item
+Chapter 4, Setting Up Your First CMake Project:
+
+Configuring the project is crucial as it determines the CMake policies that will be in effect, naming, versioning, and programming language. We’ll use this chapter to influence the fundamental behavior of the build process.
+
+We’ll also follow established project partitioning and structuring to determine the layout of directories and files, and utilize system discovery variables to adapt to different build environments. Toolchain configuration is another critical aspect that allows us to mandate a specific C++ version and the standards supported by the compiler. Following the chapter’s advice, we will disable in-source builds to maintain a clean workspace.
+
+\item
+Chapter 5, Working with Targets:
+
+Here, we learned how every modern CMake project makes extensive use of targets. We’ll, of course, apply targets as well to define a few libraries and executables (both for test and production) that will keep the project organized and ensure we comply with the principle of DRY (Don’t Repeat Yourself). The acquired knowledge of target properties and transitive usage requirements (propagated properties) will allow us to keep the configuration close to target definitions.
+
+\item
+Chapter 6, Using Generator Expressions:
+
+Generator expressions are heavily used throughout our project. We’ll aim to keep these expressions as straightforward as possible. The project will incorporate custom commands to generate files for Valgrind and coverage reports. Additionally, we’ll employ target hooks, specifically PRE\_BUILD, to clean up the .gcda files that are produced by the coverage instrumentation process.
+
+\item
+Chapter 7, Compiling C++ Sources with CMake:
+
+There’s no C++ project without compilation. The basics are quite simple, but CMake allows us to tweak this process in so many ways: extend the sources of a target, configure the optimizer, and provide debugging information. For this project, the default compilation flags will do just fine, but we’ll go ahead and play a bit with the preprocessor:
+
+\begin{itemize}
+\item
+We’ll store build metadata (the project version, build time, and the Git commit SHA) in the compiled executable and show it to the user.
+
+\item
+We’ll enable the precompilation of headers. It’s not really a necessity in such a small project, but it will help us practice this concept.
+\end{itemize}
+
+Unity builds won’t be necessary – this project won’t be big enough to make adding them worthwhile.
+
+\item
+Chapter 8, Linking Executables and Libraries:
+
+We will obtain general information on linking, useful in any project by default. Additionally, since this project includes a library, we will explicitly reference some specific building instructions for the following:
+
+\begin{itemize}
+\item
+Static libraries for testing and development
+
+\item
+Shared libraries for release
+\end{itemize}
+
+This chapter also outlines how to isolate the main() function for testing purposes, a practice we will adopt.
+
+\item
+Chapter 9, Managing Dependencies in CMake:
+
+To enhance the project’s appeal, we will introduce an external dependency: a text-based UI library. Chapter 9 explores various methods for managing dependencies. The choice will be simple: the FetchContent utility module is generally recommended and most convenient.
+
+\item
+Chapter 10, Using C++20 Modules:
+
+Although we have explored the use of C++20 modules and the environment requirements to support this feature (CMake 3.28, latest compilers), its wide support is still lacking. To ensure the project’s accessibility, we will not incorporate modules yet.
+
+\item
+Chapter 11, Testing Frameworks:
+
+Implementing proper automated tests is imperative to ensuring the quality of our solution remains consistent over time. We will integrate CTest and organize our project to facilitate testing, applying the main() function separation mentioned previously.
+
+This chapter discusses two testing frameworks: Catch2 and GTest with GMock; we will use the latter. To obtain detailed information on our coverage, we will generate HTML reports with LCOV.
+
+\item
+Chapter 12, Program Analysis Tools:
+
+For static analysis, we can select from a range of tools: Clang-Tidy, Cpplint, Cppcheck, include-what-you-use, and link-what-you-use. We will opt for Cppcheck, as Clang-Tidy is less compatible with precompiled headers built using GCC.
+
+Dynamic analysis will be conducted using Valgrind’s Memcheck tool, complemented by the Memcheck-cover wrapper to produce HTML reports. Additionally, our source code will be automatically formatted during the build process with ClangFormat.
+
+\item
+Chapter 13, Generating Documentation:
+
+Providing documentation is essential when offering a library as part of our project. CMake facilitates the automation of documentation generation using Doxygen. We will adopt this approach in a refreshed design by incorporating the doxygen-awesome-css theme.
+
+\item
+Chapter 14, Installing and Packaging:
+
+Finally, we’ll configure the installation and packaging of our solution and prepare files to form the package as described, along with target definitions. We’ll install that and the artifacts from build targets to appropriate directories by including the GNUInstallDirs module. We will additionally configure a few components to modularize the solution and prepare it for use with CPack.
+\end{itemize}
+
+Professional projects also come with a few text files: README, LICENSE, INSTALL, and so on. We will briefly cover these at the end of the chapter.
+
+To make things simpler, we won’t implement custom logic that checks whether all the required utilities and dependencies are available. We’ll rely on CMake to show its diagnostics and tell users what’s missing. If your projects get significant traction, you might want to consider adding these mechanisms to improve the user experience.
+
+Having formed a clear plan, let’s discuss how to actually structure the project, both in terms of logical targets and directory structure.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

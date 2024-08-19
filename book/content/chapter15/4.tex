@@ -1,6 +1,375 @@
 
+All build processes follow the same procedure. We begin with the top-level listfile and progress downward through the project’s source tree. Figure 15.4 illustrates the project files involved in the build process, with numbers in parentheses indicating the order of CMake script execution.
 
+\myGraphic{0.8}{content/chapter15/images/4.png}{Figure 15.4: Files used in the build stage}
+
+The top-level CMakeLists.txt (1) listfile configures the project:
+
+\filename{ch15/01-full-project/CMakeLists.txt}
+
+\begin{cmake}
+cmake_minimum_required(VERSION 3.26)
+project(Calc VERSION 1.1.0 LANGUAGES CXX)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
+include(NoInSourceBuilds)
+
+include(CTest)
+
+add_subdirectory(src bin)
+add_subdirectory(test)
+
+include(Packaging)
+\end{cmake}
+
+We start by specifying essential project details and setting the path to the CMake utility modules (the cmake directory in our project). We then prevent in-source builds using a custom module.
+
+Following that, we enable testing with the CTest module (built into CMake). This should be done at the project’s root level because this command creates the CTestTestfile.cmake file in the binary tree relative to its location in the source tree. Placing it elsewhere would prevent ctest from finding it.
+
+Next, we include two key directories:
+
+\begin{itemize}
+\item
+src, containing the project source (to be named bin in the build tree)
+
+\item
+test, containing all the testing utilities
+\end{itemize}
+
+Finally, we include the Packaging module, details of which will be discussed in the Installing and packaging section.
+
+Let’s examine the NoInSourceBuilds utility module to understand its function:
+
+\filename{ch15/01-full-project/cmake/NoInSourceBuilds.cmake}
+
+\begin{cmake}
+if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
+    message(FATAL_ERROR
+        "\n"
+        "In-source builds are not allowed.\n"
+        "Instead, provide a path to build tree like so:\n"
+        "cmake -B <destination>\n"
+        "\n"
+        "To remove files you accidentally created execute:\n"
+        "rm -rf CMakeFiles CMakeCache.txt\n"
+    )
+endif()
+\end{cmake}
+
+No surprises here, we check if the user has provided a separate destination directory for generated files using the cmake command. It must differ from the project’s source tree path. If not, we instruct the user on how to specify it and how to clean up the repository if they made a mistake.
+
+Our top-level listfile then includes the src subdirectory, instructing CMake to process the listfile within it:
+
+\filename{ch15/01-full-project/src/CMakeLists.txt}
+
+\begin{cmake}
+include(Coverage)
+include(Format)
+include(CppCheck)
+include(Doxygen)
+
+add_subdirectory(calc)
+add_subdirectory(calc_console)
+\end{cmake}
+
+This file is straightforward – it includes all the modules from the ./cmake directory we will be using and directs CMake to the nested directories to execute the listfiles found there.
+
+Next, let’s examine the listfile for the calc library. It’s somewhat complex, so we’ll break it down and discuss it in sections.
 
 \mySubsubsection{15.4.1.}{Building the Calc library}
 
+The listfile in the calc directory configures various aspects of this library but, for now, we’ll focus only on the building:
+
+\filename{ch15/01-full-project/src/calc/CMakeLists.txt (fragment)}
+
+\begin{cmake}
+add_library(calc_obj OBJECT basic.cpp)
+target_sources(calc_obj
+               PUBLIC FILE_SET HEADERS
+               BASE_DIRS include
+               FILES include/calc/basic.h
+)
+set_target_properties(calc_obj PROPERTIES
+    POSITION_INDEPENDENT_CODE 1
+)
+
+# ... instrumentation of calc_obj for coverage
+
+add_library(calc_shared SHARED)
+target_link_libraries(calc_shared calc_obj)
+
+add_library(calc_static STATIC)
+target_link_libraries(calc_static calc_obj)
+
+# ... testing and program analysis modules
+# ... documentation generation
+# ... installation
+\end{cmake}
+
+We define three targets:
+
+\begin{itemize}
+\item
+calc\_obj, an object library compiling the basic.cpp implementation file. Its basic.h header file is included using the FILE\_SET keyword in the target\_sources() command. This implicitly configures appropriate include directories to be exported correctly for both building and installation modes. By creating an object library, we prevent redundant compilation for the two library versions, but it’s essential to enable POSITION\_INDEPENDENT\_CODE so that the shared library can depend on this target.
+
+\item
+calc\_shared, a shared library that depends on calc\_obj.
+
+\item
+calc\_static, a static library that also depends on calc\_obj.
+\end{itemize}
+
+For context, here’s the C++ header for the basic library. This header file simply declares two functions within the Calc namespace, which helps avoid name collisions:
+
+\filename{ch15/01-full-project/src/calc/include/calc/basic.h}
+
+\begin{cpp}
+#pragma once
+namespace Calc {
+    int Add(int a, int b);
+    int Subtract(int a, int b);
+} // namespace Calc
+\end{cpp}
+
+The implementation file is straightforward as well:
+
+\filename{ch15/01-full-project/src/calc/basic.cpp}
+
+\begin{cpp}
+namespace Calc {
+    int Add(int a, int b) {
+        return a + b;
+    }
+
+    int Subtract(int a, int b) {
+        return a - b;
+    }
+} // namespace Calc
+\end{cpp}
+
+This wraps up the explanation of files in the src/calc directory. Next up is the src/calc\_console and building the executable of the console calculator using this library.
+
 \mySubsubsection{15.4.2.}{Building the Calc console executable}
+
+The calc\_console directory contains several files: a listfile, two implementation files (the business logic and a bootstrap file), and a header file. The listfile looks as follows:
+
+\filename{ch15/01-full-project/src/calc\_console/CMakeLists.txt (fragment)}
+
+\begin{cmake}
+add_library(calc_console_static STATIC tui.cpp)
+target_include_directories(calc_console_static PUBLIC include)
+target_precompile_headers(calc_console_static PUBLIC <string>)
+
+include(GetFTXUI)
+target_link_libraries(calc_console_static PUBLIC calc_shared
+                      ftxui::screen ftxui::dom ftxui::component)
+
+include(BuildInfo)
+BuildInfo(calc_console_static)
+
+# ... instrumentation of calc_console_static for coverage
+# ... testing and program analysis modules
+# ... documentation generation
+
+add_executable(calc_console bootstrap.cpp)
+target_link_libraries(calc_console calc_console_static)
+
+# ... installation
+\end{cmake}
+
+Though the listfile appears complex, as seasoned CMake users, we can now easily decipher its contents:
+
+\begin{enumerate}
+\item
+Define the calc\_console\_static target, containing the business code without the main() function to allow linking with GTest, which has its own entry point.
+
+\item
+Configure the include directories. We could add headers individually with FILE\_SET, but since they are internal, we simplify this step.
+
+\item
+Implement header precompilation, here demonstrated with just the <string> header as an example, though larger projects might include many more.
+
+\item
+Include a custom CMake module to fetch the FTXUI dependency.
+
+\item
+Link the business code with the shared calc\_shared library and the FTXUI components.
+
+\item
+Add a custom module to generate build information and embed it into the artifact.
+
+\item
+Outline additional steps for this target: coverage instrumentation, testing, program analysis, and documentation.
+
+\item
+Create and link the calc\_console bootstrap executable, establishing the entry point.
+
+\item
+Outline the installation.
+\end{enumerate}
+
+We will explore testing, documentation, and installation processes in their respective sections later in this chapter.
+
+We’re including the GetFTXUI utility module rather than looking for config-module in the system because it’s not very likely that most users have it installed. We’ll just fetch and build it:
+
+\filename{ch15/01-full-project/cmake/GetFTXUI.cmake}
+
+\begin{cmake}
+include(FetchContent)
+FetchContent_Declare(
+    FTXTUI
+    GIT_REPOSITORY https://github.com/ArthurSonzogni/FTXUI.git
+    GIT_TAG v0.11
+)
+option(FTXUI_ENABLE_INSTALL "" OFF)
+option(FTXUI_BUILD_EXAMPLES "" OFF)
+option(FTXUI_BUILD_DOCS "" OFF)
+FetchContent_MakeAvailable(FTXTUI)
+\end{cmake}
+
+We’re using the recommended FetchContent method, described in detail in Chapter 9, Managing Dependencies in CMake. The only unusual addition is the calls of the option() command, which lets us bypass the lengthy build steps for FTXUI and prevents its installation steps from affecting this project’s installation process. For more details, refer to the Further reading section.
+
+The listfile for the calc\_console directory includes another custom utility module that is build-related: BuildInfo. This module will capture three pieces of information to be displayed in the executable:
+
+\begin{itemize}
+\item
+The current Git commit SHA
+
+\item
+The build timestamp
+
+\item
+The project version specified in the top-level listfile
+\end{itemize}
+
+As we learned in Chapter 7, Compiling C++ Sources with CMake, CMake can capture build-time values and pass them to C++ code via template files, for example, with a struct:
+
+\filename{ch15/01-full-project/cmake/buildinfo.h.in}
+
+\begin{cpp}
+struct BuildInfo {
+    static inline const std::string CommitSHA = "@COMMIT_SHA@";
+    static inline const std::string Timestamp = "@TIMESTAMP@";
+    static inline const std::string Version = "@PROJECT_VERSION@";
+};
+\end{cpp}
+
+To fill that structure during the configuration stage, we’ll use the following code:
+
+\filename{ch15/01-full-project/cmake/BuildInfo.cmake}
+
+\begin{cmake}
+set(BUILDINFO_TEMPLATE_DIR ${CMAKE_CURRENT_LIST_DIR})
+set(DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/buildinfo")
+string(TIMESTAMP TIMESTAMP)
+
+find_program(GIT_PATH git REQUIRED)
+execute_process(COMMAND ${GIT_PATH} log --pretty=format:'%h' -n 1
+                OUTPUT_VARIABLE COMMIT_SHA)
+
+configure_file(
+    "${BUILDINFO_TEMPLATE_DIR}/buildinfo.h.in"
+    "${DESTINATION}/buildinfo.h" @ONLY
+)
+
+function(BuildInfo target)
+    target_include_directories(${target} PRIVATE ${DESTINATION})
+endfunction()
+\end{cmake}
+
+After including the module, we have set variables to capture the desired information and use configure\_file() to generate buildinfo.h. The final step was to invoke the BuildInfo function to include the generated file’s directory in the target’s include directories.
+
+The produced header file can be then shared with multiple different consumers if needed. In such a case, you’ll probably want to add include\_guard(GLOBAL) at the top of the listfile to avoid running the git command for every target.
+
+Before looking into the implementation of the console calculator, I’d like to emphasize that you don’t need to deeply understand the intricacies of the tui.cpp file or the FXTUI library, as this isn’t essential for our purposes. Instead, let’s focus on the highlighted parts of the code:
+
+\filename{ch15/01-full-project/src/calc\_console/tui.cpp}
+
+\begin{cpp}
+#include "tui.h"
+#include <ftxui/dom/elements.hpp>
+#include "buildinfo.h"
+#include "calc/basic.h"
+
+using namespace ftxui;
+using namespace std;
+
+string a{"12"}, b{"90"};
+auto input_a = Input(&a, "");
+auto input_b = Input(&b, "");
+auto component = Container::Vertical({input_a, input_b});
+
+Component getTui() {
+    return Renderer(component, [&] {
+        auto sum = Calc::Add(stoi(a), stoi(b));
+        return vbox({
+            text("CalcConsole " + BuildInfo::Version),
+            text("Built: " + BuildInfo::Timestamp),
+            text("SHA: " + BuildInfo::CommitSHA),
+            separator(),
+            input_a->Render(),
+            input_b->Render(),
+            separator(),
+            text("Sum: " + to_string(sum)),
+        }) |
+        border;
+    });
+}
+\end{cpp}
+
+This piece of code provides the getTui() function, which returns a ftxui::Component, an object that encapsulates interactive UI elements like labels, text fields, separators, and a border. For those curious about the detailed workings of these elements, further materials are available in the Further reading section.
+
+More importantly, the include directives link to the headers from the calc\_obj target and the BuildInfo module. The interaction begins with the lambda function, invoking Calc::Sum, and displaying the result using the text() function.
+
+The values from the buildinfo.h collected at build time are used in a similar way and will be shown to the user at runtime.
+
+Alongside tui.cpp, there’s a header file:
+
+\filename{ch15/01-full-project/src/calc\_console/include/tui.h}
+
+\begin{cpp}
+#include <ftxui/component/component.hpp>
+ftxui::Component getTui();
+\end{cpp}
+
+This header is used by the bootstrap file in the calc\_console target:
+
+\filename{ch15/01-full-project/src/calc\_console/bootstrap.cpp}
+
+\begin{cpp}
+#include <ftxui/component/screen_interactive.hpp>
+
+#include "tui.h"
+
+int main(int argc, char** argv) {
+    ftxui::ScreenInteractive::FitComponent().Loop(getTui());
+}
+\end{cpp}
+
+This brief code initializes an interactive console screen with FTXUI, displaying the Component object from getTui() and handling keyboard inputs in a loop. With all files in the src directory addressed, we can now progress to testing and analyzing the program.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

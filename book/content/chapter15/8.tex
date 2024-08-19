@@ -1,0 +1,9 @@
+In this chapter, we put together a professional project based on everything we’ve learned so far. Let’s do a quick recap.
+
+We started by laying out the project and discussing what files will live in which directory. Based on previous experience and the desire to practice more advanced scenarios, we delineated a main application for the users and a library that another developer might use. This shaped the structure of directories and relations between the CMake targets we want to build. We then followed with the configuration of individual targets for the build: we provided the source code for the library, defined its targets, and set it up for consumption with position-independent code parameters. The user-facing application also had its executable target defined, provided with source code, and configured its dependency: the FTXUI library.
+
+Armed with artifacts to build, we continued to enhance our project with tests and quality assurance. We added the coverage module to produce coverage reports, Memcheck to verify the solution with Valgrind during the runtime, and CppCheck to execute static analysis as well.
+
+Such a project was now ready to be installed, so we created appropriate installation entries for the library and the executable using the techniques learned so far, and we prepared a package configuration for CPack. The final task was to ensure that the project was correctly documented, so we set up automatic documentation generation with Doxygen and wrote a few basic documents that take care of less technical aspects of the software distribution.
+
+This led us to the completion of the project configuration and we can now easily build it and install it with just a few precisely used CMake commands. But what if we could just use one simple command to complete the entire process? Let’s discover how in the final chapter: Chapter 16, Writing CMake Presets.

@@ -1,7 +1,255 @@
 
 
+The final touch to a professional project is the documentation. Undocumented projects are very difficult to navigate and understand when working in teams and when shared with external audiences. I would even go as far as saying that programmers often read their own documentation after stepping away from a specific file to understand what is happening inside.
 
+Documentation is also important for legal and compliance reasons and to inform the users how to act with the software. If time permits, we should invest in setting up documentation for our project.
+
+Documentation usually falls into two categories:
+
+\begin{itemize}
+\item
+Technical documentation (covering interfaces, designs, classes, and files)
+
+\item
+General documentation (encompassing all other non-technical documents)
+\end{itemize}
+
+As we saw in Chapter 13, Generating Documentation, much of the technical documentation can be automatically generated with CMake using Doxygen.
 
 \mySubsubsection{15.7.1.}{Generating the technical documentation}
 
+While some projects generate documentation during the build phase and include it in the package, we’ve chosen not to do so for this project. However, there could be valid reasons to opt otherwise, like if the documentation needs to be hosted online.
+
+Figure 15.7 provides an overview of the documentation generation process:
+
+\myGraphic{0.8}{content/chapter15/images/7.png}{Figure 15.7: Files used to generate documentation}
+
+To generate documentation, we’ll create another CMake utility module, Doxygen. Start by using the Doxygen find-module and download the doxygen-awesome-css project for themes:
+
+\filename{ch15/01-full-project/cmake/Doxygen.cmake (fragment)}
+
+\begin{cmake}
+find_package(Doxygen REQUIRED)
+
+include(FetchContent)
+FetchContent_Declare(doxygen-awesome-css
+    GIT_REPOSITORY
+        https://github.com/jothepro/doxygen-awesome-css.git
+    GIT_TAG
+        v2.3.1
+)
+FetchContent_MakeAvailable(doxygen-awesome-css)
+\end{cmake}
+
+Then, we’ll need a function to create targets that generate documentation. We’ll adapt the code introduced in Chapter 13, Generating Documentation, to support multiple targets:
+
+\filename{ch15/01-full-project/cmake/Doxygen.cmake (continued)}
+
+\begin{cmake}
+function(Doxygen target input)
+    set(NAME "doxygen-${target}")
+    set(DOXYGEN_GENERATE_HTML YES)
+    set(DOXYGEN_HTML_OUTPUT ${PROJECT_BINARY_DIR}/${output})
+
+    UseDoxygenAwesomeCss()
+    UseDoxygenAwesomeExtensions()
+
+    doxygen_add_docs("doxygen-${target}"
+        ${PROJECT_SOURCE_DIR}/${input}
+        COMMENT "Generate HTML documentation"
+    )
+endfunction()
+
+# ... copied from Ch13:
+# UseDoxygenAwesomeCss
+# UseDoxygenAwesomeExtensions
+\end{cmake}
+
+Use this function by calling it for the library target:
+
+\filename{ch15/01-full-project/src/calc/CMakeLists.txt (fragment)}
+
+\begin{cmake}
+# ... calc_static target definition
+# ... testing and program analysis modules
+
+Doxygen(calc src/calc)
+
+# ... file continues
+\end{cmake}
+
+And for the console executable:
+
+\filename{ch15/01-full-project/src/calc\_console/CMakeLists.txt (fragment)}
+
+\begin{cmake}
+# ... calc_static target definition
+# ... testing and program analysis modules
+Doxygen(calc_console src/calc_console)
+
+# ... file continues
+\end{cmake}
+
+This setup adds two targets to the project: doxygen-calc and doxygen-calc\_console, allowing for the on-demand generation of technical documentation. Now, let’s consider what other documents should be included.
+
 \mySubsubsection{15.7.2.}{Writing non-technical documents for a professional project}
+
+Professional projects should include a set of non-technical documents stored in the top-level directory, essential for comprehensive understanding and legal clarity:
+
+\begin{itemize}
+\item
+README: Provides a general description of the project
+
+\item
+LICENSE: Details the legal parameters regarding the project’s use and distribution
+\end{itemize}
+
+Additional documents you might consider include:
+
+\begin{itemize}
+\item
+INSTALL: Offers step-by-step installation instructions
+
+\item
+CHANGELOG: Presents significant changes across versions
+
+\item
+AUTHORS: Lists contributors and their contact information if the project has multiple contributors
+
+\item
+BUGS: Advises on known issues and details on reporting new ones
+\end{itemize}
+
+CMake doesn’t directly interact with these files, as they don’t involve automated processing or scripting. Yet, their presence is vital for a well-documented C++ project. Here’s a minimal example of each document:
+
+\filename{ch15/01-full-project/README.md}
+
+\begin{shell}
+# Calc Console
+
+Calc Console is a calculator that adds two numbers in a
+terminal. It does all the math by using a **Calc** library.
+This library is also available in this package.
+This application is written in C++ and built with CMake.
+
+## More information
+
+- Installation instructions are in the INSTALL file
+- License is in the LICENSE file
+\end{shell}
+
+This is short and maybe a little silly. Note the .md extension – it stands for Markdown, which is a text-based formatting language that is easily readable. Websites such as GitHub and many text editors will render these files with rich formatting.
+
+Our INSTALL file will look like this:
+
+\filename{ch15/01-full-project/INSTALL}
+
+\begin{shell}
+To install this software you'll need to provide the following:
+
+- C++ compiler supporting C++17
+- CMake >= 3.26
+- GIT
+- Doxygen + Graphviz
+- CPPCheck
+- Valgrind
+
+This project also depends on GTest, GMock and FXTUI. This
+software is automatically pulled from external repositories
+during the installation.
+
+To configure the project type:
+
+cmake -B <temporary-directory>
+
+Then you can build the project:
+
+cmake --build <temporary-directory>
+
+And finally install it:
+
+cmake --install <temporary-directory>
+
+To generate the documentation run:
+
+cmake --build <temporary-directory> -t doxygen-calc
+cmake --build <temporary-directory> -t doxygen-calc_console
+\end{shell}
+
+The LICENSE file is a bit tricky, as it requires some expertise in copyright law (and otherwise). Instead of writing all the clauses by ourselves, we can do what many other projects do and use a readily available software license. For this project, we’ll go with the MIT License, which is extremely permissive. Check the Further reading section for some useful references:
+
+\filename{ch15/01-full-project/LICENSE}
+
+\begin{shell}
+Copyright 2022 Rafal Swidzinski
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+\end{shell}
+
+Lastly, we have the CHANGELOG. As suggested earlier, it’s good to keep track of changes in a file so that developers using your project can easily find out which version supports the features they need. For example, it might be useful to say that a multiplication feature was added to the library in version 0.8.2. Something as simple as the following is already helpful:
+
+\filename{ch15/01-full-project/CHANGELOG}
+
+\begin{shell}
+1.1.0 Updated for CMake 3.26 in 2nd edition of the book
+1.0.0 Public version with installer
+0.8.2 Multiplication added to the Calc Library
+0.5.1 Introducing the Calc Console application
+0.2.0 Basic Calc library with Sum function
+\end{shell}
+
+With these documents, the project not only gains an operational structure but also communicates its usage, changes, and legal considerations effectively, ensuring users and contributors have all the necessary information at their disposal.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
