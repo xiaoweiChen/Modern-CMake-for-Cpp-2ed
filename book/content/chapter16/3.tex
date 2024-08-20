@@ -1,0 +1,58 @@
+CMake searches for CMakePresets.json and CMakeUserPresets.json in the top-level directory. Both files use the same JSON structure to define presets, hence there isn’t much difference between them to discuss. The format is a JSON object with the following keys:
+
+\begin{itemize}
+\item
+version: This is a required integer that specifies the version of the preset JSON schema
+
+\item
+cmakeMinimumRequired: This is an object that specifies the required CMake version
+
+\item
+include: This is an array of strings that includes external presets from file paths provided in the array (since schema version 4)
+
+\item
+configurePresets: This is an array of objects that defines the configuration stage presets
+
+\item
+buildPresets: This is an array of objects that defines the build stage presets
+
+\item
+testPresets: This is an array of objects that are specific to the test stage presets
+
+\item
+packagePresets: This is an array of objects that are specific to the package stage presets
+
+\item
+workflowPresets: This is an array of objects that are specific to the workflow mode presets
+
+\item
+vendor: This is an object that contains custom settings defined by IDEs and other vendors; CMake does not process this field
+\end{itemize}
+
+When writing a preset, CMake requires the version entry to be present; other values are optional. Here’s an example preset file (actual presets will be added in subsequent sections):
+
+\filename{ch16/01-presets/CMakePresets.json}
+
+\begin{json}
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 26,
+        "patch": 0
+    },
+    "include": [],
+    "configurePresets": [],
+    "buildPresets": [],
+    "testPresets": [],
+    "packagePresets": [],
+    "workflowPresets": [],
+    "vendor": {
+        "data": "IDE-specific information"
+    }
+}
+\end{json}
+
+There’s no requirement to add empty arrays like in the preceding example; entries other than version are optional. Speaking of which, the appropriate schema version for CMake 3.26 is 6.
+
+Now that we understand the structure of the preset file, let’s actually learn how to define the presets themselves.

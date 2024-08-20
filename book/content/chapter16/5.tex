@@ -1,0 +1,61 @@
+Workflow presets are the ultimate automation solution for our project. They allow us to automatically execute multiple stage-specific presets in the predetermined order. That way, we can practically perform an end-to-end build in a single step.
+
+To discover available workflows for a project, we can execute the following command:
+
+\begin{shell}
+cmake --workflow --list-presets
+\end{shell}
+
+To select and apply a preset, use the following command:
+
+\begin{shell}
+cmake –workflow --preset <preset-name>
+\end{shell}
+
+Additionally, with the -{}-fresh flag, we can wipe the build tree and clear the cache.
+
+Defining workflow presets is quite simple; we need to define a name and we can optionally provide displayName and description, just like for stage-specific presets. After that, we must enumerate all the stage-specific presets the workflow should execute. This is done by providing a steps array containing objects with type and name properties, as illustrated here:
+
+\filename{ch16/01-presets/CMakePresets.json (continued)}
+
+\begin{json}
+...
+"workflowPresets": [
+{
+    "name": "myWorkflow",
+    "steps": [
+        {
+            "type": "configure",
+            "name": "myConfigure"
+        },
+        {
+            "type": "build",
+            "name": "myBuild"
+        },
+        {
+            "type": "test",
+            "name": "myTest"
+        },
+        {
+            "type": "package",
+            "name": "myPackage"
+        },
+        {
+            "type": "build",
+            "name": "myInstall"
+        }
+    ]
+...
+\end{json}
+
+Each object in the steps array references a preset we defined earlier in this chapter, indicating its type (configure, build, test, or package) and a name. These presets collectively execute all necessary steps to fully build and install a project from scratch with a single command:
+
+\begin{shell}
+cmake --workflow --preset myWorkflow
+\end{shell}
+
+Workflow presets are the ultimate solution for automating C++ building, testing, packaging, and installing. Next, let’s explore how to manage some edge cases with conditions and macros.
+
+
+
+

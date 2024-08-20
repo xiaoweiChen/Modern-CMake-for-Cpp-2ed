@@ -1,0 +1,73 @@
+The configuration of projects can become a complex task when we need to be specific about elements such as cache variables, chosen generators, and more—especially when there are multiple ways to build our project. This is where presets come in handy. Instead of memorizing command-line arguments or writing shell scripts to execute cmake with different arguments, we can create a preset file and store the required configuration in the project itself.
+
+CMake utilizes two optional files to store project presets:
+
+\begin{itemize}
+\item
+CMakePresets.json: Official presets delivered by project authors.
+
+\item
+CMakeUserPresets.json: Dedicated to users who wish to add custom presets to the project. Projects should add this file to the VCS ignore list to ensure that custom settings don’t inadvertently get shared in the repository.
+\end{itemize}
+
+Preset files must be placed in the top directory of the project for CMake to recognize them. Each preset file can define multiple presets for each stage: configure, build, test, package, and workflow presets that encompass multiple stages. Users can then select a preset to execute through the IDE, GUI, or command line.
+
+Presets can be listed by adding the -{}-list-presets argument to the command line, specific to the stage we’re listing for. For example, build presets can be listed with:
+
+\begin{shell}
+cmake --build --list-presets
+\end{shell}
+
+Test presets can be listed with:
+
+\begin{shell}
+ctest --list-preset
+\end{shell}
+
+To use a preset, we need to follow the same pattern, and provide the preset name after the -{}-preset argument.
+
+Additionally, you can’t list package presets with the cmake command; you need to use cpack. Here’s a command line for the package preset:
+
+\begin{shell}
+cpack --preset <preset-name
+\end{shell}
+
+After picking the preset, you can, of course, add stage-specific command-line arguments, for example, to specify your build tree or installation path. Added arguments override whatever is set in the preset.
+
+There’s a special case for workflow presets, which can be listed and applied if the additional -{}-workflow argument is present when running the cmake command:
+
+\begin{shell}
+$ cmake --workflow --list-presets
+Available workflow presets:
+    "myWorkflow"
+$ cmake --workflow --preset myWorkflow
+Executing workflow step 1 of 4: configure preset "myConfigure"
+...
+\end{shell}
+
+That’s how you can apply and review available presets in a project. Now, let’s explore how the preset file is structured.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,130 @@
+When we discussed the general fields for each stage-specific preset, we mentioned the condition field. It’s time to return to that subject. The condition field enables or disables a preset, revealing its true potential when integrated with workflows. Essentially, it allows us to bypass presets that aren’t suitable under certain conditions and create alternative presets that are.
+
+Conditions require preset schema version 3 or above (introduced in CMake 3.22) and are JSON objects that codify a few simple logical operations that can determine whether circumstances, like used OS, environment variables, or even chosen generators, fit the scenario of a preset. CMake provides this data through macros, which are essentially a limited set of read-only variables usable in the preset file.
+
+The structure of a condition object varies based on the check type. Each condition must include a type field and additional fields as defined by the type. Recognized basic types include:
+
+\begin{itemize}
+\item
+const: This checks whether the value provided in the value field is Boolean true
+
+\item
+equals, notEquals: This compares the lhs field value to the value in the rhs field
+
+\item
+inList and notInList: These check for the presence of the value provided in the string field within the array in the list field
+
+\item
+matches and notMatches: These evaluate whether the string field’s value aligns with the pattern defined in the regex field
+\end{itemize}
+
+An example condition looks like this:
+
+\begin{json}
+"condition": {
+    "type": "equals",
+    "lhs": "${hostSystemName}",
+    "rhs": "Windows"
+}
+\end{json}
+
+The const condition’s practical use is primarily for disabling a preset without removing it from the JSON file. Apart from const, all basic conditions permit the use of macros in the fields they introduce: lhs, rhs, string, list, and regex.
+
+Advanced condition types, which function like “not”, “and”, and “or” operations, utilize other conditions as arguments:
+
+\begin{itemize}
+\item
+not: A Boolean inversion of the condition provided in the condition field
+
+\item
+anyOf and allOf: These check whether any or all conditions in the conditions array are true
+\end{itemize}
+
+For instance:
+
+\begin{json}
+"condition": {
+    "type": "anyOf",
+    "conditions": [
+        {
+            "type": "equals",
+            "lhs": "${hostSystemName}",
+            "rhs": "Windows"
+        },
+        {
+            "type": "equals",
+            "lhs": "${hostSystemName}",
+            "rhs": "Linux"
+        }
+    ]
+}
+\end{json}
+
+This condition evaluates as true if the system is either Linux or Windows.
+Through these examples, we’ve introduced our first macro: \$\{hostSystemName\}. Macros follow a simple syntax and are limited to specific instances, like:
+
+\begin{itemize}
+\item
+\$\{sourceDir\}: This is the path of the source tree
+
+\item
+\$\{sourceParentDir\}: This is the path of the source tree’s parent directory
+
+\item
+\$\{sourceDirName\}: This is the project’s directory name
+
+\item
+\$\{presetName\}: This is the name of the preset
+
+\item
+\$\{generator\}: This is the generator used to create the buildsystem
+
+\item
+\$\{hostSystemName\}: This is the system name: Linux, Windows, or Darwin on macOS
+
+\item
+\$\{fileDir\}: This is the name of the file containing the current preset (applicable when an include array is used to import external presets)
+
+\item
+\$\{dollar\}: This is the escaped dollar sign (\$)
+
+\item
+\$\{pathListSep\}: This is the environment-specific path separator
+
+\item
+\$env\{<variable-name>\}: This returns the environment variable if specified by the preset (case-sensitive), or the parent environment value
+
+\item
+\$penv\{<variable-name>\}: This returns the environment variable from the parent environment
+
+\item
+\$vendor\{<macro-name>\}: This allows IDE vendors to introduce their own macros
+\end{itemize}
+
+These macros provide sufficient flexibility for use in presets and their conditions, enabling the effective toggling of workflow steps as needed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

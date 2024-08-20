@@ -1,21 +1,463 @@
 
 
-
+Stage-specific presets are simply presets that configure individual CMake stages: configure, build, test, package, and install. They allow for a granular and structured approach to defining build configurations. Here’s an overview of the common features shared across all preset stages, followed by an introduction to defining presets for individual stages.
 
 \mySubsubsection{16.4.1.}{Common features across presets}
 
+There are three features that are used to configure presets regardless of the CMake stage. Namely, these are unique name fields, optional fields, and associations with configuration presets. The following sections will cover each, respectively.
+
+
 \mySamllsection{Unique name fields}
+
+Every preset must have a unique name field within its stage. Given that CMakeUserPresets.json (if it exists) implicitly includes CMakePresets.json (if it exists), both files share the namespace, preventing duplicate names across them. For example, you can’t have two package-stage presets with the name myPreset in both files.
+
+A minimal preset file might look like this:
+
+\begin{json}
+{
+    "version": 6,
+    "configurePresets": [
+    {
+        "name": "myPreset"
+    },
+    {
+        "name": "myPreset2"
+    }
+    ]
+}
+\end{json}
+
 
 \mySamllsection{Optional fields}
 
+Every stage-specific preset can use the same optional fields:
+
+\begin{itemize}
+\item
+displayName: This is a string that provides a user-friendly name for the preset
+
+\item
+description: This is a string that offers an explanation of what the preset does
+
+\item
+inherits: This is a string, or an array of strings, that effectively copies the configuration of presets named in this field as a base, to be further extended or modified
+
+\item
+hidden: This is a Boolean that hides the preset from the listings; such hidden presets can only be used through inheritance
+
+\item
+environment: This is an object that overrides ENVvariables for this stage; each key identifies an individual variable, and values can be strings or null; it supports macros
+
+\item
+condition: This is an object that enables or disables this preset (more on this later)
+
+\item
+vendor: This is a custom object that contains vendor-specific values and follows the same convention as a root-level vendor field
+\end{itemize}
+
+Presets can form a graph-like inheritance structure, provided there are no cyclic dependencies. CMakeUserPresets.json can inherit from project-level presets but not the other way around.
+
 \mySamllsection{Association with configuration-stage presets}
+
+All stage-specific presets must be associated with a configuration preset, as they must know the location of the build tree. While the configure preset is inherently associated with itself, build, test, and package presets need to explicitly define this association via the configurePreset field.
+
+Contrary to what you might think, this association doesn’t mean CMake will automatically execute the configuration preset when you decide to run any of the subsequent presets. You still need to execute each preset manually, or use a workflow preset (we’ll get to that in a bit).
+
+With these foundational concepts in place, we can continue into the specifics of presets for individual stages, starting with the configuration stage. As we progress, we’ll explore how these presets interact and how they can be used to streamline the project configuration and building process in CMake.
 
 \mySubsubsection{16.4.2.}{Defining configuration-stage presets}
 
+As previously indicated, configuration presets reside within the configurePresets array. They can be listed by adding the -{}-list-presets argument to the command line, specific to the configuration stage:
+
+\begin{shell}
+cmake --list-presets
+\end{shell}
+
+To configure a project with a chosen preset, specify its name after the -{}-preset argument, like so:
+
+\begin{shell}
+cmake --preset myConfigurationPreset
+\end{shell}
+
+The configuration preset has some general fields like name and description, but it also has its own unique set of optional fields. Here are the simplified descriptions of the most important ones:
+
+\begin{itemize}
+\item
+generator: A string that specifies a generator to use for the preset; required for schema version < 3
+
+\item
+architecture and toolset: A string that configures generators supporting these options
+
+\item
+binaryDir: A string that provides a relative or absolute path to the build tree; required for schema version < 3; supports macros
+
+\item
+installDir: A string that provides a relative or absolute path to the installation directory; it is required for schema version < 3 and it supports macros
+
+\item
+cacheVariables: A map that defines cache variables; values support macros
+\end{itemize}
+
+When defining the cacheVariables map, remember the order in which variables are resolved in the project. As you can see in Figure 16.1, any cache variables defined through the command line will override preset variables. Any cache or environment preset variables will override those coming from the cache file or the host environment.
+
+\myGraphic{0.8}{content/chapter16/images/1.png}{Figure 16.1: How presets override CMakeCache.txt and the system environment variables}
+
+Let’s declare a simple myConfigure configuration preset that specifies the generator, build tree, and installation path:
+
+\filename{ch16/01-presets/CMakePresets.json (continued)}
+
+\begin{json}
+...
+    "configurePresets": [
+        {
+            "name": "myConfigure",
+            "displayName": "Configure Preset",
+            "description": "Ninja generator",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "installDir": "${sourceDir}/build/install"
+        }
+    ],
+...
+\end{json}
+
+Our introduction to configure presets is complete, which brings us to build-stage presets.
+
 \mySubsubsection{16.4.3.}{Defining build-stage presets}
+
+You won’t be surprised to learn that build presets reside within the buildPresets array. They can be listed by adding the -{}-list-presets argument to the command line, specific to the build stage:
+
+\begin{shell}
+cmake --build --list-presets
+\end{shell}
+
+To build a project with a chosen preset, specify its name after the -{}-preset argument, like so:
+
+\begin{shell}
+cmake --build --preset myBuildingPreset
+\end{shell}
+
+The build preset also has some general fields like name and description, and it has its unique set of optional fields. The simplified descriptions of the most important ones are:
+
+\begin{itemize}
+\item
+jobs: An integer that sets the number of parallel jobs used to build the project
+
+\item
+targets: A string or string array that sets targets to build and supports macros
+
+\item
+configuration: A string that determines the build type for multi-configuration generators (Debug, Release, etc.)
+
+\item
+cleanFirst: A Boolean that ensures that the project is always cleaned before the build
+\end{itemize}
+
+That’s it. Now, we can write a build preset like so:
+
+\filename{ch16/01-presets/CMakePresets.json (continued)}
+
+\begin{json}
+...
+    "buildPresets": [
+        {
+            "name": "myBuild",
+            "displayName": "Build Preset",
+            "description": "Four jobs",
+            "configurePreset": "myConfigure",
+            "jobs": 4
+        }
+    ],
+...
+\end{json}
+
+You’ll notice that the required configurePreset field is set to point to the myConfigure preset we defined in the previous section. Now, we’re able to move on to the test presets.
 
 \mySubsubsection{16.4.4.}{Defining test-stage presets}
 
+Test presets live within the testPresets array. They can be displayed by adding the -{}-listpresets argument to the command line, specific to the test stage:
+
+\begin{shell}
+ctest --list-presets
+\end{shell}
+
+To test a project using a preset, specify its name after the -{}-preset argument, like so:
+
+\begin{shell}
+ctest --preset myTestPreset
+\end{shell}
+
+The test preset also has its own unique set of optional fields. The simplified descriptions of the most important ones are:
+
+\begin{itemize}
+\item
+configuration: A string that determines the build type for multi-configuration generators (Debug, Release, etc.)
+
+\item
+output: An object that configures the output
+
+\item
+filter: An object that specifies which tests to run
+
+\item
+execution: An object that configures the execution of tests
+\end{itemize}
+
+Each object maps the appropriate command-line options to configuration values. We’ll highlight a few essential options, but this isn’t an exhaustive list. Refer to the Further reading section for a full reference.
+
+Optional entries for the output object include:
+
+\begin{itemize}
+\item
+shortProgress: Boolean; progress will be reported within a single line
+
+\item
+verbosity: A string that sets the output verbosity to one of the following levels: default, verbose, or extra
+
+\item
+outputOnFailure: A Boolean that prints the program output upon test failure
+
+\item
+quiet: Boolean; suppress all output
+\end{itemize}
+
+For exclude, some of the accepted entries are:
+
+\begin{itemize}
+\item
+name: A string that excludes tests with names matching a regex pattern and supports macros
+
+\item
+label: A string that excludes tests with labels matching a regex pattern and supports macros
+
+\item
+fixtures: An object that determines which fixtures to exclude from the test (see official documentation for more details)
+\end{itemize}
+
+Finally, the execution object accepts the following optional entry:
+
+\begin{itemize}
+\item
+outputLogFile: A string that specifies the output logfile path and supports macros
+\end{itemize}
+
+The filter object accepts include and exclude keys to configure the filtering of test cases; here’s a partially filled structure to illustrate this:
+
+\begin{json}
+    "testPresets": [
+        {
+            "name": "myTest",
+            "configurePreset": "myConfigure",
+            "filter": {
+                "include": {
+                    ... name, label, index, useUnion ...
+                },
+                "exclude": {
+                    ... name, label, fixtures ...
+                }
+            }
+        }
+    ],
+...
+\end{json}
+
+Each key defines its own object of options:
+
+For include, entries include:
+
+\begin{itemize}
+\item
+name: A string that includes tests with names matching a regex pattern and supports macros
+
+\item
+label: A string that includes tests with labels matching a regex pattern and supports macros
+
+\item
+index: An object that selects tests to run with accepting start, end, and stride integers, and a specificTests array of integers; it supports macros
+
+\item
+useUnion: A Boolean that enables the usage of a union of tests determined by index and name, rather than the intersection
+\end{itemize}
+
+For exclude, entries include:
+
+\begin{itemize}
+\item
+name: A string that excludes tests with names matching a regex pattern and supports macros
+
+\item
+label: A string that excludes tests with labels matching a regex pattern and supports macros
+
+\item
+fixtures: An object that determines which fixtures to exclude from the test (see official documentation for more details)
+\end{itemize}
+
+Finally, the execution object can be added right here:
+
+\begin{json}
+    "testPresets": [
+        {
+            "name": "myTest",
+            "configurePreset": "myConfigure",
+            "execution": {
+                ... stopOnFailure, enableFailover, ...
+                ... jobs, repeat, scheduleRandom, ...
+                ... timeout, noTestsAction ...
+            }
+        }
+    ],
+...
+\end{json}
+
+It accepts the following optional entries:
+
+\begin{itemize}
+\item
+stopOnFailure: A Boolean that enables halting the tests if any fail
+
+\item
+enableFailover: A Boolean that resumes previously interrupted tests
+
+\item
+jobs: An integer that runs a number of multiple tests in parallel
+
+\item
+repeat: An object that determines how to repeat tests; the object must have the following fields:
+\begin{itemize}
+\item
+mode – A string with one of the following values: until-fail, until-pass, aftertimeout
+
+\item
+count – An integer that determines the number of repeats
+\end{itemize}
+
+\item
+scheduleRandom: A Boolean that enables a random order of test execution
+
+\item
+timeout: An integer that sets a limit (in seconds) on the total execution time for all tests
+
+\item
+noTestsAction: A string that defines the action if no tests are found, with options like default, error, and ignore
+\end{itemize}
+
+While there are many configuration options, simple presets are also viable:
+
+\filename{ch16/01-presets/CMakePresets.json (continued)}
+
+\begin{json}
+...
+"testPresets": [
+    {
+        "name": "myTest",
+        "displayName": "Test Preset",
+        "description": "Output short progress",
+        "configurePreset": "myConfigure",
+        "output": {
+            "shortProgress": true
+        }
+    }
+],
+...
+\end{json}
+
+As with the build preset, we also set the required configurePreset field for the new test preset to neatly tie things together. Let’s take a look at the last stage-specific preset type, the package preset.
+
 \mySubsubsection{16.4.5.}{Defining package-stage presets}
 
+Package presets were introduced in schema version 6, meaning you’ll need at least CMake 3.25 to utilize them. These presets should be included in the packagePresets array. They can also be displayed by appending the -{}-list-presets argument to the command line, specific to the test stage:
+
+\begin{shell}
+cpack --list-presets
+\end{shell}
+
+To create a project package using a preset, specify its name after the -{}-preset argument, like so:
+
+\begin{shell}
+cpack --preset myTestPreset
+\end{shell}
+
+A package preset leverages the same shared fields as other presets while introducing some optional fields specific to itself:
+
+\begin{itemize}
+\item
+generators: An array of strings that sets the package generators to use (ZIP, 7Z, DEB, etc.)
+
+\item
+configuration: An array of strings that determines the list of build types for CPack to package (Debug, Release, etc.)
+
+\item
+filter: An object that specifies which tests to run
+
+\item
+packageName, packageVersion, packageDirectory, and vendorName: Strings that specify the metadata for the created package
+\end{itemize}
+
+Let’s extend our preset file with a concise package preset as well:
+
+\filename{ch16/01-presets/CMakePresets.json (continued)}
+
+\begin{json}
+...
+    "packagePresets": [
+        {
+            "name": "myPackage",
+            "displayName": "Package Preset",
+            "description": "ZIP generator",
+            "configurePreset": "myConfigure",
+            "generators": [
+            "ZIP"
+            ]
+        }
+    ],
+...
+\end{json}
+
+Such a configuration will allow us to streamline the creation of project packages, but we’re still missing one key ingredient: project installation. Let’s find out how we can make it work.
+
 \mySubsubsection{16.4.6.}{Adding the installation preset}
+
+You might’ve noticed that the CMakePresets.json object doesn’t support defining "installPresets". There’s no explicit way to install your project through a preset, which seems odd since the configure preset provides an installDir field! So, do we have to resort to manual installation commands?
+
+Fortunately, no. There’s a workaround that enables us to use the build preset to achieve our goal.
+
+Take a look:
+
+\filename{ch16/01-presets/CMakePresets.json (continued)}
+
+\begin{json}
+...
+    "buildPresets": [
+        {
+            "name": "myBuild",
+            ...
+        },
+        {
+            "name": "myInstall",
+            "displayName": "Installation",
+            "targets" : "install",
+            "configurePreset": "myConfigure"
+        }
+    ],
+...
+\end{json}
+
+We can create a build preset with a targets field set to install. The install target is implicitly defined by the project when we configure the installation correctly. Building with this preset will execute the necessary steps to install the project to installDir specified in the associated configure preset (if the installDir field is empty, the default location will be used):
+
+\begin{shell}
+$ cmake --build --preset myInstall
+[0/1] Install the project...
+-- Install configuration: ""
+-- Installing: .../install/include/calc/basic.h
+-- Installing: .../install/lib/libcalc_shared.so
+-- Installing: .../install/lib/libcalc_static.a
+-- Installing: .../install/lib/calc/cmake/CalcLibrary.cmake
+-- Installing: .../install/lib/calc/cmake/CalcLibrary-noconfig.cmake
+-- Installing: .../install/lib/calc/cmake/CalcConfig.cmake
+-- Installing: .../install/bin/calc_console
+-- Set non-toolchain portion of runtime path of ".../install/bin/calc_
+console" to ""
+\end{shell}
+
+This neat trick can help us save a few cycles. It would be even better if we could provide a single command for our end users that takes care of everything, from configuration to installation. Well, we can, with workflow presets. Let’s take a look.
+
