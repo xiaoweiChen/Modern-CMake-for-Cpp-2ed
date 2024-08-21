@@ -1,57 +1,59 @@
-To store a list, CMake concatenates all elements into a string, using a semicolon, ;, as a delimiter: a;list;of;5;elements. You can escape a semicolon in an element with a backslash, like so: a\verb|\|;single\verb|\|;element.
 
-To create a list, we can use the set() command:
+为了存储一个列表，CMake会将所有元素连接成一个字符串，使用分号（;）作为分隔符：a;list;of;5;elements。你可以在元素中使用反斜杠来转义分号，如下所示：a\verb|\|;single\verb|\|;element。
 
-\begin{cmake}
-    set(myList a list of five elements)
-\end{cmake}
 
-Because of how lists are stored, the following commands will have exactly the same effect:
+要创建一个列表，我们可以使用set()命令：
 
 \begin{cmake}
-    set(myList "a;list;of;five;elements")
-    set(myList a list "of;five;elements")
+set(myList a list of five elements)
 \end{cmake}
 
-CMake automatically unpacks lists in unquoted arguments. By passing an unquoted myList reference, we effectively send more arguments to the command:
+由于列表的存储方式，以下命令将产生完全相同的效果：
 
 \begin{cmake}
-    message("the list is:" ${myList})
+set(myList "a;list;of;five;elements")
+set(myList a list "of;five;elements")
 \end{cmake}
 
-The message() command will receive six arguments: “the list is:", “a", “list", “of", “five", and “elements". This may have unintended consequences, as the output will be printed without any additional spaces between the arguments:
+CMake会自动在未加引号的参数中解包列表。通过传递未加引号的myList引用，我们实际上向命令发送了更多的参数：
+
+\begin{cmake}
+message("the list is:" ${myList})
+\end{cmake}
+
+message()命令将接收六个参数：“the list is:”, “a”, “list”, “of”, “five”, 和 “elements”。这可能会产生意想不到的后果，因为输出将不带任何额外的空格打印参数：
 
 \begin{shell}
-    the list is:alistoffiveelements
+the list is:alistoffiveelements
 \end{shell}
 
-As you can see, this is a very simple mechanism, and it should be used carefully.
+如你所见，这是一个非常简单的机制，应该小心使用。
 
-CMake offers a list() command that provides a multitude of subcommands to read, search, modify, and order lists. Here’s a short summary:
+CMake提供了一个list()命令，该命令提供了多种子命令来读取、搜索、修改和排序列表。以下是一个简短的摘要：
 
 \begin{cmake}
-    list(LENGTH <list> <out-var>)
-    list(GET <list> <element index> [<index> ...] <out-var>)
-    list(JOIN <list> <glue> <out-var>)
-    list(SUBLIST <list> <begin> <length> <out-var>)
-    list(FIND <list> <value> <out-var>)
-    list(APPEND <list> [<element>...])
-    list(FILTER <list> {INCLUDE | EXCLUDE} REGEX <regex>)
-    list(INSERT <list> <index> [<element>...])
-    list(POP_BACK <list> [<out-var>...])
-    list(POP_FRONT <list> [<out-var>...])
-    list(PREPEND <list> [<element>...])
-    list(REMOVE_ITEM <list> <value>...)
-    list(REMOVE_AT <list> <index>...)
-    list(REMOVE_DUPLICATES <list>)
-    list(TRANSFORM <list> <ACTION> [...])
-    list(REVERSE <list>)
-    list(SORT <list> [...])
+list(LENGTH <list> <out-var>)
+list(GET <list> <element index> [<index> ...] <out-var>)
+list(JOIN <list> <glue> <out-var>)
+list(SUBLIST <list> <begin> <length> <out-var>)
+list(FIND <list> <value> <out-var>)
+list(APPEND <list> [<element>...])
+list(FILTER <list> {INCLUDE | EXCLUDE} REGEX <regex>)
+list(INSERT <list> <index> [<element>...])
+list(POP_BACK <list> [<out-var>...])
+list(POP_FRONT <list> [<out-var>...])
+list(PREPEND <list> [<element>...])
+list(REMOVE_ITEM <list> <value>...)
+list(REMOVE_AT <list> <index>...)
+list(REMOVE_DUPLICATES <list>)
+list(TRANSFORM <list> <ACTION> [...])
+list(REVERSE <list>)
+list(SORT <list> [...])
 \end{cmake}
 
-Most of the time, we don’t really need to use lists in our projects. However, if you find yourself in that rare case where this concept would be convenient, you’ll find a more in-depth reference of the list() command in Appendix, Miscellaneous Commands.
+大多数时候，我们的项目中并不真正需要使用列表。然而，如果你发现自己处于那种罕见的情况，这个概念会很方便，你可以在附录中找到list()命令的更深入的参考资料，杂项命令。
 
-Now that we know how to work with lists and variables of all kinds, let’s shift our focus to controlling the execution flow and learn about control structures available in CMake.
+现在我们知道了如何处理各种类型的列表和变量，让我们将焦点转移到控制执行流程上，并了解CMake中可用的控制结构。
 
 
 

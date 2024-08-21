@@ -1,58 +1,58 @@
-The majority of this book will teach you how to prepare CMake projects for your users. To cater to their needs, we need to thoroughly understand how users interact with CMake in different scenarios. This will allow you to test your project files and ensure they’re working correctly.
+本书的大部分内容将教你如何为你的用户提供准备 CMake 项目。为了满足他们的需求，我们需要彻底了解用户在不同场景中如何与 CMake 交互。这将允许你测试你的项目文件，并确保它们正确工作。
 
-CMake is a family of tools and consists of five executables:
-
-\begin{itemize}
-\item
-cmake: The main executable that configures, generates, and builds projects
-
-\item
-ctest: The test driver program used to run and report test results
-
-\item
-cpack: The packaging program used to generate installers and source packages
-
-\item
-cmake-gui: The graphical wrapper around cmake
-
-\item
-ccmake: The console-based GUI wrapper around cmake
-\end{itemize}
-
-Additionally, Kitware, the company behind CMake, offers a separate tool called CDash to provide advanced oversight over the health of our projects’ builds.
-
-\mySubsubsection{1.4.1}{CMake command line}
-
-The cmake is the main binary of the CMake suite, and provides a few modes of operation (also sometimes called actions):
+CMake 是一组工具，包括五个可执行文件：
 
 \begin{itemize}
 \item
-Generating a project buildsystem
+cmake: 用于配置、生成和构建项目的核心可执行文件
 
 \item
-Building a project
+ctest: 用于运行和报告测试结果的测试驱动程序
 
 \item
-Installing a project
+cpack: 用于生成安装程序和源包的打包程序
 
 \item
-Running a script
+cmake-gui: 窗口化的图形界面
 
 \item
-Running a command-line tool
-
-\item
-Running a workflow preset
-
-\item
-Getting help
+ccmake: 基于控制台的图形界面
 \end{itemize}
 
-Let’s see how they work.
+此外，Kitware，CMake 的开发公司，还提供了一个名为 CDash 的单独工具，用于提供对我们项目构建健康状况的高级监控。
 
-\mySamllsection{Generating a project buildsystem}
+\mySubsubsection{1.4.1}{CMake命令行}
 
-The first step required to build our project is to generate a buildsystem. Here are three forms of command to execute the CMake generating a project buildsystem action:
+cmake 是 CMake 套件的主要二进制文件，并提供几种操作模式（有时也称为操作）：
+
+\begin{itemize}
+\item
+生成项目构建系统
+
+\item
+构建项目
+
+\item
+安装项目
+
+\item
+运行脚本
+
+\item
+运行命令行工具
+
+\item
+运行工作流程预设
+
+\item
+获取帮助
+\end{itemize}
+
+让我们看看它们是如何工作的。
+
+\mySamllsection{生成项目构建系统}
+
+构建我们项目的第一步是生成构建系统。以下是执行 CMake 生成项目构建系统操作的三种命令形式：
 
 \begin{shell}
 cmake [<options>] -S <source tree> -B <build tree>
@@ -60,49 +60,49 @@ cmake [<options>] <source tree>
 cmake [<options>] <build tree>
 \end{shell}
 
-We’ll discuss available <options> in the upcoming sections. Right now, let’s focus on choosing the right form of the command. One important feature of CMake is the support for out-of-source builds or the support for storing build artifacts in a directory different from the source tree. This is a preferred approach to keep the source directory clean from any build-related files and avoid polluting the Version Control Systems (VCSs) with accidental files or ignore directives.
+我们将讨论可用的 <options>。目前，让我们关注选择正确的命令形式。CMake 的一个重要特性是支持源外构建或支持将构建工件存储在与源树不同的目录中。这是一种保持源目录干净，避免意外文件或忽略指令污染版本控制系统（VCS）的首选方法。
 
-This is why the first form of command is the most practical. It allows us to specify the paths to the source tree and the produced buildsystem specified with -S and -B, respectively:
+这就是为什么第一种命令形式最实用。它允许我们指定源树和生成的构建系统的路径，分别用 -S 和 -B 指定：
 
 \begin{shell}
 cmake -S ./project -B ./build
 \end{shell}
 
-CMake will read the project files from the ./project directory and generate a buildsystem in the ./build directory (creating it beforehand if needed).
+CMake 将从 ./project 目录读取项目文件，并在 ./build 目录中生成构建系统（如果需要，事先创建）。
 
-We can skip one of the arguments and cmake will “guess” that we intended to use the current directory for it. Note that skipping both will produce an in-source build and store the build artifacts along with source files, which we don’t want.
+我们可以省略一个参数，cmake 会“猜测”我们打算使用当前目录作为省略的参数。请注意，省略两个参数将产生源内构建，并将构建工件与源文件一起存储，这是我们不想的。
 
-\begin{myNotic}{BE EXPLICIT WHEN RUNNING CMAKE}
-Do not use the second or third form of the cmake <directory> command, because they can produce a messy in-source build. In Chapter 4, Setting Up Your First CMake Project, we’ll learn how to prevent users from doing that.
+\begin{myNotic}{运行 CMake 时要明确}
+不要使用第二种或第三种形式的 cmake <directory> 命令，因为它们可能会产生混乱的源内构建。在第 4 章，设置你的第一个 CMake 项目，我们将学习如何防止用户这样做。
 
-As hinted in the syntax snippet, the same command behaves differently if a previous build already exists in <directory>: it will use the cached path to the sources and rebuild from there. Since we often invoke the same commands from the Terminal command history, we might get into trouble here; before using this form, always check whether your shell is currently working in the right directory.
+如语法片段所示，相同的命令如果之前在 <directory> 中已经存在构建，其行为会有所不同：它会使用缓存的源路径并从此处重新构建。由于我们经常从终端命令历史记录中调用相同的命令，我们可能会在这里遇到麻烦；在使用这种形式之前，请始终检查你的 shell 是否在正确的目录中工作。
 \end{myNotic}
 
-\mySamllsubsection{Examples}
+\mySamllsubsection{示例}
 
-Generate the build tree in the current directory using the source from one directory up:
+使用来自上一目录的源在当前目录生成构建树：
 
 \begin{shell}
 cmake -S ..
 \end{shell}
 
-Generate the build tree in the ./build directory using the source from the current directory:
+使用当前目录的源在 ./build 目录生成构建树：
 
 \begin{shell}
 cmake -B build
 \end{shell}
 
-\mySamllsubsection{Choosing a generator}
+\mySamllsubsection{选择生成器}
 
-As discussed earlier, you can specify a few options during the generation stage. Selecting and configuring a generator decides which build tool from our system will be used for building in the subsequent Building a project section, what build files will look like, and what the structure of the build tree will be.
+正如之前讨论的，你可以在生成阶段指定几个选项。选择和配置生成器决定了我们将使用系统中哪个构建工具来构建后续的构建项目部分，构建文件将是什么样子，以及构建树的结构将是什么样子。
 
-So, should you care? Luckily, the answer is often “no.” CMake does support multiple native buildsystems on many platforms; however, unless you have installed a few generators at the same time, CMake will correctly select one for you. This can be overridden by the CMAKE\_GENERATOR environment variable or by specifying the generator directly on the command line, like so:
+所以，你应该关心吗？幸运的是，答案通常是“不”。CMake 在许多平台上支持多种本地构建系统；然而，除非你同时安装了几个生成器，CMake 会为你正确选择一个。这可以通过设置 CMAKE\_GENERATOR 环境变量或直接在命令行上指定生成器来覆盖：
 
 \begin{shell}
 cmake -G <generator name> -S <source tree> -B <build tree>
 \end{shell}
 
-Some generators (such as Visual Studio) support a more in-depth specification of a toolset (compiler) and platform (compiler or SDK). Additionally, CMake will scan environment variables that override the defaults: CMAKE\_GENERATOR\_TOOLSETand CMAKE\_GENERATOR\_PLATFORM. Alternatively, the values can be specified directly in the command line:
+一些生成器（如 Visual Studio）支持对工具集（编译器）和平台（编译器或 SDK）进行更深入的指定。此外，CMake 将扫描环境变量以覆盖默认值：CMAKE\_GENERATOR\_TOOLSET 和 CMAKE\_GENERATOR\_PLATFORM。或者，值可以直接在命令行上指定：
 
 \begin{shell}
 cmake -G <generator name>
@@ -111,17 +111,17 @@ cmake -G <generator name>
       -S <source tree> -B <build tree>
 \end{shell}
 
-Windows users usually want to generate a buildsystem for their preferred IDE. On Linux and macOS, it’s very common to use the Unix Makefiles or Ninja generators.
+Windows 用户通常希望为他们的首选 IDE 生成一个构建系统。在 Linux 和 macOS 上，使用 Unix Makefiles 或 Ninja 生成器非常常见。
 
-To check which generators are available on your system, use the following command:
+要检查您的系统上可用的生成器，请使用以下命令：
 
 \begin{shell}
 cmake --help
 \end{shell}
 
-At the end of the help printout, you will get a full list of generators, like this one produced on Windows 10 (some output was truncated for readability):
+在帮助信息的末尾，您将获得一个生成器的完整列表，如下例所示，这是在 Windows 10 上产生的（为了便于阅读，部分输出截断了）：
 
- The following generators are available on this platform:
+以下是在此平台上可用的生成器：
 
 \begin{shell}
 Visual Studio 17 2022
@@ -164,376 +164,376 @@ Sublime Text 2 - Ninja
 Sublime Text 2 - Unix Makefiles
 \end{shell}
 
-As you can see, CMake supports a lot of different generator flavors and IDEs.
+正如你所见，CMake 支持许多不同的生成器风格和 IDE。
 
-\mySamllsubsection{Managing the project cache}
+\mySamllsubsection{管理项目缓存}
 
-CMake queries the system for all kinds of information during the configuration stage. Because these operations can take a bit of time, the collected information is cached in the CMakeCache.txt file in the build tree directory. There are a few command-line options that allow you to manage the behavior of the cache more conveniently.
+在配置阶段，CMake 会查询系统上的各种信息。因为这些操作可能需要一些时间，所以收集到的信息会被缓存在构建树目录中的 CMakeCache.txt 文件里。有几个命令行选项可以让您更方便地管理缓存的行为。
 
-The first option at our disposal is the ability to prepopulate cached information:
+我们首先可以使用的是预填充缓存信息的能力：
 
 \begin{shell}
 cmake -C <initial cache script> -S <source tree> -B <build tree>
 \end{shell}
 
-We can provide a path to the CMake listfile, which (only) contains a list of set() commands to specify variables that will be used to initialize an empty build tree. We’ll discuss writing the listfiles in the next chapter.
+我们可以提供一个路径到 CMake 列表文件，这个文件（仅）包含一系列 set() 命令来指定用于初始化空构建树的变量。我们将在下一章讨论编写列表文件。
 
-The initialization and modification of existing cache variables can be done in another way (for instance, when creating a file is a bit much to only set a few variables). You can set them directly in a command line, as follows:
+现有缓存变量的初始化和修改可以用另一种方式完成（例如，当创建一个文件仅为设置几个变量有些过于繁琐时）。您可以直接在命令行中设置它们，如下所示：
 
 \begin{shell}
 cmake -D <var>[:<type>]=<value> -S <source tree> -B <build tree>
 \end{shell}
 
-The :<type> section is optional (it is used by GUIs) and it accepts the following types: BOOL, FILEPATH, PATH, STRING or INTERNAL. If you omit the type, CMake will check if the variable exists in the CMakeCache.txt file and use its type; otherwise, it will be set to UNINITIALIZED.
+这个 :<type> 部分是可选的（它由 GUI 使用）并且接受以下类型：BOOL，FILEPATH，PATH，STRING 或 INTERNAL。如果您省略类型，CMake 会检查变量是否存在于 CMakeCache.txt 文件中并使用其类型；否则，它将被设置为 UNINITIALIZED。
 
-One particularly important variable that we’ll often set through the command line specifies the build type (CMAKE\_BUILD\_TYPE). Most CMake projects will use it on numerous occasions to decide things such as the verbosity of diagnostic messages, the presence of debugging information, and the level of optimization for created artifacts.
+我们经常通过命令行设置的一个特别重要的变量是指定构建类型（CMAKE\_BUILD\_TYPE）。大多数 CMake 项目会在许多情况下使用它来决定诸如诊断消息的详细程度、调试信息的存在以及创建工件的优化级别等事项。
 
-For single-configuration generators (such as GNU Make and Ninja), you should specify the build type during the configuration phase and generate a separate build tree for each type of config.
+对于单配置生成器（如 GNU Make 和 Ninja），您应该在配置阶段指定构建类型并为每种配置类型生成一个单独的构建树。
 
-Values used here are Debug, Release, MinSizeRel, or RelWithDebInfo. Missing this information may have undefined effects on projects that rely on it for configuration.
+这里使用的值有 Debug，Release，MinSizeRel 或 RelWithDebInfo。缺少这些信息可能会对依赖它进行配置的项目产生未定义的影响。
 
-Here’s an example:
+这里是一个例子：
 
 \begin{shell}
 cmake -S . -B ../build -D CMAKE_BUILD_TYPE=Release
 \end{shell}
 
-Note that multi-configuration generators are configured during the build stage.
+请注意，多配置生成器是在构建阶段进行配置的。
 
-For diagnostic purposes, we can also list cache variables with the -L option:
+为了诊断目的，我们还可以使用 -L 选项列出缓存变量：
 
 \begin{shell}
 cmake -L -S <source tree> -B <build tree>
 \end{shell}
 
-Sometimes, project authors may provide insightful help messages with variables – to print them, add the H modifier:
+有时，项目作者可能会在变量中提供有见地的帮助信息 —— 要打印它们，请添加 H 修饰符：
 
 \begin{shell}
 cmake -LH -S <source tree> -B <build tree>
 cmake -LAH -S <source tree> -B <build tree>
 \end{shell}
 
-Surprisingly, custom variables that are added manually with the -D option won’t be visible in this printout unless you specify one of the supported types.
+令人惊讶的是，使用 -D 选项手动添加的自定义变量不会在这个打印输出中显示，除非您指定了支持的类型之一。
 
-The removal of one or more variables can be done with the following option:
+可以使用以下选项删除一个或多个变量：
 
 \begin{shell}
 cmake -U <globbing_expr> -S <source tree> -B <build tree>
 \end{shell}
+在这里，通配表达式支持 *（通配符）和 ?（任意字符）符号。使用这些时要小心，因为很容易意外删除比预期更多的变量。
 
-Here, the globbing expression supports the * (wildcard) and ? (any character) symbols. Be careful when using these, as it is easy to erase more variables than intended.
+-U 和 -D 选项都可以重复多次使用。
 
-Both the -U and -D options can be repeated multiple times.
+\mySamllsubsection{调试和跟踪}
 
-\mySamllsubsection{Debugging and tracing}
-
-The cmake command can be run with a multitude of options that allow you to peek under the hood. To get general information about variables, commands, macros, and other settings, run the following:
+cmake 命令可以使用多种选项来让您窥视其内部工作。要获取关于变量、命令、宏和其他设置的通用信息，请运行以下命令：
 
 \begin{shell}
 cmake --system-information [file]
 \end{shell}
 
-The optional file argument allows you to store the output in a file. Running it in the build tree directory will print additional information about the cache variables and build messages from the log files.
+可选的文件参数允许您将输出存储在文件中。在构建树目录中运行它将打印有关缓存变量和日志文件中的构建消息的额外信息。
 
-In our projects, we’ll be using message() commands to report details of the build process. CMake filters the log output of these based on the current log level (by default, this is STATUS). The following line specifies the log level that we’re interested in:
+在我们的项目中，我们将使用 message() 命令来报告构建过程的详细信息。CMake 会根据当前的日志级别（默认为 STATUS）过滤这些日志输出。以下行指定了我们感兴趣的日志级别：
 
 \begin{shell}
 cmake --log-level=<level>
 \end{shell}
 
-Here, level can be any of the following: ERROR, WARNING, NOTICE, STATUS, VERBOSE, DEBUG, or TRACE. You can specify this setting permanently in the CMAKE\_MESSAGE\_LOG\_LEVEL cache variable.
+在这里，级别可以是以下任一选项：ERROR, WARNING, NOTICE, STATUS, VERBOSE, DEBUG 或 TRACE。您可以在 CMAKE\_MESSAGE\_LOG\_LEVEL 缓存变量中永久指定此设置。
 
-Another interesting option allows you to display log context with each message() call. To debug very complex projects, the CMAKE\_MESSAGE\_CONTEXT variable can be used like a stack. Whenever your code enters an interesting context, you can name it descriptively. By doing this, our messages will be decorated with the current CMAKE\_MESSAGE\_CONTEXT variable, like so:
+另一个有趣的选项允许您在每个 message() 调用中显示日志上下文。为了调试非常复杂的项目，CMAKE\_MESSAGE\_CONTEXT 变量可以像栈一样使用。每当您的代码进入一个有趣的上下文时，您可以给它一个描述性的名称。这样做之后，我们的消息将被当前的 CMAKE\_MESSAGE\_CONTEXT 变量装饰，如下所示：
 
 \begin{shell}
 [some.context.example] Debug message.
 \end{shell}
 
-The option to enable this kind of log output is as follows:
+启用这种日志输出的选项如下：
 
 \begin{shell}
 cmake --log-context <source tree>
 \end{shell}
 
-We’ll discuss naming contexts and logging commands in more detail in Chapter 2, The CMake Language.
+我们将在第 2 章《CMake 语言》中详细讨论命名上下文和日志命令。
 
-If all else fails and we need to use the big guns, there is always trace mode, which will print every executed command with its filename, the line number it is called from, and a list of passed arguments. You can enable it as follows:
+如果其他所有方法都失败了，我们需要使用重型武器，那么总是有跟踪模式，它会打印每个执行的命令及其文件名、调用它的行号以及传递的参数列表。您可以按以下方式启用它：
 
 \begin{shell}
 cmake --trace
 \end{shell}
 
-As you can imagine, it’s not recommended for everyday use, as the output is very long.
+正如您所想象的，它不建议日常使用，因为输出非常长。
 
-\mySamllsubsection{Configuring presets}
+\mySamllsubsection{预设配置}
 
-There are many, many options that users can specify to generate a build tree from your project. When dealing with the build tree path, generator, cache, and environmental variable, it’s easy to get confused or miss something. Developers can simplify how users interact with their projects and provide a CMakePresets.json file that specifies some defaults.
+有许多选项可供用户指定以从您的项目生成构建树。当涉及到构建树路径、生成器、缓存和环境变量时，很容易感到困惑或遗漏某些细节。开发人员可以通过提供一个 CMakePresets.json 文件来简化用户与项目的交互方式，并在此文件中指定一些默认设置。
 
-To list all of the available presets, execute the following:
+要列出所有可用的预设，请执行以下命令：
 
 \begin{shell}
 cmake --list-presets
 \end{shell}
 
-You can use one of the available presets as follows:
+您可以使用其中一个可用的预设，如下所示：
 
 \begin{shell}
 cmake --preset=<preset> -S <source> -B <build tree>
 \end{shell}
 
-To learn more, please refer to the Navigating the project files section of this chapter and Chapter 16, Writing CMake Presets.
+要了解更多信息，请参阅本章的“导航项目文件”部分以及第 16 章“编写 CMake 预设”。
 
-\mySamllsubsection{Cleaning the build tree}
+\mySamllsubsection{清理构建树}
 
-Every now and then, we might need to erase generated files. This may be due to some changes in the environment that were made between builds, or just to ensure that we are working on a clean slate. We can go ahead and delete the build tree directory manually, or just add the --fresh parameter to the command line:
+有时我们可能需要删除生成的文件。这可能是由于构建之间环境发生了一些变化，或者只是为了确保我们从头开始工作。我们可以手动删除构建树目录，或者只需在命令行中添加 -{}-fresh 参数：
 
 \begin{shell}
 cmake --fresh -S <source tree> -B <build tree>
 \end{shell}
 
-CMake will then erase CMakeCache.txt and CMakeFiles/ in a system-agnostic way and generate the buildsystem from scratch.
+CMake 将以系统无关的方式删除 CMakeCache.txt 和 CMakeFiles/ 文件夹，并从头开始重新生成构建系统。
 
-\mySamllsection{Building a project}
+\mySamllsection{构建项目}
 
-After generating our build tree, we’re ready for the building a project action. Not only does CMake know how to generate input files for many different builders but it can also run them for us providing appropriate arguments, as required by our project.
+生成构建树之后，我们就可以进行项目的构建操作了。CMake 不仅知道如何为许多不同的构建工具生成输入文件，还可以根据项目需求为我们运行这些工具并提供适当的参数。
 
-\begin{myNotic}{AVOID CALLING MAKE DIRECTLY}
-Many online sources recommend running GNU Make directly after the generation stage by calling the make command directly. Because GNU Make is a default generator for Linux and macOS, this recommendation can work. However, use the method described in this section instead, as it is generator-independent and is officially supported across all platforms. As a result, you won’t need to worry about the exact environment of every user of your application.
+\begin{myNotic}{避免直接调用 make}
+许多在线资源建议在生成阶段后直接通过 make 命令运行 GNU Make。因为 GNU Make 是 Linux 和 macOS 的默认生成器，所以这个建议可以奏效。然而，建议使用本节描述的方法，因为它不依赖于特定的生成器，并且在所有平台上都得到官方支持。因此，您无需担心应用程序每个用户的精确环境。
 \end{myNotic}
 
-The syntax of build mode is:
+构建模式的语法如下：
 
 \begin{shell}
 cmake --build <build tree> [<options>] [-- <build-tool-options>]
 \end{shell}
 
-In the majority of cases, it is enough to simply provide the bare minimum to get a successful build:
+大多数情况下，只需要提供最基本的参数即可成功构建：
 
 \begin{shell}
 cmake --build <build tree>
 \end{shell}
 
-The only required argument is the path to the generated build tree. This is the same path that was passed with the -B argument in the generation stage.
+唯一必需的参数是生成的构建树的路径。这与生成阶段中使用 -B 参数传递的路径相同。
 
-CMake allows you to specify key build parameters that work for every builder. If you need to provide special arguments to your chosen native builder, pass them at the end of the command after the -- token:
+如果您需要为所选的本地构建工具提供特殊参数，可以在命令末尾的 -{}- 符号后传递它们：
 
 \begin{shell}
 cmake --build <build tree> -- <build tool options>
 \end{shell}
 
-Let’s see what other options are available.
+让我们看看还有哪些其他选项可用。
 
-\mySamllsubsection{Running parallel builds}
+\mySamllsubsection{运行并行构建}
 
-By default, many build tools will use multiple concurrent processes to leverage modern processors and compile your sources in parallel. Builders know the structure of project dependencies, so they can simultaneously process steps that have their dependencies met to save users’ time.
+默认情况下，许多构建工具都会使用多个并发进程来利用现代处理器，并行编译源代码。构建工具了解项目依赖结构，因此可以同时处理满足依赖关系的任务以节省用户的时间。
 
-You might want to override that setting if you’d like to build faster on a multi-core machine (or to force a single-threaded build for debugging).
+如果您希望在多核机器上更快地构建（或为了调试而强制单线程构建），可以覆盖该设置。
 
-Simply specify the number of jobs with either of the following options:
+只需使用以下任一选项指定作业数量：
 
 \begin{shell}
 cmake --build <build tree> --parallel [<number of jobs>]
 cmake --build <build tree> -j [<number of jobs>]
 \end{shell}
 
-The alternative is to set it with the CMAKE\_BUILD\_PARALLEL\_LEVEL environment variable. The command-line option will override this variable.
+或者，您可以使用 CMAKE\_BUILD\_PARALLEL\_LEVEL 环境变量设置它。命令行选项将覆盖此变量。
 
-\mySamllsubsection{Selecting targets to build and clean }
+\mySamllsubsection{选择要构建和清理的目标}
 
-Every project is made up of one or more parts, called targets (we’ll discuss these in the second part of the book). Usually, we’ll want to build all available targets; however, on occasion, we might be interested in skipping some or explicitly building a target that was deliberately excluded from normal builds. We can do this as follows:
+每个项目由一个或多个称为目标的部分组成（我们将在本书第二部分讨论这些）。通常我们会想要构建所有可用的目标；但是偶尔，我们可能对跳过某些目标或明确构建被故意排除在正常构建之外的目标感兴趣。可以这样做：
 
 \begin{shell}
 cmake --build <build tree> --target <target1> --target <target2> …
 \end{shell}
 
-We can specify multiple targets to build by repeating the –target argument. Also, there’s a shorthand version, -t <target>, that can be used instead.
+可以通过重复 -{}-target 参数来指定要构建的多个目标。此外，也可以使用简写形式 -t <target>。
 
-\mySamllsubsection{Cleaning the build tree }
+\mySamllsubsection{清理构建树}
 
-One special target that isn’t normally built is called clean. Building it has the special effect of removing all artifacts from the build directory, so everything can be created from scratch later.
-You can start this process like this:
+有一个特殊的不会正常构建的目标叫做 clean。构建它会产生特殊的效果，即从构建目录中移除所有产物，以便稍后可以从头开始创建。
+
+您可以这样启动清理过程：
 
 \begin{shell}
 cmake --build <build tree> -t clean
 \end{shell}
 
-Additionally, CMake offers a convenient alias if you’d like to clean first and then implement a normal build:
+另外，CMake 提供了一个方便的别名，如果您想先清理再执行正常的构建：
 
 \begin{shell}
 cmake --build <build tree> --clean-first
 \end{shell}
 
-This action is different from cleaning mentioned in the Cleaning the build tree section, as it only affects target artifacts and nothing else (like the cache).
+这个操作与“清理构建树”部分中提到的清理不同，因为它只影响目标产物而不影响其他任何东西（例如缓存）。
 
-\mySamllsubsection{Configuring the build type for multi-configuration generators}
+\mySamllsubsection{为多配置生成器配置构建类型}
 
-So, we already know a bit about generators: they come in different shapes and sizes. Some of them offer the ability to build both Debug and Release build types in a single build tree. Generators that support this feature include Ninja Multi-Config, Xcode, and Visual Studio. Every other generator is a single-configuration generator, and they require a separate build tree for every config type we want to build.
+我们已经对生成器有了一定的了解：它们有不同的类型和功能。其中一些生成器能够在一个构建树中同时构建 Debug 和 Release 构建类型。支持此功能的生成器包括 Ninja Multi-Config、Xcode 和 Visual Studio。其他每个生成器都是单一配置生成器，它们需要为每种配置类型单独构建树。
 
-Select Debug, Release, MinSizeRel, or RelWithDebInfo and specify it as follows:
+选择 Debug、Release、MinSizeRel 或 RelWithDebInfo 并指定如下：
 
 \begin{shell}
 cmake --build <build tree> --config <cfg>
 \end{shell}
 
-Otherwise, CMake will use Debug as the default.
+否则，CMake 将使用 Debug 作为默认值。
 
-\mySamllsubsection{Debugging the build process}
+\mySamllsubsection{调试构建过程}
 
-When things go bad, the first thing we should do is check the output messages. However, veteran developers know that printing all the details all the time is confusing, so they often hide them by default. When we need to peek under the hood, we can ask for far more detailed logs by telling CMake to be verbose:
+当出现问题时，首先应该检查输出消息。然而，经验丰富的开发者知道始终打印所有细节会令人困惑，因此他们通常默认隐藏这些细节。当我们需要查看底层情况时，可以要求 CMake 提供更详细的日志：
 
 \begin{shell}
 cmake --build <build tree> --verbose
 cmake --build <build tree> -v
 \end{shell}
 
-The same effect can be achieved by setting the CMAKE\_VERBOSE\_MAKEFILE cached variable.
+同样效果也可以通过设置 CMAKE\_VERBOSE\_MAKEFILE 缓存变量实现。
 
-\mySamllsection{Installing a project}
+\mySamllsection{安装项目}
 
-When artifacts are built, users can install them on the system. Usually, this means copying files into the correct directories, installing libraries, or running some custom installation logic from a CMake script.
+当构建产物完成后，用户可以将它们安装到系统中。通常这意味着将文件复制到正确的目录，安装库或运行 CMake 脚本中的自定义安装逻辑。
 
-The syntax of installation mode is:
+安装模式的语法如下：
 
 \begin{shell}
 cmake --install <build tree> [<options>]
 \end{shell}
 
-As with other modes of operation, CMake requires a path to a generated build tree:
+像其他操作模式一样，CMake 需要生成的构建树的路径：
 
 \begin{shell}
 cmake --install <build tree>
 \end{shell}
 
-The install action also has plenty of additional options. Let’s see what they can do.
+安装动作也有许多额外的选项。让我们来看看它们能做什么。
 
-\mySamllsubsection{Choosing the installation directory}
+\mySamllsubsection{选择安装目录}
 
-We can prepend the installation path with a prefix of our choice (for example, when we have limited write access to some directories). The /usr/local path that is prefixed with /home/user becomes /home/user/usr/local.
+我们可以使用自选的前缀来预置安装路径（例如，当我们对某些目录的写入权限有限时）。例如，如果 /usr/local 路径前缀为 /home/user，则变为 /home/user/usr/local。
 
-The signature for this option is as follows:
+该选项的签名如下：
 
 \begin{shell}
 cmake --install <build tree> --install-prefix <prefix>
 \end{shell}
 
-If you use CMake 3.21 or older, you’ll have to use a less explicit option:
+如果您使用的是 CMake 3.21 或更早版本，则必须使用不太直观的选项：
 
 \begin{shell}
 cmake --install <build tree> --prefix <prefix>
 \end{shell}
 
-Note that this won’t work on Windows, as paths on this platform usually start with the drive letter.
+请注意，此选项在 Windows 上不起作用，因为 Windows 上的路径通常以驱动器字母开头。
 
-\mySamllsubsection{Installation for multi-configuration generators}
+\mySamllsubsection{多配置生成器的安装}
 
-Just like in the build stage, we can specify which build type we want to use for our installation (for more details, please refer to the Building a project section). The available types include Debug, Release, MinSizeRel, and RelWithDebInfo. The signature is as follows:
+就像在构建阶段一样，我们可以指定用于安装的构建类型（更多详情请参阅“构建项目”部分）。可用类型包括 Debug、Release、MinSizeRel 和 RelWithDebInfo。签名如下：
 
 \begin{shell}
 cmake --install <build tree> --config <cfg>
 \end{shell}
 
-\mySamllsubsection{Selecting components to install}
+\mySamllsubsection{选择要安装的组件}
 
-As a developer, you might choose to split your project into components that can be installed independently. We’ll discuss the concept of components in further detail in Chapter 14, Installing and Packaging. For now, let’s just assume they represent sets of artifacts that don’t need to be used in every case. This might be something like application, docs, and extra-tools.
+作为开发者，您可能会选择将项目拆分为可以独立安装的组件。我们将在第 14 章“安装和打包”中更详细地讨论组件的概念。现在，我们假设它们代表一组不需要在所有情况下使用的产物。这可能类似于 application、docs 和 extra-tools。
 
-To install a single component, use the following option:
+要安装单个组件，使用以下选项：
 
 \begin{shell}
 cmake --install <build tree> --component <component>
 \end{shell}
 
-\mySamllsubsection{Setting file permissions}
+\mySamllsubsection{设置文件权限}
 
-If the installation is performed on a Unix-like platform, you can specify default permissions for the installed directories with the following option, using the format of u=rwx,g=rx,o=rx:
+如果安装在类 Unix 平台上，您可以使用以下选项指定安装目录的默认权限，格式为 u=rwx,g=rx,o=rx：
 
 \begin{shell}
 cmake --install <build tree>
       --default-directory-permissions <permissions>
 \end{shell}
 
-\mySamllsubsection{Debugging the installation process}
+\mySamllsubsection{调试安装过程}
 
-Similarly to the build stage, we can also choose to view a detailed output of the installation stage.
+与构建阶段类似，我们也可以选择查看安装阶段的详细输出。
 
-To do this, use any of the following:
+为此，请使用以下任一命令：
 
 \begin{shell}
 cmake --install <build tree> --verbose
 cmake --install <build tree> -v
 \end{shell}
 
-The same effect can be achieved if the VERBOSE environment variable is set.
+如果设置了 VERBOSE 环境变量，也能达到同样的效果。
 
-\mySamllsection{Running a script}
+\mySamllsection{运行脚本}
 
-CMake projects are configured using CMake’s custom language. It’s cross-platform and quite powerful. Since it’s already there, why not make it available for other tasks? Sure enough, CMake can run standalone scripts (more on that in the Discovering scripts and modules section), like so:
+CMake 项目是使用 CMake 自定义语言配置的。它是跨平台的并且相当强大。既然已经有了这样的语言，为什么不将其用于其他任务呢？当然，CMake 可以运行独立的脚本（有关更多信息，请参阅“发现脚本和模块”部分），如下所示：
 
 \begin{shell}
 cmake [{-D <var>=<value>}...] -P <cmake script file>
       [-- <unparsed options>...]
 \end{shell}
 
-Running such a script won’t run any configuration or generate stages, and it won’t affect the cache.
+运行此类脚本不会执行任何配置或生成阶段，也不会影响缓存。
 
-There are two ways you can pass values to this script:
+有两种方法可以将值传递给此脚本：
 
 \begin{itemize}
 \item
-Through variables defined with the -D option
+通过使用 -D 选项定义的变量
 
 \item
-Through arguments that can be passed after a -{}- token
+通过可以在 -{}- 符号后传递的参数
 \end{itemize}
 
-CMake will create CMAKE\_ARGV<n> variables for all arguments passed to the script with the latter (including the -{}- token).
+CMake将为传递给脚本的所有参数(包括-{}-)创建CMAKE\_ARGV<n>变量。
 
-\mySamllsection{Running a command-line tool}
+\mySamllsection{运行命令行工具}
 
-On rare occasions, we might need to run a single command in a platform-independent way – perhaps copy a file or compute a checksum. Not all platforms were created equal, so not all commands are available in every system (or they have been named differently).
+少数情况下，我们需要以平台无关的方式运行单个命令——例如复制文件或计算校验和。并非所有的平台都完全相同，因此并非所有命令在每个系统中都可用（或者它们有不同的名称）。
 
-CMake offers a mode in which most common commands can be executed in the same way across platforms. Its syntax is:
+CMake 提供了一种模式，在这种模式下，大多数常见命令都可以跨平台地以相同方式执行。其语法如下：
 
 \begin{shell}
 cmake -E <command> [<options>]
 \end{shell}
 
-As the use of this particular mode is fairly limited, we won’t cover it in depth. However, if you’re interested in the details, I recommend calling cmake -E to list all the available commands. To simply get a glimpse of what’s on offer, CMake 3.26 supports the following commands: capabilities, cat, chdir, compare\_files, copy, copy\_directory, copy\_directory\_if\_different, copy\_if\_different, echo, echo\_append, env, environment, make\_directory, md5sum, sha1sum, sha224sum, sha256sum, sha384sum, sha512sum, remove, remove\_directory, rename, rm, sleep, tar, time, touch, touch\_nocreate, create\_symlink, create\_hardlink, true, and false.
+由于这种特定模式的应用相对有限，我们不会深入介绍。但是，如果您对该细节感兴趣，我建议您通过运行 cmake -E 来列出所有可用的命令。为了让您快速了解提供的内容，CMake 3.26 支持以下命令： capabilities, cat, chdir, compare\_files, copy, copy\_directory, copy\_directory\_if\_different, copy\_if\_different, echo, echo\_append, env, environment, make\_directory, md5sum, sha1sum, sha224sum, sha256sum, sha384sum, sha512sum, remove, remove\_directory, rename, rm, sleep, tar, time, touch, touch\_nocreate, create\_symlink, create\_hardlink, true 和 false。
 
-If a command you’d like to use is missing or you need a more complex behavior, consider wrapping it in a script and running it in -P mode.
+如果缺少您想要使用的命令或您需要更复杂的行为，可以考虑将它封装在脚本中，并在 -P 模式下运行。
 
-\mySamllsection{Running a workflow preset}
+\mySamllsection{运行工作流预设}
 
-We mentioned in the How does it work? section that building with CMake has three stages: configure, generate, and build. Additionally, we can also run automated tests and even create redistributable packages with CMake. Usually, users need to manually execute every such step separately by calling the appropriate cmake action through the command line. However, advanced projects can specify workflow presets that bundle multiple steps into a single action that can be executed with just one command. For now, we’ll only mention that users can get the list of available presets by running:
+我们在“它是如何工作的？”部分中提到，使用 CMake 构建项目分为三个阶段：配置、生成和构建。此外，我们还可以使用 CMake 运行自动化测试甚至创建可重分配的包。通常，用户需要通过命令行单独手动执行每一个步骤。但是，高级项目可以指定工作流预设，将多个步骤捆绑成一个单一的动作，只需一个命令即可执行。目前，我们只需知道用户可以通过运行以下命令获取可用预设的列表：
 
 \begin{shell}
 cmake ––workflow --list-presets
 \end{shell}
 
-They can execute a workflow preset with:
+他们可以执行一个工作流预设，如下所示：
 
 \begin{shell}
 cmake --workflow --preset <name>
 \end{shell}
 
-This will be explained in depth in Chapter 16, Writing CMake Presets.
+这将在第 16 章“编写 CMake 预设”中详细介绍。
 
-\mySamllsection{Getting help}
+\mySamllsection{获取帮助}
 
-It isn’t a surprise that CMake offers extensive help that is accessible through its command line.
+CMake 提供了广泛的帮助信息，可以通过其命令行访问。
 
-The syntax of help mode is:
+帮助模式的语法如下：
 
 \begin{shell}
 cmake --help
 \end{shell}
 
-This will print the list of the possible topics to dive deeper into and explain which parameters need to be added to the command to get more help.
+这将打印出一系列可能的主题列表，以深入了解，并解释需要向命令添加哪些参数以获取更多帮助。
 
-\mySubsubsection{1.4.2}{CTest command line}
+\mySubsubsection{1.4.2}{CTest 命令行}
 
-Automated testing is very important in order to produce and maintain high-quality code. The CMake suite comes with a dedicated command-line tool for this purpose called CTest. It is provided to standardize the way tests are run and reported. As a CMake user, you don’t need to know the details of testing this particular project: what framework is used or how to run it. CTest provides a convenient interface to list, filter, shuffle, retry, and timebox test runs.
+为了生产高质量的代码并维护其质量，自动化测试是非常重要的。CMake 套件包含了一个专门用于此目的的命令行工具 CTest。它旨在标准化测试的执行和报告方式。作为 CMake 用户，您不需要了解特定项目测试的详细信息：使用了哪个框架或如何运行它。CTest 提供了一个方便的接口来列出、过滤、随机化、重试和限制测试运行的时间。
 
-To run tests for a built project, we just need to call ctest in the generated build tree:
+要为已构建的项目运行测试，我们只需在生成的构建树中调用 ctest：
 
 \begin{shell}
 $ ctest
@@ -545,38 +545,39 @@ Guessing configuration Debug
 Total Test time (real) = 3.24 sec
 \end{shell}
 
-We devoted an entire chapter to this subject: Chapter 11, Testing Frameworks.
+我们为这一主题专门编写了一整章：第 11 章“测试框架”。
 
-\mySubsubsection{1.4.3}{CPack command line}
+\mySubsubsection{1.4.3}{CPack 命令行}
 
-After we have built and tested our amazing software, we are ready to share it with the world. The rare few power users are completely fine with the source code. However, the vast majority of the world uses precompiled binaries for convenience and time-saving reasons.
+构建并测试完我们优秀的软件后，我们就准备将其分享给全世界。少数高级用户可以完全接受源代码，但绝大多数用户出于方便和节省时间的原因使用预编译的二进制文件。
 
-CMake doesn’t leave you stranded here; it comes with batteries included. CPack is a tool that will create redistributable packages for various platforms: compressed archives, executable installers, wizards, NuGet packages, macOS bundles, DMG packages, RPMs, and more.
+CMake 在这方面并没有让您束手无策；它自带了一系列工具。CPack 是一个工具，它可以为各种平台创建可重分配的包：压缩归档文件、可执行安装程序、向导、NuGet 包、macOS 应用程序包、DMG 包、RPM 包等。
 
-CPack works in a very similar way to CMake: it is configured with the CMake language and has many package generators to pick from (not to be confused with CMake buildsystem generators).
-We’ll go through all the details in Chapter 14, Installing and Packaging, as this tool is meant to be used by mature CMake projects.
+CPack 的工作方式与 CMake 非常相似：它使用 CMake 语言进行配置，并提供了许多包生成器供选择（不要与 CMake 构建系统生成器混淆）。
+
+我们将在第 14 章“安装和打包”中详细介绍这个工具，因为这个工具是为成熟的 CMake 项目设计的。
 
 \mySubsubsection{1.4.4}{CMake GUI}
 
-CMake for Windows comes with a GUI version to configure the building process of previously prepared projects. For Unix-like platforms, there is a version built with Qt libraries. Ubuntu provides it in the cmake-qt-gui package.
+Windows 版本的 CMake 配备了一个图形用户界面（GUI），用于配置先前准备好的项目的构建过程。对于类 Unix 平台，有一个使用 Qt 库构建的版本。Ubuntu 通过 cmake-qt-gui 包提供它。
 
-To access the CMake GUI, run the cmake-gui executable:
+要访问 CMake GUI，运行 cmake-gui 可执行文件：
 
-\myGraphic{0.5}{content/chapter1/images/3.png}{Figure 1.3: The CMake GUI – the configuring stage for a buildsystem using a generator for Visual Studio 2019}
+\myGraphic{0.8}{content/chapter1/images/3.png}{图 1.3：CMake GUI — 使用 Visual Studio 2019 生成器配置构建系统的阶段}
 
-The GUI application is a convenience for users of your application: it can be useful for those who aren’t familiar with the command line and would prefer a graphical interface.
+GUI 应用程序为您的应用程序用户提供了便利：对于那些不熟悉命令行并更喜欢图形界面的人来说，它很有用。
 
-\begin{myNotic}{USE COMMAND-LINE TOOLS INSTEAD}
-I would definitely recommend the GUI to end users, but for programmers like you, I suggest avoiding any manual blocking steps that require clicking on forms every time you build your programs. This is especially advantageous in mature projects, where entire builds can be fully executed without any user interaction.
+\begin{myNotic}{推荐使用命令行工具}
+我肯定会推荐 GUI 给最终用户，但对于像您这样的程序员，我建议避免任何需要每次构建程序时点击表单的手动阻塞步骤。这对于成熟的项目尤其有利，因为整个构建过程可以完全无需用户交互就能执行。
 \end{myNotic}
 
-\mySubsubsection{1.4.5}{CCMake command line}
+\mySubsubsection{1.4.5}{CCMake 命令行}
 
-The ccmake executable is an interactive text user interface for CMake on Unix-like platforms (it’s unavailable for Windows unless explicitly built). I’m mentioning it here so you know what it is when you see it (Figure 1.4, but as with the GUI, developers will benefit more from editing the CMakeCache.txt file directly.
+ccmake 可执行文件是在类 Unix 平台上的 CMake 的交互式文本用户界面（在 Windows 上不可用，除非显式构建）。我在这里提一下，这样当您看到它时就知道它是什么（图 1.4，但就像 GUI 一样，开发人员直接编辑 CMakeCache.txt 文件会更有益。
 
-\myGraphic{0.5}{content/chapter1/images/4.png}{Figure 1.4: The configuring stage in ccmake}
+\myGraphic{1.0}{content/chapter1/images/4.png}{图 1.4：ccmake 中的配置阶段}
 
-Having this out of the way, we have concluded the basic introduction to the command line of the CMake suite. It’s time to discover the structure of a typical CMake project.
+解决了这些问题后，我们已经完成了对 CMake 套件基本命令行介绍。现在是时候探索典型 CMake 项目的结构了。
 
 
 

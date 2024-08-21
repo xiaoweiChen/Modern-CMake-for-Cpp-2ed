@@ -1,29 +1,30 @@
-Writing in the CMake language is trickier than one might expect. When you read a CMake listfile for the first time, you may be under the impression that the language in it is so simple that it can be just practiced without any theory. You may then attempt to introduce changes and experiment with the code without a thorough understanding of how it actually works. I wouldn’t blame you. We programmers are usually very busy, and build-related issues aren’t usually something that sounds exciting to invest lots of time in. In an effort to go fast, we tend to make gut-based changes hoping they just might do the trick. This approach to solving technical problems is called voodoo programming.
+在CMake语言中编写代码比预期的要棘手。当你第一次阅读CMake列表文件时，你可能会觉得里面的语言如此简单，以至于可以不需要任何理论就能实践。然后你可能会试图进行更改并尝试代码，而没有彻底了解它实际上是如何工作的。我不会责怪你。我们程序员通常都很忙，而且与构建相关的问题通常不是那种让人愿意投入大量时间的事情。为了快速完成，我们倾向于基于直觉进行更改，希望它们可能会奏效。这种解决技术问题的方法被称为巫毒编程。
 
-The CMake language appears trivial: after introducing our small extension, fix, hack, or one-liner, we suddenly realize that something isn’t working. Usually, the duration spent on debugging exceeds the time required for comprehending the topic itself. Luckily, this won’t be our fate because this chapter covers most of the critical knowledge needed to use the CMake language in practice.
+CMake语言看起来微不足道：在我们引入了小小的扩展、修复、黑客或单行代码之后，我们突然发现有些东西不工作了。通常，用于调试的时间超过了理解主题本身所需的时间。幸运的是，这不会是我们的命运，因为这一章节涵盖了实践中使用CMake语言所需的大部分关键知识。
 
-In this chapter, we’ll not only learn about the building blocks of the CMake language – comments, commands, variables, and control structures – but we’ll also understand the necessary background and try out examples following the latest practices.
-CMake puts you in a bit of a unique position. On one hand, you perform the role of a build engineer and must have a comprehensive grasp of compilers, platforms, and all related aspects. On the other hand, you’re a developer who writes the code that generates a buildsystem. Crafting high-quality code is a challenging task that demands a multifaceted approach. Not only must the code be functional and legible but it should also be easy to analyze, extend, and maintain.
+在本章中，我们不仅将学习CMake语言的基本构建块——注释、命令、变量和控制结构——还将了解必要的背景知识，并遵循最新实践尝试示例。
 
-To conclude, we will present a selection of the most practical and frequently utilized commands in CMake. Commands that are also commonly used, but not to the same extent, will be placed in Appendix, Miscellaneous Commands (reference guides for the string, list, file, and math commands).
+CMake让你处于一个独特的位置。一方面，你扮演着构建工程师的角色，必须全面掌握编译器、平台及其所有相关方面。另一方面，你是一个编写生成构建系统的代码的开发者。编写高质量的代码是一项具有挑战性的任务，需要多方面的方法。代码不仅要有功能性和可读性，还应该易于分析、扩展和维护。
 
-In this chapter, we’re going to cover the following main topics:
+最后，我们将介绍CMake中最实用和最常用的命令。那些也经常使用，但程度不如前面的命令将在附录“杂项命令”(字符串、列表、文件和数学命令的参考指南)中介绍。
+
+在本章中，我们将包括以下主要主题：
 
 \begin{itemize}
 \item
-The basics of the CMake language syntax
+CMake语言语法的基础
 
 \item
-Working with variables
+变量操作
 
 \item
-Using lists
+使用列表
 
 \item
-Understanding control structures in CMake
+理解CMake中的控制结构
 
 \item
-Exploring the frequently used commands
+探索常用的命令
 \end{itemize}
 
 

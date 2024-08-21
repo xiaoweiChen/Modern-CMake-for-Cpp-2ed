@@ -1,36 +1,37 @@
-CMake is a cross-platform, open-source software written in C++. That means you can, of course, compile it yourself; however, the most likely scenario is that you won’t have to. This is because precompiled binaries are available for you to download from the official web page at \url{https://cmake.org/download/}.
 
-Unix-based systems provide ready-to-install packages directly from the command line.
+CMake 是一个跨平台的、开源的软件，用 C++ 编写。这意味着你可以自己编译它；然而，最有可能的情况是你不需要这样做。这是因为可以从官方网站 \url{https://cmake.org/download/} 下载预编译的二进制文件。
+
+基于 Unix 的系统可以直接从命令行提供准备好的可安装包。
 
 \begin{myNotic}{Note}
-Remember that CMake doesn’t come with compilers. If your system doesn’t have them installed yet, you’ll need to provide them before using CMake. Make sure to add the paths to their executables to the PATH environment variable so that CMake can find them.
+请记住，CMake 并不包含编译器。如果你的系统还没有安装它们，在使用 CMake 之前你需要提供它们。确保将它们的执行文件路径添加到 PATH 环境变量中，这样 CMake 才能找到它们。
 
-To avoid facing tooling and dependency problems while learning from this book, I recommend practicing by following the first installation method: Docker. In a real-world scenario, you will of course want to use a native version, unless you’re working in a virtualized environment to begin with.
+为了避免在学习本书时遇到工具和依赖问题，我建议通过第一种安装方法进行实践：Docker。在现实世界的场景中，你当然会想要使用本地的版本，除非你最初就在虚拟化环境中工作。
 \end{myNotic}
 
-Let’s go through some different environments in which CMake can be used.
+让我们来看看 CMake 可以使用的不同环境。
 
 \mySubsubsection{1.3.1}{Docker}
 
-Docker (\url{https://www.docker.com/}) is a cross-platform tool that provides OS-level virtualization, allowing applications to be shipped in well-defined packages called containers. These are self-sufficient bundles that contain a piece of software with all of the libraries, dependencies, and tools required to run it. Docker executes its containers in lightweight environments that are isolated one from another.
+Docker (\url{https://www.docker.com/}) 是一个跨平台的工具，提供操作系统级别的虚拟化，允许应用程序以定义良好的包形式（称为容器）进行传输。这些是自给自足的捆绑包，包含运行所需的所有库、依赖项和工具。Docker 在轻量级环境中执行其容器，彼此隔离。
 
-This concept makes it extremely convenient to share whole toolchains that are necessary for a given process, configured and ready to go. I can’t stress enough how easy things become when you don’t need to worry about minuscule environmental differences.
+这个概念使得分享完成特定过程所需的所有工具链变得极为方便，无需担心微小的环境差异。
 
-The Docker platform has a public repository of container images, \url{https://registry.hub.docker.com/}, that provides millions of ready-to-use images.
+Docker 平台有一个公共的容器镜像仓库，\url{https://registry.hub.docker.com/}，提供数百万个现成的镜像。
 
-For your convenience, I have published two Docker repositories:
+为了方便起见，我发布了两个 Docker 仓库：
 
 \begin{itemize}
 \item
-swidzinski/cmake2:base: An Ubuntu-based image that contains the curated tools and dependencies that are necessary to build with CMake
+swidzinski/cmake2:base: 一个基于 Ubuntu 的镜像，包含构建时所需的精心挑选的工具和依赖项
 
 \item
-swidzinski/cmake2:examples: An image based on the preceding toolchain with all of the projects and examples from this book
+swidzinski/cmake2:examples: 基于上述工具链的镜像，包含本书中的所有项目和示例
 \end{itemize}
 
-The first option is for readers who simply want a clean-slate image ready to build their own projects, and the second option is for hands-on practice with examples as we go through the chapters.
+第一个选项是为那些只想有一个干净的镜像来构建自己项目的读者准备的，第二个选项是为我们在章节中进行示例实践而准备的。
 
-You can install Docker by following the instructions from its official documentation (please refer to docs.docker.com/get-docker). Then, execute the following commands in your terminal to download the image and start the container:
+你可以按照官方文档中的说明安装 Docker（请参考 docs.docker.com/get-docker）。然后，在终端中执行以下命令来下载镜像并启动容器：
 
 \begin{shell}
 $ docker pull swidzinski/cmake2:examples
@@ -38,49 +39,49 @@ $ docker run -it swidzinski/cmake2:examples
 root@b55e271a85b2:root@b55e271a85b2:#
 \end{shell}
 
-Note that examples are available in the directories matching this format:
+请注意，示例位于以下格式的目录中
 
 \begin{shell}
 devuser/examples/examples/ch<N>/<M>-<title>
 \end{shell}
 
-Here, <N> and <M> are zero-padded chapter and example numbers, respectively (like 01, 08, and 12).
+在这里，<N>和<M>分别是零填充的章节和示例编号（例如 01, 08, 和 12）
 
 \mySubsubsection{1.3.2}{Windows}
 
-Installing in Windows is straightforward – simply download the version for 32 or 64 bits from the official website. You can also pick a portable ZIP or MSI package for Windows Installer, which will add the CMake bin directory to the PATH environment variable (Figure 1.2) so that you can use it in any directory without any such errors:
+在 Windows 上安装非常简单——只需从官方网站下载适用于 32 位或 64 位的版本即可。您还可以选择适用于 Windows Installer 的便携式 ZIP 或 MSI 包装包，它会将 CMake 的 bin 目录添加到 PATH 环境变量中（图 1.2），这样一来您就可以在任何目录中使用它而不会出现此类错误：
 
-\textit{cmake} is not recognized as an internal or external command, operable program, or batch file.
+\textit{cmake}未被识别为内部或外部命令，也不是可运行的程序或批处理文件。
 
-If you select the ZIP package, you will have to do it manually. The MSI installer comes with a convenient GUI:
+如果你选择 ZIP 包，你需要手动进行。MSI 安装程序带有方便的 GUI：
 
-\myGraphic{0.5}{content/chapter1/images/2.png}{Figure 1.2: The installation wizard can set up the PATH environment variable for you}
+\myGraphic{0.8}{content/chapter1/images/2.png}{图 1.2：安装向导可以为你的环境变量设置 PATH}
 
-As I mentioned earlier, this is open-source software, so it is possible to build CMake yourself. However, on Windows, you will have to get a binary copy of CMake on your system first. This scenario is used by CMake contributors to generate newer versions.
+正如我之前提到的，这是一个开源软件，所以你可以自己构建 CMake。然而，在 Windows 上，你首先需要在你的系统上获取 CMake 的二进制副本。这种情况被 CMake 贡献者用来生成新版本。
 
-The Windows platform is no different from others, and it also requires a build tool that can finalize the build process started by CMake. A popular choice here is the Visual Studio IDE, which comes bundled with a C++ compiler. The Community edition is available for free from Microsoft’s website: \url{https://visualstudio.microsoft.com/downloads/}.
-
+Windows 平台与其他平台没有什么不同，它也需要一个构建工具来完成由 CMake 开始构建过程。这里的一个流行选择是 Visual Studio IDE，它附带了 C++ 编译器。社区版可以从 Microsoft 的网站免费获得：\url{https://visualstudio.microsoft.com/downloads/}.
 
 \mySubsubsection{1.3.3}{Linux}
 
-Installing CMake on Linux follows the same process as with any other popular package: call your package manager from the command line. Package repositories are usually kept up to date with fairly recent versions of CMake, but usually not the latest. If you’re fine with this and using a distribution like Debian or Ubuntu, it is simplest to just install the appropriate package:
+在 Linux 上安装 CMake 的过程与安装任何其他流行软件包相同：从命令行调用你的包管理器。包仓库通常会更新到 CMake 的最新版本，但通常不是最新版本。如果你满意于此，并且使用像 Debian 或 Ubuntu 这样的发行版，最简单的方法就是直接安装适当的包：
 
 \begin{shell}
 $ sudo apt-get install cmake
 \end{shell}
 
-For a Red Hat distribution, use the following command:
+对于 Red Hat 发行版，使用以下命令：
 
 \begin{shell}
 $ yum install cmake
 \end{shell}
 
 \begin{myTip}{Tip}
-Note that when installing a package, your package manager will fetch the latest available version in the repository configured for your OS. In many cases, package repositories don’t provide the latest version but, rather, a stable one that has been proven over time to work reliably. Pick according to your needs, but be aware that older versions won’t have all the features described in this book.
+请注意，当安装包时，你的包管理器将获取为你的操作系统配置的仓库中可用的最新版本。在许多情况下，包仓库不提供最新版本，而是提供经过时间考验的稳定版本，以确保可靠的工作。根据你的需求选择，但请注意，旧版本可能不包含本书中描述的所有功能。
 \end{myTip}
 
-To get the latest version, reference the download section of the official CMake website. If you know the current version number, you can use one of the following commands.
-The command for Linux x86\_64 is:
+要获取最新版本，请参考官方 CMake 网站的下载部分。如果你知道当前版本号，你可以使用以下命令之一。
+
+Linux x86\_64 的命令是：
 
 \begin{shell}
 $ VER=3.26.0 && wget https://github.com/Kitware/CMake/releases/download/
@@ -88,7 +89,7 @@ v$VER/cmake-$VER-linux-x86_64.sh && chmod +x cmake-$VER-linux-x86_64.sh &&
 ./cmake-$VER-linux-x86_64.sh
 \end{shell}
 
-The command for Linux AArch64 is:
+Linux AArch64 的命令是：
 
 \begin{shell}
 $ VER=3.26.0 && wget https://github.com/Kitware/CMake/releases/download/
@@ -96,33 +97,33 @@ v$VER/cmake-$VER-Linux-aarch64.sh && chmod +x cmake-$VER-Linux-aarch64.sh
 && ./cmake-$VER-Linux-aarch64.sh
 \end{shell}
 
-Alternatively, check out the Building from the source section to learn how to compile CMake on your platform yourself.
+或者，查看从源代码构建部分，了解如何在您的平台上自行编译 CMake。
 
 \mySubsubsection{1.3.4}{macOS}
 
-This platform is also strongly supported by CMake developers. The most popular choice of installation is through MacPorts with the following command:
+这个平台也得到了 CMake 开发者的强烈支持。最流行的安装方法是通过 MacPorts，使用以下命令：
 
 \begin{shell}
 $ sudo port install cmake
 \end{shell}
 
-Do note that at the time of writing, the latest version available in MacPorts was 3.24.4. To get the latest version, install the cmake-devel package:
+请注意，在撰写本文时，MacPorts 中可用的最新版本是 3.24.4。要获取最新版本，请安装 cmake-devel 包：
 
 \begin{shell}
 $ sudo port install cmake-devel
 \end{shell}
 
-Alternatively, you can use the Homebrew package manager:
+或者，可以使用 Homebrew 包管理器：
 
 \begin{shell}
 $ brew install cmake
 \end{shell}
 
-macOS package managers will cover all necessary steps, but be mindful that you might not get the latest version unless you’re building from the source.
+macOS 包管理器将涵盖所有必要步骤，但请注意，除非你从源代码构建，否则你可能无法获得最新版本。
 
-\mySubsubsection{1.3.5}{Building from the source}
+\mySubsubsection{1.3.5}{从源代码构建}
 
-If you’re using another platform, or just want to experience the latest builds that haven’t been promoted to a release (or adopted by your favorite package repository), download the source from the official website and compile it yourself:
+如果你使用其他平台，或者只是想体验尚未发布（或被你最喜欢的包仓库采用）的最新构建，请从官方网站下载源代码并自行编译：
 
 \begin{shell}
 $ wget https://github.com/Kitware/CMake/releases/
@@ -134,9 +135,9 @@ $ make
 $ make install
 \end{shell}
 
-Building from the source is relatively slow and requires more steps. However, there is no other way to have the freedom of picking any version of CMake. This is especially useful when packages that are available in repositories of your operating system are stale: the older the version of the system, the fewer updates it gets.
+从源代码构建相对较慢且需要更多步骤。然而，没有其他方法可以自由选择 CMake 的任何版本。这对于系统包仓库中的包陈旧时特别有用：系统版本越旧，获得的更新就越少。
 
-Now that we have installed CMake, let’s learn how to use it!
+现在我们已经安装了 CMake，让我们学习如何使用它！
 
 
 

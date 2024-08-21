@@ -1,5 +1,5 @@
 
-CMake offers many scripting commands that allow you to work with variables and the environment. Some of them have been extensively covered in the Appendix: for example, list(), string(), and file(). Others, such as find\_file(), find\_package(), and find\_path(), fit better in chapters that talk about their respective subjects. In this section, we will provide a brief overview of the common commands that are useful in most situations:
+CMake 提供了许多脚本命令，允许您处理变量和环境。其中一些在附录中已经详细介绍了，例如 list()、string() 和 file()。其他如 find\_file()、find\_package() 和 find\_path()，更适合放在讨论它们各自主题的章节中。在本节中，我们将简要概述在大多数情况下都有用的常见命令：
 
 \begin{itemize}
 \item
@@ -18,47 +18,48 @@ file()
 execute\_process()
 \end{itemize}
 
-Let’s get to it.
+让我们开始吧。
 
-\mySubsubsection{2.6.1}{The message() command}
+\mySubsubsection{2.6.1}{message()}
 
-We already know and love our trusty message() command, which prints text to standard output. However, there’s a lot more to it than meets the eye. By providing a MODE argument, you can customize the behavior of the command like so: message(<MODE> "text to print").
 
-The recognized modes are as follows:
+我们已经知道并喜爱我们可靠的 message() 命令，它将文本打印到标准输出。然而，它的功能远不止于此。通过提供一个 MODE 参数，您可以自定义命令的行为，如下所示：message(<MODE> "text to print")。
+
+可用的模式如下：
 
 \begin{itemize}
 \item
-FATAL\_ERROR: This stops processing and generation.
+FATAL\_ERROR: 停止处理和生成。
 
 \item
-SEND\_ERROR: This continues processing but skips generation.
+SEND\_ERROR: 继续处理但跳过生成。
 
 \item
-WARNING: This continues processing.
+WARNING:继续处理。
 
 \item
-AUTHOR\_WARNING: A CMake warning. This continues processing.
+AUTHOR\_WARNING: CMake 警告。继续处理。
 
 \item
-DEPRECATION: This works accordingly if either of the CMAKE\_ERROR\_DEPRECATED or CMAKE\_WARN\_DEPRECATED variables are enabled.
+DEPRECATION: 如果启用了 CMAKE\_ERROR\_DEPRECATED 或 CMAKE\_WARN\_DEPRECATED 变量，则相应地工作。
 
 \item
-NOTICE or omitted mode (default): This prints a message to stderr to attract the user’s attention.
+NOTICE 或省略模式（默认）: 打印消息到 stderr 以吸引用户的注意。
 
 \item
-STATUS: This continues processing and is recommended for main messages to users.
+STATUS: 继续处理，推荐用于向用户显示的主要消息。
 
 \item
-VERBOSE: This continues processing and should be used for more detailed information that usually isn’t very necessary.
+VERBOSE: 继续处理，应用于更详细的信息，通常不是非常必要。
 
 \item
-DEBUG: This continues processing and should contain any fine details that might be helpful when there’s an issue with a project.
+DEBUG: 继续处理，应包含任何可能在项目出现问题时有帮助的细微细节。
 
 \item
-TRACE: This continues processing and is recommended to print messages during project development. Usually, these sorts of messages would be removed before publishing the project.
+TRACE: 继续处理，建议在项目开发期间打印消息。通常，这类消息会在发布项目之前被移除。
 \end{itemize}
 
-Picking the right mode is extra work, but it can save debugging time by coloring the output text based on the severity (since 3.21) or even stop the execution after declaring an irrecoverable error:
+选择正确的模式需要额外的工作，但它可以通过基于严重性（自 3.21 版本起）给输出文本着色来节省调试时间，甚至在声明不可恢复的错误后停止执行：
 
 \filename{ch02/10-useful/message\_error.cmake}
 
@@ -67,11 +68,11 @@ message(FATAL_ERROR "Stop processing")
 message("This won't be printed.")
 \end{cmake}
 
-Messages will be printed depending on the current log level (which is STATUS by default). We discussed how to change this in the previous chapter in the Options for debugging and tracing section.
+消息将根据当前的日志级别（默认为 STATUS）打印。我们在上一章的调试和跟踪选项部分讨论了如何更改此设置。
 
-In Chapter 1, First Steps with CMake, I mentioned debugging with CMAKE\_MESSAGE\_CONTEXT, and now it’s time to delve into it. In the meantime, we have gained insights into three crucial pieces of this subject: lists, scopes, and functions.
+在第 1 章《CMake 的第一步》中，我提到了使用 CMAKE\_MESSAGE\_CONTEXT 进行调试，现在是深入研究它的时候了。在此期间，我们获得了这个主题三个关键部分的见解：列表、作用域和函数。
 
-In complex debugging scenarios, it can be extremely useful to indicate in which context the message is occurring. Consider the following output, where messages printed in the foo function have the appropriate prefix:
+在复杂的调试场景中，指出消息发生的上下文可能非常有用。考虑以下输出，其中在 foo 函数中打印的消息有适当的前缀：
 
 \begin{shell}
 $ cmake -P message_context.cmake --log-context
@@ -80,7 +81,7 @@ $ cmake -P message_context.cmake --log-context
 [top] After `foo`
 \end{shell}
 
-Here’s how this works:
+以下是它的工作原理：
 
 \filename{ch02/10-useful/message\_context.cmake}
 
@@ -96,20 +97,20 @@ foo()
 message("After `foo`")
 \end{cmake}
 
-Let’s break this down:
+让我们来分解一下：
 
 \begin{enumerate}
 \item
-First, we append the top to the context-tracking variable CMAKE\_MESSAGE\_CONTEXT, then we print the initial Before `foo` message, and the matching prefix [top] will be added to the output.
+首先，我们将 top 追加到上下文跟踪变量 CMAKE\_MESSAGE\_CONTEXT，然后打印初始的“在 'foo' 之前”消息，匹配的前缀 [top] 将被添加到输出中。
 
 \item
-Next, upon entering the foo() function, we append a new context to the list named foo after the function it belongs to and output another message, which appears with the extended [top.foo] prefix in the output.
+接下来，进入 foo() 函数时，我们在属于该函数的列表后追加一个名为 foo 的新上下文，并输出另一个消息，该消息在输出中显示扩展的 [top.foo] 前缀。
 
 \item
-Finally, after function execution has completed, we print the After `foo` message. The message is printed with the original [foo] scope. Why? Because of the variable scope rules: the changed CMAKE\_MESSAGE\_CONTEXT variable only lives until the end of the function scope, and is then restored to the original unchanged version.
+最后，在函数执行完成后，我们打印“在 'foo' 之后”消息。消息以原始的 [foo] 作用域打印。为什么？因为变量作用域规则：更改的 CMAKE\_MESSAGE\_CONTEXT 变量只在函数作用域结束前有效，然后恢复为原始未更改的版本
 \end{enumerate}
 
-Another cool trick with message() is to add indentation to the CMAKE\_MESSAGE\_INDENT list (in exactly the same way as with CMAKE\_MESSAGE\_CONTEXT):
+message() 的另一个技巧是向 CMAKE\_MESSAGE\_INDENT 列表添加缩进（与 CMAKE\_MESSAGE\_CONTEXT 完全相同的方式）：
 
 \begin{cmake}
 list(APPEND CMAKE_MESSAGE_INDENT " ")
@@ -118,7 +119,7 @@ foo()
 message("After `foo`")
 \end{cmake}
 
-The output from our scripts can then look a bit simpler:
+然后，我们的脚本输出可以看起来更简单：
 
 \begin{shell}
 Before `foo`
@@ -126,44 +127,44 @@ Before `foo`
 After `foo`
 \end{shell}
 
-Since CMake doesn’t offer any real debugger with breakpoints or other tools, the ability to produce clean log messages comes in very handy when things don’t go exactly as planned.
+由于CMake没有提供任何带有断点或其他工具的真正调试器，所以当事情没有完全按计划进行时，生成干净的日志消息的能力非常方便。
 
-\mySubsubsection{2.6.2}{The include() command}
+\mySubsubsection{2.6.2}{include()}
 
-Partitioning code into different files to keep things ordered and, well, separate, is quite useful. Then, we can reference them from our parent listfile by calling include(), like so:
+将代码分割成不同的文件以保持有序和分离是非常有用的。然后，我们可以通过调用 include() 从我们的父列表文件引用它们，如下所示：
 
 \begin{shell}
 include(<file|module> [OPTIONAL] [RESULT_VARIABLE <var>])
 \end{shell}
 
-If we provide a filename (a path with a .cmake extension), CMake will try to open and execute it.
+如果我们提供一个文件名（带有 .cmake 扩展名的路径），CMake 将尝试打开并执行它。
 
-Note that no nested, separate variable scope will be created, so any changes to variables made in that file will affect the calling scope.
+请注意，不会创建嵌套的独立变量作用域，因此该文件中对变量的任何更改都会影响调用作用域。
 
-CMake will raise an error if a file doesn’t exist unless we specify that it is optional with the OPTIONAL keyword. When we need to know whether include() was successful, we can provide a RESULT\_VARIABLE keyword with the name of the variable. It will be filled with a full path to the included file on success or not found (NOTFOUND) on failure.
+如果文件不存在，CMake 将报错，除非我们使用 OPTIONAL 关键字指定它是可选的。当我们需要知道 include() 是否成功时，可以提供 RESULT\_VARIABLE 关键字以及变量的名称。在成功时，它将被填充为包含文件的完整路径，在失败时则为 NOTFOUND。
 
-When running in script mode, any relative paths will be resolved from the current working directory. To force searching in relation to the script itself, provide an absolute path:
+在脚本模式下运行时，任何相对路径都将从当前工作目录解析。要强制相对于脚本本身进行搜索，请提供绝对路径：
 
 \begin{cmake}
 include("${CMAKE_CURRENT_LIST_DIR}/<filename>.cmake")
 \end{cmake}
 
-If we don’t provide a path but do provide the name of a module (without .cmake or otherwise), CMake will try to find a module and include it. CMake will search for a file with the name of <module>.cmake in CMAKE\_MODULE\_PATH and then in the CMake module directory.
+如果我们不提供路径，但提供了模块的名称（不带 .cmake 或其他），CMake 将尝试找到一个模块并包含它。CMake 将在 CMAKE\_MODULE\_PATH 中搜索名为 <模块>.cmake 的文件，然后是在 CMake 模块目录中。
 
-As CMake walks the source tree and includes different listfiles, the following variables are set: CMAKE\_CURRENT\_LIST\_DIR, CMAKE\_CURRENT\_LIST\_FILE, CMAKE\_PARENT\_LIST\_FILE, and CMAKE\_CURRENT\_LIST\_LINE.
+当 CMake 遍历源树并包含不同的列表文件时，将设置以下变量： CMAKE\_CURRENT\_LIST\_DIR, CMAKE\_CURRENT\_LIST\_FILE, CMAKE\_PARENT\_LIST\_FILE和CMAKE\_CURRENT\_LIST\_LINE。
 
-\mySubsubsection{2.6.3}{The include\_guard() command}
+\mySubsubsection{2.6.3}{include\_guard()}
 
-When we include files that have side effects, we might want to restrict them so that they’re only included once. This is where include\_guard([DIRECTORY|GLOBAL]) comes in.
+当我们包含具有副作用的文件时，我们可能希望限制它们，以便它们只被包含一次。这时 include\_guard([DIRECTORY|GLOBAL]) 就派上用场了。
 
-Put include\_guard() at the top of the included file. When CMake encounters it for the first time, it will make a note of this fact in the current scope. If the file gets included again (maybe because we don’t control all the files in our project), it won’t be processed any further.
+将 include\_guard() 放在包含文件的顶部。当 CMake 第一次遇到它时，它将在当前作用域中记录这一事实。如果文件再次被包含（可能是因为我们无法控制项目中的所有文件），它就不会再被进一步处理。
 
-If we want to protect against inclusion in unrelated function scopes that won’t share variables with each other, we should provide DIRECTORY or GLOBAL arguments. As the names suggest, the DIRECTORY keyword will apply the protection within the current directory and below it, and the GLOBAL keyword applies the protection to the whole build.
+如果我们希望防止在不会共享变量的不相关函数作用域中包含，我们应该提供 DIRECTORY 或 GLOBAL 参数。顾名思义，DIRECTORY 关键字将在当前目录及其以下应用保护，而 GLOBAL 关键字将把保护应用于整个构建。
 
 
-\mySubsubsection{2.6.4}{The file() command}
+\mySubsubsection{2.6.4}{file()}
 
-To give you an idea of what you can do with CMake scripts, let’s take a quick look at the most useful variants of the file manipulation command:
+为了让您了解可以在 CMake 脚本中执行的操作，让我们快速看一下文件操作命令的最有用的变体：
 
 \begin{shell}
 file(READ <filename> <out-var> [...])
@@ -171,27 +172,27 @@ file({WRITE | APPEND} <filename> <content>...)
 file(DOWNLOAD <url> [<file>] [...])
 \end{shell}
 
-In short, the file() command will let you read, write, and transfer files and work with the filesystem, file locks, paths, and archives, all in a system-independent manner. Please see the Appendix for more details.
+简而言之，file() 命令可以让您以系统无关的方式读取、写入和传输文件，以及与文件系统、文件锁、路径和存档等交互。有关更多详细信息，请参阅附录。
 
-\mySubsubsection{2.6.5}{The execute\_process() command}
+\mySubsubsection{2.6.5}{execute\_process()}
 
-Every now and then, you’ll need to resort to using tools available in the system (after all, CMake is primarily a buildsystem generator). CMake offers a command for this purpose: you can use execute\_process() to run other processes and collect their output. This command is a great fit for scripts and it can also be used in projects, but it only works during the configuration stage.
+在需要的时候，您将不得不求助于使用系统中的工具（毕竟，CMake 主要是一个构建系统生成器）。CMake 提供了一个命令以实现此目的：您可以使用 execute\_process() 来运行其他进程并收集它们的输出。这个命令非常适合脚本使用，也可以在项目中使用，但它仅在配置阶段有效。
 
-Here’s the general form of the command:
+以下是该命令的一般形式：
 
 \begin{shell}
 execute_process(COMMAND <cmd1> [<arguments>]... [OPTIONS])
 \end{shell}
 
-CMake will use the API of the operating system to create a child process (so, shell operators such as \&\&, ||, and > won’t work). However, you can still chain commands and pass the output of one to another simply by providing the COMMAND <cmd> <arguments> arguments more than once.
+CMake 将使用操作系统的 API 来创建一个子进程（因此，像 \&\&, || 和 > 这样的 shell 操作符将不起作用）。然而，您仍然可以通过多次提供 COMMAND 参数来链接命令，并将一个命令的输出传递给另一个。
 
-Optionally, you may use a TIMEOUT <seconds> argument to terminate the process if it hasn’t finished the task within the required limit, and you can set the WORKING\_DIRECTORY <directory> as you need.
+可选地，您可以使用 TIMEOUT 参数来在进程未在所需限制内完成任务时终止该进程，并且可以根据需要设置 WORKING\_DIRECTORY 。
 
-The exit codes of all tasks can be collected in a list by providing RESULTS\_VARIABLE <variable> arguments. If you’re only interested in the result of the last executed command, use the singular form: RESULT\_VARIABLE <variable>.
+所有任务的退出代码可以通过提供 RESULTS\_VARIABLE 参数来收集到一个列表中。如果您只对最后执行的命令的结果感兴趣，请使用单数形式：RESULT\_VARIABLE 。
 
-To collect the output, CMake provides two arguments: OUTPUT\_VARIABLE and ERROR\_VARIABLE (which are used in a similar fashion). If you would like to merge both stdout and stderr, use the same variable for both arguments.
+为了收集输出，CMake 提供了两个参数：OUTPUT\_VARIABLE 和 ERROR\_VARIABLE（它们的用法类似）。如果您希望合并 stdout 和 stderr，请为这两个参数使用相同的变量。
 
-Remember that when writing projects for other users, you should make sure that the command you’re planning to use is available on the platforms you claim to support.
+请记住，当为其他用户编写项目时，您应该确保您计划使用的命令在您声称支持的平台上是可用的。
 
 
 

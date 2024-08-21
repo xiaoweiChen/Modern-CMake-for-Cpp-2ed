@@ -1,79 +1,77 @@
 
 
 
-Creating top-notch software is no easy task. Developers researching this subject online often struggle to determine which advice is current and which methods have been superseded by newer, better practices. Moreover, most resources explain the process chaotically, lacking proper background, context, and structure.
+创建顶级软件并非易事。在线研究这个主题的开发者常常难以确定哪些建议是当前的，哪些方法已经被更新、更好的实践所取代。此外，大多数资源以混乱的方式解释过程，缺乏适当的背景、上下文和结构。
 
-Modern CMake for C++ provides an end-to-end guide that offers a simpler experience by treating the building of C++ solutions comprehensively. It not only teaches you how to use CMake in your projects but also highlights what makes them maintainable, elegant, and clean. The guide walks you through automating complex tasks common in many projects, including building, testing, and packaging.
+《Modern CMake for C++》提供了一个端到端的指南，通过全面处理C++解决方案的构建，提供了更简单的体验。它不仅教你如何在项目中使用CMake，还强调了如何使项目保持可维护性、优雅和简洁。该指南引导你完成许多项目中常见的复杂任务的自动化，包括构建、测试和打包。
 
-The book instructs you on organizing source directories, building targets, and creating packages. As you progress, you will learn to compile and link executables and libraries, understand these processes in detail, and optimize each step for the best results. Additionally, you will discover how to incorporate external dependencies into your project, such as third-party libraries, testing frameworks, program analysis tools, and documentation generators. Finally, you’ll learn how to export, install, and package your solution for both internal and external use.
+本书指导你如何组织源目录、构建目标和创建包。随着你的进步，你将学习编译和链接可执行文件和库，详细理解这些过程，并优化每个步骤以获得最佳结果。此外，你将发现如何将外部依赖项（如第三方库、测试框架、程序分析工具和文档生成器）整合到你的项目中。最后，你将学习如何导出、安装和打包你的解决方案，以供内部和外部使用。
 
-After completing this book, you’ll be able to use CMake confidently on a professional level.
+完成这本书后，你将能够在专业水平上自信地使用CMake。
 
 \myChapterNoFile{}{适读人群}
 
-After you’ve learned C++, you’ll quickly discover that proficiency with the language alone isn’t enough to prepare you for delivering projects at the highest standards. This book fills that gap: it is addressed to anyone aspiring to become a better software developer or even a professional build engineer! Read it if you want to learn modern CMake from scratch or elevate and refresh your current CMake skills. It will help you understand how to make top-notch C++ projects and transition from other build environments.
+在你学会了C++之后，你很快就会发现，仅仅掌握语言本身并不足以让你准备好以最高标准交付项目。这本书填补了这一空白：它面向任何渴望成为更好的软件开发者甚至专业构建工程师的人！如果你想要从零开始学习现代CMake或提升和刷新你当前的CMake技能，就读这本书吧。它将帮助你了解如何制作顶级的C++项目，并从其他构建环境中过渡。
 
 \myChapterNoFile{}{关于本书}
 
-Chapter 1, First Steps with CMake, covers the installation of CMake, the use of its command line interface, and introduces the fundamental building blocks necessary for a CMake project.
+第1章，\textit{CMake入门的第一步}，涵盖了CMake的安装、命令行界面的使用，并介绍了CMake项目所需的基本构建块。
 
-Chapter 2, The CMake Language, cover the essential concepts of the CMake language, including command invocations, arguments, variables, control structures, and comments.
+第2章，\textit{CMake语言}，涵盖了CMake语言的基本概念，包括命令调用、参数、变量、控制结构和注释。
 
-Chapter 3, Using CMake in Popular IDEs, emphasizes the importance of Integrated Development Environments (IDEs), guides you through selecting an IDE, and provides setup instructions for Clion, Visual Studio Code, and Visual Studio IDE.
+第3章，\textit{在主流IDE中使用CMake}，强调了集成开发环境（IDEs）的重要性，指导你选择IDE，并为Clion、Visual Studio Code和Visual Studio IDE提供设置说明。
 
-Chapter 4, Setting up Your First CMake Project, will teach you how to configure a basic CMake project in its top-level file, structure the file tree, and prepare the toolchain necessary for development.
+第4章，设置你的第一个CMake项目，将教你如何在顶级文件中配置基本的CMake项目，结构化文件树，并准备必要的工具链进行开发。
 
-Chapter 5, Working with Targets, explores the concept of logical build targets, understand their properties and different types, and learn how to define custom commands for CMake projects.
+第5章，\textit{了解目标}，探讨了逻辑构建目标的概念，理解它们的属性和不同类型，并学习如何为CMake项目定义自定义命令。
 
-Chapter 6, Using Generator Expressions, explains the purpose and syntax of generator expressions, including how to use them for conditional expansion, queries, and transformations.
+第6章，\textit{生成器表达式}，解释了生成器表达式的目的和语法，包括如何使用它们进行条件扩展、查询和转换。
 
-Chapter 7, Compiling C++ Sources with CMake, delves into the compilation process, configure the preprocessor and optimizer, and discover techniques to reduce build time and improve debugging.
+第7章，\textit{编译C++源代码}，深入探讨了编译过程，配置预处理器和优化器，并发现减少构建时间和提高调试的技术。
 
-Chapter 8, Linking Executables and Libraries, understands the linking mechanism, different types of libraries, the One Definition Rule, the order of linking, and how to prepare your project for testing.
+第8章，\textit{链接可执行文件和库}，理解链接机制，不同类型的库，单一定义规则，链接顺序，以及如何准备你的项目进行测试。
 
-Chapter 9, Managing Dependencies in CMake, will teach you to manage third-party libraries, add CMake support for those that lack it, and fetch external dependencies from the internet.
+第9章，\textit{CMake中管理依赖项}，将教你如何管理第三方库，为那些缺乏CMake支持的库添加支持，并从互联网上获取外部依赖。
 
-Chapter 10, Using the C++20 Modules, introduces C++20 modules, shows how to enable their support in CMake, and configure the toolchain accordingly.
+第10章，\textit{使用C++20模块}，介绍了C++20模块，展示了如何在CMake中启用它们的支持，并相应地配置工具链。
 
-Chapter 11, Testing Frameworks, will help you understand the importance of automated testing, leverage built-in testing support in CMake, and get started with unit testing using popular frameworks.
+第11章，\textit{测试框架}，将帮助你理解自动化测试的重要性，利用CMake内置的测试支持，并使用流行的框架开始单元测试。
 
-Chapter 12, Program Analysis Tools, will show you how to automatically format source code and detect software errors during both build time and runtime.
+第12章，\textit{程序分析工具}，将展示你如何自动格式化源代码并在构建时间和运行时检测软件错误。
 
-Chapter 13, Generating Documentation, presents how to use Doxygen for automating documentation creation from source code and add styling to enhance your documentation’s appearance.
+第13章，\textit{生成文档}，介绍了如何使用Doxygen从源代码自动创建文档，并添加样式以增强你的文档外观。
 
-Chapter 14, Installing and Packaging, prepares your project for release with and without installation, create reusable packages, and designate individual components for packaging.
+第14章，\textit{安装和打包}，准备你的项目进行发布，无论是否安装，创建可重用包，并为打包指定单个组件。
 
-Chapter 15, Creating Your Professional Project, applies all the knowledge acquired throughout the book to develop a comprehensive, professional-grade project.
+第15章，\textit{创建专业项目}，应用本书所学到的所有知识来开发一个全面、专业级别的项目。
 
-Chapter 16, Writing CMake Presets, encapsulates high-level project configurations into workflows using CMake preset files, making project setup and management more efficient.
+第16章，\textit{编写CMake预设}，将高级项目配置封装到使用CMake预设文件的工作流程中，使项目设置和管理更加高效。
 
-Appendix - Miscellaneous Commands, serves as a reference for various CMake commands related to strings, lists, files, and mathematical operations.
+附录 - 其他命令，作为与字符串、列表、文件和数学运算相关的各种CMake命令的参考。
 
-\myChapterNoFile{}{To get the most out of this book}
+\myChapterNoFile{}{利用本书}
 
-Basic familiarity with C++ and Unix-like systems is assumed throughout the book. Although Unix knowledge isn’t a strict requirement, it will prove helpful in fully understanding the examples given in this book.
+本书假设你对C++和类Unix系统有基本的熟悉。尽管Unix知识不是严格的要求，但它将有助于你完全理解本书中给出的示例。
 
-This book targets CMake 3.26, but most of the techniques described should work from CMake 3.15 (features that were added after are usually highlighted). Some chapters have been updated to CMake 3.28 to cover the latest features.
+本书的目标是CMake 3.26，但这里描述的大多数技术应该适用于CMake 3.15（之后添加的功能通常会突出显示）。有些章节已经更新到CMake 3.28，以涵盖最新功能。
 
-Preparation of the environment to run examples is covered in Chapters 1-3, but we specifically recommend using the Docker image provided with this book if you’re familiar with this tool.
+运行示例的环境准备在第1-3章中介绍，但如果你熟悉这个工具，我们特别推荐使用本书提供的Docker镜像。
 
-\myChapterNoFile{}{Download the example code files}
+\myChapterNoFile{}{下载示例}
 
-The code bundle for the book is hosted on GitHub at \url{https://github.com/PacktPublishing/ Modern-CMake-for-Cpp-2E}. We also have other code bundles from our rich catalog of books and videos available at \url{https://github.com/PacktPublishing/}. Check them out!
+本书的代码包托管在GitHub上，地址为\url{https://github.com/PacktPublishing/Modern-CMake-for-Cpp-2E}。我们还有其他丰富的书籍和视频代码包，也可在我们的GitHub仓库中找到，地址为：\url{https://github.com/PacktPublishing/}。去看看吧！
 
+\myChapterNoFile{}{下载彩图}
 
-\myChapterNoFile{}{Download the color images}
+我们还提供了一个PDF文件，其中包含了本书中使用的屏幕截图/图表的彩色图片。你可以在这里下载： \url{https://packt.link/gbp/9781805121800}
 
-We also provide a PDF file that has color images of the screenshots/diagrams used in this book.
-You can download it here: \url{https://packt.link/gbp/9781805121800}.
+\myChapterNoFile{}{内容约定}
 
-\myChapterNoFile{}{Conventions used}
+本书中使用了一些文本约定。
 
-There are a number of text conventions used throughout this book.
+CodeInText: 表示文本中的代码单词、数据库表名、文件夹名、文件名、文件扩展名、路径名、虚拟URL、用户输入和Twitter句柄。例如：“将下载的WebStorm-10*.dmg磁盘映像文件作为系统中的另一个磁盘挂载。”
 
-CodeInText: Indicates code words in text, database table names, folder names, filenames, file extensions, pathnames, dummy URLs, user input, and Twitter handles. For example: “Mount the downloaded WebStorm-10*.dmg disk image file as another disk in your system.”
-
-A block of code is set as follows:
+代码块如下设置：
 
 \begin{cmake}
 cmake_minimum_required(VERSION 3.26)
@@ -81,7 +79,7 @@ project(Hello)
 add_executable(Hello hello.cpp)
 \end{cmake}
 
-When we wish to draw your attention to a particular part of a code block, the relevant lines or items are set in bold:
+当我们想要吸引你注意代码块中的特定部分时，相关的行或项目将以粗体显示：
 
 \begin{cmake}
 cmake_minimum_required(VERSION 3.26)
@@ -90,22 +88,22 @@ add_executable(Hello hello.cpp)
 add_subdirectory(api) # bold
 \end{cmake}
 
-Any command-line input or output is written as follows:
+命令行输入或输出如下：
 
 \begin{shell}
 cmake --build <dir> --parallel [<number-of-jobs>]
 cmake --build <dir> -j [<number-of-jobs>]
 \end{shell}
 
-Bold: Indicates a new term, an important word, or words that you see on the screen. For example: “Select System info from the Administration panel.”
+粗体(Bold)：表示新术语、重要单词或你在屏幕上看到的单词。例如：“从管理面板中选择系统信息。
 
 \begin{myNotic}{Note}
-Warnings or important notes appear like this.
+警告或重要注释
 \end{myNotic}
 
 
 \begin{myTip}{Tip}
-Tips and tricks appear like this.
+提示和技巧
 \end{myTip}
 
 

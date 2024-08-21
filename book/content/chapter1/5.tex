@@ -1,83 +1,82 @@
-Quite a lot of files and directories make up CMake projects. Let’s get a general idea of what each one does so we can start tinkering with them. There are several general categories:
+CMake 项目由大量的文件和目录构成。让我们大致了解一下每个组成部分的作用，以便开始对它们进行调整。这些文件和目录可以分为几个主要类别：
 
 \begin{itemize}
 \item
-Of course, we’ll have project files that we, as developers, prepare and change as our project grows.
+当然，我们将有项目文件，作为开发者的我们，会随着项目的成长准备和修改这些文件。
 
 \item
-There will be files that CMake generates for itself, and even though they will contain CMake language commands, they aren’t meant for developers to edit. Any manual changes made there will be overwritten by CMake.
+会有 CMake 为自己生成的文件，尽管它们将包含 CMake 语言命令，但它们并不是供开发者编辑的。在那里所做的任何手动更改都将被 CMake 覆盖。
 
 \item
-Some files are meant for advanced users (as in: not project developers) to customize how CMake builds the project to their individual needs.
+有些文件是为高级用户（即：非项目开发者）准备的，以便他们根据个人需求自定义 CMake 构建项目的方式。
 
 \item
-Finally, there are some temporary files that provide valuable information in specific contexts.
+有些文件是为高级用户（即：非项目开发者）准备的，以便他们根据个人需求自定义 CMake 构建项目的方式。
 \end{itemize}
 
-This section will also suggest which files you can put in the ignore file of your Version Control System (VCS).
+本节还将建议您可以将哪些文件加入到版本控制系统 (VCS) 的忽略文件中。
 
 
-\mySubsubsection{1.5.1}{The source tree}
+\mySubsubsection{1.5.1}{源代码目录}
 
-This is the directory where your project will live (it is also called the project root). It contains all of the C++ sources and CMake project files.
+这是项目的存放目录（也称为项目根目录）。它包含了所有的 C++ 源文件和 CMake 项目文件。
 
-Here are the most important takeaways from this directory:
+以下是关于此目录的一些重要点：
 
 \begin{itemize}
 \item
-It requires a CMakeLists.txt configuration file.
+需要一个 CMakeLists.txt 配置文件。
 
 \item
-The path to this directory is given by the user with a -S argument of the cmake command when generating a buildsystem.
+此目录的路径通过用户在生成构建系统时传递给 cmake 命令的 -S 参数给出。
 
 \item
-Avoid hardcoding any absolute paths to the source tree in your CMake code – users of your software will store the project in another path.
+避免在 CMake 代码中硬编码源代码目录的绝对路径——您的软件用户将会在另一个路径中存储项目。
 \end{itemize}
 
-It’s a good idea to initialize a repository in this directory, perhaps using a VCS like Git.
+在这个目录中初始化一个仓库是个好主意，可以使用 Git 这样的版本控制系统。
 
-\mySubsubsection{1.5.2}{The build tree}
+\mySubsubsection{1.5.2}{构建目录}
 
-CMake creates this directory in a path specified by the user. It will store the buildsystem and everything that gets created during the build: the artifacts of the project, the transient configuration, the cache, the build logs, and the output of your native build tool (like GNU Make). Alternative names for this directory include build root and binary tree.
+CMake 根据用户的指定在此目录中创建构建系统以及构建过程中产生的一切：项目的制品、临时配置、缓存、构建日志和原生构建工具（如 GNU Make）的输出。这个目录的其他名称包括构建根目录和二进制目录。
 
-Key things to remember:
+需要记住的关键点：
 
 \begin{itemize}
 \item
-Your build configuration (buildsystem) and build artifacts will be created here (such as binary files, executables, and libraries, along with object files and archives used for final linking).
+构建配置（构建系统）和构建制品（如二进制文件、可执行文件和库，以及用于最终链接的对象文件和归档文件）将在此处创建。
 
 \item
-CMake recommends that this directory be placed outside the source tree directory (a practice known as out-of-source builds). This way, we can prevent the pollution of our project (in-source builds).
+CMake 推荐将此目录置于源代码目录之外（即外源构建）。这样可以防止污染项目（即内源构建）。
 
 \item
-It is specified with -B to the cmake command when generating a buildsystem.
+它通过 -B 参数传递给 cmake 命令来指定。
 
 \item
-This directory isn’t meant as a final destination for generated files. Rather, it’s recommended that your projects include an installation stage that copies the final artifacts where they should be in the system and removes all temporary files used for building.
+这个目录不是生成文件的最终目的地。相反，建议您的项目包含一个安装阶段，将最终制品复制到系统中的适当位置，并移除所有用于构建的临时文件。
 \end{itemize}
 
-Don’t add this directory to your VCS – every user picks one for themselves. If you have a good reason to do an in-source build, make sure to add this directory to the VCS ignore file (like .gitignore).
+不要将此目录加入到您的版本控制系统 (VCS) 中——每个用户都会为自己选择一个。如果您有充分的理由进行内源构建，请确保将此目录加入到版本控制系统的忽略文件中（如 .gitignore）。
 
+\mySubsubsection{1.5.3}{列表文件}
 
-\mySubsubsection{1.5.3}{Listfiles}
+包含 CMake 语言的文件被称为列表文件 (listfiles)，可以通过调用 include() 和 find\_package() 或间接地通过 add\_subdirectory() 来相互包含。CMake 对这些文件的命名没有强制规定，但按照惯例，它们通常带有 .cmake 扩展名。
 
-Files that contain the CMake language are called listfiles and can be included one in another by calling include() and find\_package(), or indirectly with add\_subdirectory(). CMake doesn’t enforce any naming rules for these files but, by convention, they have a .cmake extension.
+\mySamllsection{项目文件}
 
-\mySamllsection{Project file}
+CMake 项目通过一个 CMakeLists.txt 列表文件进行配置（请注意，由于历史原因，该文件具有非常规的扩展名）。此文件位于每个项目的源代码树的顶部，并且是在配置阶段首先被执行的文件。
 
-CMake projects are configured with a CMakeLists.txt listfile (notice that due to historical reasons, this file has an unconventional extension). This file is required at the top of the source tree of every project and is the first to be executed in the configuration stage.
-
-A top-level CMakeLists.txt should contain at least two commands:
+顶级的 CMakeLists.txt 文件应至少包含以下两个命令：
 
 \begin{itemize}
 \item
-cmake\_minimum\_required(VERSION <x.xx>): Sets an expected version of CMake and tells CMake how to handle legacy behaviors with policies
+cmake\_minimum\_required(VERSION <x.xx>): 设置期望的 CMake 版本，并告诉 CMake 如何处理遗留行为。
 
 \item
-project(<name> <OPTIONS>): Names the project (the provided name will be stored in the PROJECT\_NAME variable) and specifies the options to configure it (more on this in Chapter 2, The CMake Language)
+project(<name> <OPTIONS>): 命名项目（提供的名称将存储在 PROJECT\_NAME 变量中），并指定配置项目的选项（更多细节请参见第 2 章，《CMake 语言》）。
 \end{itemize}
 
-As your software grows, you might want to partition it into smaller units that can be configured and reasoned about separately. CMake supports this through the notion of subdirectories with their own CMakeLists.txtfiles. Your project structure might look similar to the following example:
+随着软件的增长，您可能希望将其划分为较小的单元，这些单元可以单独配置和管理。CMake 支持通过子目录及其各自的 CMakeLists.txt 文件来实现这一点。您的项目结构可能如下所示：
 
 \begin{shell}
 myProject/CMakeLists.txt
@@ -86,7 +85,7 @@ myProject/api/api.h
 myProject/api/api.cpp
 \end{shell}
 
-A very simple top-level CMakeLists.txt file can then be used to bring it all together:
+一个非常简单的顶级 CMakeLists.txt 文件可以用来整合整个项目：
 
 \begin{cmake}
 cmake_minimum_required(VERSION 3.26)
@@ -95,11 +94,11 @@ message("Top level CMakeLists.txt")
 add_subdirectory(api)
 \end{cmake}
 
-The main aspects of the project are covered in the top-level file: managing the dependencies, stating the requirements, and detecting the environment. We also have an add\_subdirectory(api) command to include another CMakeListst.txt file from the api subdirectory to perform steps that are specific to the API part of our application.
+项目的主要方面都在顶级文件中覆盖：管理依赖项、声明要求和检测环境。我们还使用 add\_subdirectory(api) 命令来包含来自 api 子目录的另一个 CMakeLists.txt 文件，以执行与应用的 API 部分相关的特定步骤。
 
-\mySamllsection{Cache file}
+\mySamllsection{缓存文件}
 
-Cache variables will be generated from the listfiles and stored in CMakeCache.txt when the configure stage is run for the first time. This file resides in the root of the build tree and has a fairly simple format (some lines removed for brevity):
+从列表文件中生成的缓存变量将在首次运行配置阶段时被存储在 CMakeCache.txt 文件中。此文件位于构建树的根目录，并具有相当简单的格式（为简洁起见，省略了一些行）：
 
 \begin{shell}
 # This is the CMakeCache file.
@@ -128,46 +127,46 @@ CMAKE_CACHE_MINOR_VERSION:INTERNAL=19
 # ... more variables here ...
 \end{shell}
 
-As you can see from the header comments, this format is pretty self-explanatory. Cache entries in the EXTERNAL section are meant for users to modify, while the INTERNAL section is managed by CMake.
+从头部注释中可以看出，这种格式相当不言自明。EXTERNAL 部分的缓存条目是供用户修改的，而 INTERNAL 部分则由 CMake 管理。
 
-Here are a couple of key takeaways to bear in mind:
-
-\begin{itemize}
-\item
-You can manage this file manually, by calling cmake (see Options for caching in the Mastering the command line section of this chapter), or through ccmake or cmake-gui
-
-\item
-You can reset the project to its default configuration by deleting this file; it will be regenerated from the listfiles.
-\end{itemize}
-
-Cache variables can be read and written from the listfiles. Sometimes, variable reference evaluation is a bit complicated; we will cover that in more detail in Chapter 2, The CMake Language.
-
-\mySamllsection{Package definition file}
-
-A big part of the CMake ecosystem is the external packages that projects can depend on. They provide libraries and tools in a seamless, cross-platform way. Package authors that want to provide CMake support will ship it with a CMake package configuration file.
-
-We’ll learn how to write those files in Chapter 14, Installing and Packaging. Meanwhile, here’s a few interesting details to bear in mind:
+以下是几个需要牢记的关键点：
 
 \begin{itemize}
 \item
-Config-files (original spelling) contain information regarding how to use the library binaries, headers, and helper tools. Sometimes, they expose CMake macros and functions that can be used in your project.
+您可以手动管理此文件，也可以通过调用 cmake（参见本章“掌握命令行”部分的缓存选项），或通过 ccmake 或 cmake-gui 来管理。
 
 \item
-Config-files are named <PackageName>-config.cmake or <PackageName>Config.cmake.
-
-\item
-Use the find\_package() command to include packages.
+通过删除此文件可以将项目重置为其默认配置；文件将从列表文件中重新生成。
 \end{itemize}
 
-If a specific version of the package is required, CMake will check this against the associated <PackageName>-config-version.cmake or <PackageName>ConfigVersion.cmake.
+可以从列表文件读取和写入缓存变量。有时，变量引用的评估会有些复杂；我们将在第 2 章《CMake 语言》中更详细地介绍这一点。
 
-If a vendor doesn’t provide a config file for the package, sometimes, the configuration is bundled with the CMake itself or can be provided in the project with Find-module (original spelling).
+\mySamllsection{包定义文件}
 
-\mySamllsection{Generated file}
+CMake 生态系统的一个大部分是项目可以依赖的外部包。它们以无缝、跨平台的方式提供库和工具。希望提供 CMake 支持的包作者会将 CMake 包配置文件一起发布。
 
-Many files are generated in the build tree by the cmake executable in the generation stage. As such, they shouldn’t be edited manually. CMake uses them as a configuration for the cmake install action, CTest, and CPack.
+我们将在第 14 章《安装和打包》中学习如何编写这些文件。同时，以下是几个需要记住的有趣细节：
 
-Files that you may encounter are:
+\begin{itemize}
+\item
+配置文件（原始拼写）包含有关如何使用库的二进制文件、头文件和辅助工具的信息。有时，它们会暴露可以在您的项目中使用的 CMake 宏和函数。
+
+\item
+配置文件命名为 <PackageName>-config.cmake 或 <PackageName>Config.cmake.
+
+\item
+使用 find\_package() 命令来包含包。
+\end{itemize}
+
+如果需要特定版本的包，CMake 会将此与相关的<PackageName>-config-version.cmake或<PackageName>ConfigVersion.cmake。
+
+如果供应商没有为包提供配置文件，有时，配置会与 CMake 本身捆绑，或者可以在项目中通过 Find-module（原始拼写）提供。
+
+\mySamllsection{生成的文件}
+
+在生成阶段，许多文件由 cmake 可执行文件在构建树中生成。因此，它们不应手动编辑。CMake 将它们用作 cmake 安装动作、CTest 和 CPack 的配置。
+
+您可能会遇到的文件有：
 
 \begin{itemize}
 \item
@@ -180,53 +179,53 @@ CTestTestfile.cmake
 CPackConfig.cmake
 \end{itemize}
 
-If you’re implementing an in-source build, it’s probably a good idea to add them to the VCS ignore file.
+如果您正在实现源内构建，将它们添加到版本控制系统的忽略文件中可能是一个好主意。
 
-\mySubsubsection{1.5.4}{JSON and YAML files}
+\mySubsubsection{1.5.4}{JSON 和 YAML 文件}
 
-Other formats used by CMake are JavaScript Object Notation (JSON) and Yet Another Markup Language (YAML). These files are introduced as an interface to communicate with external tools (like IDEs) or to provide configuration that can be easily generated and parsed.
+CMake 使用的其他格式包括 JavaScript 对象表示法（JSON）和另一种标记语言（YAML）。这些文件被引入作为与外部工具（如 IDEs）通信的接口，或者提供易于生成和解析的配置。
 
-\mySamllsection{Preset file}
+\mySamllsection{预设文件}
 
-The advanced configuration of the projects can become a relatively busy task when we need to be specific about things such as cache variables, chosen generators, the path of the build tree, and more – especially when we have more than one way of building our project. This is where the presets come in – instead of manually configuring these values through the command line, we can just provide a file that stores all the details and ship it with the project. Since CMake 3.25, presets also allow us to configure workflows, which tie stages (configure, build, test, and package) into a named list of steps to execute.
+当我们需要具体指定缓存变量、选择的生成器、构建树路径等等时，项目的高级配置可能会成为一个相对繁忙的任务——尤其是当我们有不止一种方式来构建项目时。这时预设就派上用场了——我们不需要通过命令行手动配置这些值，只需提供一个存储所有细节的文件，并与项目一起发布。自从 CMake 3.25 版本以来，预设还允许我们配置工作流程，将阶段（配置、构建、测试和打包）绑定到一个命名步骤列表中执行。
 
-As mentioned in the Mastering the command line section of this chapter, users can choose presets through the GUI or use the command -{}-list-presets and select a preset for the buildsystem with the -{}-preset=<preset> option.
+正如本章“掌握命令行”部分所提到的，用户可以通过 GUI 选择预设，或者使用命令 -{}-list-presets 并使用 -{}-preset=<preset> 选项为构建系统选择预设。
 
-Presets are stored in two files:
+预设存储在两个文件中：
 
 \begin{itemize}
 \item
-CMakePresets.json: This is meant for project authors to provide official presets.
+CMakePresets.json: 这是供项目作者提供官方预设的文件。
 
 \item
-CMakeUserPresets.json: This is dedicated to users who want to customize the project configuration to their liking (you can add it to your VCS ignore file).
+CMakeUserPresets.json:这是专供想要根据个人喜好自定义项目配置的用户使用的文件（您可以将其添加到您的版本控制系统忽略文件中）。
 \end{itemize}
 
-Presets are not required in projects and only become useful in advanced scenarios. See Chapter 16, Writing CMake Presets, for details.
+预设不是项目必需的，只在高级场景中变得有用。详情请参见第 16 章《编写 CMake 预设》。
 
-\mySamllsection{File-based API}
+\mySamllsection{基于文件的 API}
 
-CMake 3.14 introduced an API that allows external tools to query the buildsystem information: paths to generated files, cache entries, toolchains, and such. We only mention this very advanced topic to avoid confusion if you come across a file-based API phrase in the documentation. The name suggests how it works: a JSON file with a query has to be placed in a special path inside the build tree. CMake will read this file during the buildsystem generation and write a response to another file, so it can be parsed by external applications.
+CMake 3.14 引入了一个 API，允许外部工具查询构建系统信息：生成文件的路径、缓存条目、工具链等等。我们只提到这个非常高级的话题，以避免如果您在文档中遇到基于文件的 API 这个术语时产生混淆。这个名字表明了它的工作方式：一个包含查询的 JSON 文件必须放置在构建树内的一个特殊路径中。CMake 在生成构建系统时会读取这个文件，并将响应写入另一个文件，以便外部应用程序可以解析。
 
-The file-based API was introduced to replace a deprecated mechanism called server mode (or cmake-server), which was finally removed in CMake 3.26.
+基于文件的 API 是为了替换一种在 CMake 3.26 版本中被废弃的机制，称为服务器模式（或 cmake-server）。
 
-\mySamllsection{Configure log}
+\mySamllsection{配置日志}
 
-Since version 3.26, CMake will provide a structured log file for really advanced debugging of the configure stage at:
+自从 3.26 版本以来，CMake 将为配置阶段的深度调试提供一个结构化的日志文件，位置在：
 
 \begin{shell}
 <build tree>/CMakeFiles/CMakeConfigureLog.yaml
 \end{shell}
 
-It’s one of these features that you don’t normally need to pay attention to – until you do.
+这是一个通常不需要特别注意的功能——直到你需要它。
 
-\mySubsubsection{1.5.5}{Ignoring files in Git}
+\mySubsubsection{1.5.5}{在 Git 中忽略文件}
 
-There are many VCSs; one of the most popular out there is Git. Whenever we start a new project, it is good to make sure that we only add the necessary files to the repository. Project hygiene is easier to maintain if we specify unwanted files in the .gitignore file. For example, we might exclude files that are generated, user-specific, or temporary.
+有许多版本控制系统；其中最受欢迎的是 Git。每当我们开始一个新项目时，确保只将必要的文件添加到仓库是很好的做法。如果我们指定了不需要的文件在 .gitignore 文件中，项目卫生更容易维护。例如，我们可能会排除生成的、特定于用户的或临时的文件。
 
-Git will automatically skip them when forming new commits. Here’s the file that I use in my projects:
+Git 在形成新提交时会自动跳过它们。以下是我项目中使用的文件：
 
-\filename{ch01/01-hello/�gitignore}
+\filename{ch01/01-hello/.gitignore}
 
 \begin{shell}
 CMakeUserPresets.json
@@ -244,7 +243,7 @@ build_release/
 **/compile_commands.json
 \end{shell}
 
-Now you hold a map to the sea of project files. Some files are very important and you will use them all the time – others, not so much. While it might seem like a waste to learn about them, it can be invaluable to know where not to look for answers. In any case, one last question for this chapter remains: what other self-contained units can you create with CMake?
+现在您掌握了一张项目文件的大海图。有些文件非常重要，您将经常使用它们——其他的则不那么重要。虽然学习它们可能看起来像是浪费时间，但知道在哪里找不到答案可能非常有价值。无论如何，本章的最后一个问题是：您还可以用 CMake 创建哪些其他自包含的单元？
 
 
 

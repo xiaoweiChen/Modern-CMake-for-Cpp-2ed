@@ -1,8 +1,8 @@
-The CMake language wouldn’t be complete without control structures! Like everything else, they are provided in the form of a command, and they come in three categories: conditional blocks, loops, and command definitions. Control structures are executed in scripts and during buildsystem generation for projects.
+CMake语言如果没有控制结构就不完整了！与其他所有内容一样，它们以命令的形式提供，并且分为三类：条件块、循环和命令定义。控制结构在脚本执行和项目构建系统生成期间执行。
 
-\mySubsubsection{2.5.1}{Conditional blocks}
+\mySubsubsection{2.5.1}{条件块}
 
-The only conditional block supported in CMake is the humble if() command. All conditional blocks have to be closed with an endif() command, and they may have any number of elseif() commands and one optional else() command in this order:
+CMake支持的唯一条件块是朴素的if()命令。所有条件块都必须用endif()命令关闭，并且可以按照以下顺序有任意数量的elseif()命令和一个可选的else()命令：
 
 \begin{shell}
 if(<condition>)
@@ -14,33 +14,33 @@ else() # optional block
 endif()
 \end{shell}
 
-As in many other imperative languages, the if()-endif() block controls which sets of commands will be executed:
+与许多其他命令式语言一样，if()-endif()块控制哪些命令集将被执行：
 
 \begin{itemize}
 \item
-If the <condition> expression specified in the if() command is met, the first section will be executed.
+如果if()命令中指定的<condition>表达式成立，将执行第一个部分。
 
 \item
-Otherwise, CMake will execute commands in the section belonging to the first elseif() command in this block that has met its condition.
+否则，CMake将执行属于此块中第一个满足其条件的elseif()命令的部分中的命令。
 
 \item
-If there are no such commands, CMake will check whether the else() command is provided and execute any commands in that section of the code.
+如果没有这样的命令，CMake将检查是否提供了else()命令并执行代码该部分中的任何命令。
 
 \item
-If none of the preceding conditions are met, the execution continues after the endif() command.
+如果前面的条件都不满足，执行将在endif()命令之后继续。
 \end{itemize}
 
-Note that no local variable scope is created in any of the conditional blocks.
+请注意，在任何条件块中都没有创建局部变量作用域。
 
-The provided <condition> expression is evaluated according to a very simple syntax – let’s learn more about it.
+提供的<condition>表达式根据非常简单的语法进行评估——让我们了解更多关于它的信息。
 
-\mySamllsection{The syntax for conditional commands}
+\mySamllsection{条件命令的语法}
 
-The same syntax is valid for if(), elseif(), and while() commands.
+相同的语法适用于if()、elseif()和while()命令。
 
-\mySamllsubsection{Logical operators}
+\mySamllsubsection{逻辑运算符}
 
-The if() conditions support the NOT, AND, and OR logical operators:
+if()条件支持NOT、AND和OR逻辑运算符：
 
 \begin{itemize}
 \item
@@ -53,15 +53,15 @@ NOT <condition>
 <condition> OR <condition>
 \end{itemize}
 
-Also, the nesting of conditions is possible with matching pairs of parentheses (()). As in all decent languages, the CMake language respects the order of evaluation and starts from the innermost parenthesis:
+此外，条件的嵌套也是可能的，需要匹配的圆括号对(())。与所有体面的语言一样，CMake语言遵循求值顺序，并从最内层的括号开始：
 
 \begin{shell}
 (<condition>) AND (<condition> OR (<condition>))
 \end{shell}
 
-\mySamllsubsection{The evaluation of a string and a variable}
+\mySamllsubsection{字符串和变量的求值}
 
-For legacy reasons (because the variable reference (\$\{\}) syntax wasn’t always around), CMake will try to evaluate unquoted arguments as if they are variable references. In other words, using a plain variable name (for example, QUX) inside a condition is equal to writing \$\{QUX\}. Here’s an example for you to consider, and a gotcha:
+由于历史原因(因为变量引用(\$\{\})语法并不总是存在)，CMake将尝试计算未引用的参数，就好像它们是变量引用一样。换句话说，在条件中使用一个普通的变量名(例如，QUX)等于写\$\{QUX\}。这里有一个例子，也是一个陷阱:
 
 \begin{cmake}
 set(BAZ FALSE)
@@ -69,40 +69,40 @@ set(QUX "BAZ")
 if(${QUX})
 \end{cmake}
 
-The if() condition works in a bit of a convoluted way here – first, it will evaluate \$\{QUX\} to BAZ, which is a recognized variable, and this in turn is evaluated to a string containing five characters spelling FALSE. Strings are considered Boolean true only if they equal any of the following constants (these comparisons are case-insensitive): ON, Y, YES, TRUE, or a non-zero number.
+这里的if()条件工作方式有些复杂——首先，它会将\$\{QUX\}求值为BAZ，这是一个已识别的变量，进而又被求值为一个包含五个字符的字符串，拼写为FALSE。字符串只有在等于以下常量之一时才被视为布尔真（这些比较不区分大小写）：ON、Y、YES、TRUE或非零数字。
 
-This brings us to the conclusion that the condition in the preceding example will evaluate to Boolean false.
+这使我们得出结论，前面示例中的条件将求值为布尔假。
 
-However, here’s another catch – what would be the evaluation of a condition with an unquoted argument with the name of a variable containing a value such as BAR? Consider the following code example:
+然而，这里还有一个陷阱——如果一个条件的未加引号参数名为一个包含如BAR这样的值的变量，其求值会是什么？考虑以下代码示例：
 
 \begin{cmake}
 set(FOO BAR)
 if(FOO)
 \end{cmake}
 
-According to what we have said so far, it would be false, as the BAR string doesn’t meet the criteria to evaluate to a Boolean true value. That’s unfortunately not the case, because CMake makes an exception when it comes to unquoted variable references. Unlike quoted arguments, FOO won’t be evaluated to BAR to produce an if("BAR") statement (which would be false). Instead, CMake will only evaluate if(FOO) to false if it is any of the following constants (these comparisons are case-insensitive):
+根据我们目前所说的，它将是假的，因为BAR字符串不符合求值为布尔真值的条件。不幸的是，情况并非如此，因为CMake在处理未加引号的变量引用时有一个例外。与加引号的参数不同，FOO不会求值为BAR以产生if(“BAR”)语句（这将是不正确的）。相反，CMake只有在以下情况下才会将if(FOO)求值为假（这些比较不区分大小写）：
 
 \begin{itemize}
 \item
-OFF, NO, FALSE, N, IGNORE, or NOTFOUND
+OFF, NO, FALSE, N, IGNORE或 NOTFOUND
 
 \item
-A string ending with -NOTFOUND
+以-NOTFOUND结尾的字符串
 
 \item
-An empty string
+空字符串
 
 \item
-Zero
+零
 \end{itemize}
 
-So, simply asking for an undefined variable will be evaluated to false:
+因此，简单地请求一个未定义的变量将被求值为假：
 
 \begin{cmake}
 if (CORGE)
 \end{cmake}
 
-When a variable is defined beforehand, the scenario changes and the condition evaluates to true:
+当变量事先定义后，情况就改变了，条件求值为真：
 
 \begin{cmake}
 set(CORGE "A VALUE")
@@ -110,10 +110,10 @@ if (CORGE)
 \end{cmake}
 
 \begin{myNotic}{Note}
-If you think that the recursive evaluation of unquoted if() arguments is confusing, wrap variable references in quoted arguments: if("\$\{CORGE\}"). This will result in argument evaluation before the provided argument is passed into the if() command, and the behavior will be consistent with the evaluation of strings.
+如果你认为未加引号的if()参数的递归求值令人困惑，可以将变量引用用引号括起来：if(“\$\{CORGE\}”)。这将导致在提供的参数传递到if()命令之前对其进行求值，并且其行为将与字符串的求值一致。
 \end{myNotic}
 
-In other words, CMake assumes that the user passing a variable name to the if() command is asking whether the variable is defined with a value that does not evaluate to Boolean false. To explicitly check whether the variable is defined or not (and ignore its value), we can use the following:
+换句话说，CMake假定传递变量名给if()命令的用户是在询问该变量是否定义了不等于布尔假的值。为了明确检查变量是否已定义（忽略其值），我们可以使用以下方法：
 
 \begin{cmake}
 if(DEFINED <name>)
@@ -121,120 +121,120 @@ if(DEFINED CACHE{<name>})
 if(DEFINED ENV{<name>})
 \end{cmake}
 
-\mySamllsubsection{Comparing values}
+\mySamllsubsection{比较值}
 
-Comparison operations are supported with the following operators:
+支持以下操作符进行比较操作：
 
-EQUAL, LESS, LESS\_EQUAL, GREATER, and GREATER\_EQUAL
+EQUAL, LESS, LESS\_EQUAL, GREATER, 和 GREATER\_EQUAL
 
-The usual comparison operators found in other languages do not work in CMake: ==, >, <, !=, and so on.
+在其他语言中常见的比较操作符在 CMake 中不起作用：==, >, <, != 等等。
 
-They can be used to compare numeric values, like so:
+它们可以用来比较数值，如下所示：
 
 \begin{cmake}
 if (1 LESS 2)
 \end{cmake}
 
-You can compare software versions following the major[.minor[.patch[.tweak]]] format by adding a VERSION\_ prefix to any of the operators:
+您可以通过在任一操作符前加上 VERSION\_ 前缀来按照 [major[.minor[.patch[.tweak]]]] 的格式比较软件版本：
 
 \begin{cmake}
 if (1.3.4 VERSION_LESS_EQUAL 1.4)
 \end{cmake}
 
-Omitted components are treated as zeros, and non-integer version components truncate the compared string at that point.
+省略的组件被视为零，非整数的版本组件将在此点截断比较的字符串。
 
-For lexicographic string comparisons, we need to prepend an operator with the STR prefix (note the lack of an underscore):
+对于字典序字符串比较，我们需要在操作符前加上 STR 前缀（注意没有下划线）：
 
 \begin{cmake}
 if ("A" STREQUAL "${B}")
 \end{cmake}
 
-We often need more advanced mechanisms than simple equality comparisons. Fortunately, CMake also supports POSIX regex matching (the CMake documentation hints at an Extended Regular Expression (ERE) flavor, but no support for specific regex character classes is mentioned). We can use the MATCHES operator as follows:
+我们经常需要比简单相等比较更高级的机制。幸运的是，CMake 也支持 POSIX 正则表达式匹配（CMake 文档暗示支持扩展正则表达式（ERE）风格，但未提到对特定正则字符类的支持）。我们可以按以下方式使用 MATCHES 操作符：
 
 \begin{shell}
 <VARIABLE|STRING> MATCHES <regex>
 \end{shell}
 
-Any matched groups are captured in CMAKE\_MATCH\_<n> variables.
+任何匹配的组会被捕获在CMAKE\_MATCH\_<n>变量中。
 
-\mySamllsubsection{Simple checks}
+\mySamllsubsection{简单检查}
 
-We already mentioned one simple check, DEFINED, but there are others that simply return true if a condition is met.
+我们之前提到了一个简单检查，DEFINED，但还有其他的检查，如果满足条件则返回真。
 
-We can check the following:
-
-\begin{itemize}
-\item
-Whether a value is in a list: <VARIABLE|STRING> IN\_LIST <VARIABLE>
-
-\item
-Whether a command is available for invocation in this version of CMake: COMMAND <command-name>
-
-\item
-Whether a CMake policy exists: POLICY <policy-id> (this is covered in Chapter 4, Setting Up Your First CMake Project )
-
-\item
-Whether a CTest test was added with add\_test(): TEST <test-name>
-
-\item
-Whether a build target is defined: TARGET <target-name>
-\end{itemize}
-
-We’ll explore build targets in Chapter 5, Working with Targets, but for now, let’s just say that targets are logical units of a build process in a project created with add\_executable(), add\_library(), or add\_custom\_target() commands.
-
-\mySamllsubsection{Examining the filesystem}
-
-CMake provides many ways of working with files. We rarely need to manipulate them directly, and normally, we’d rather use a high-level approach. For reference, this book will provide a short list of the file-related commands in the Appendix. But most often, only the following operators will be needed (behavior is well-defined only for absolute paths):
+我们可以检查以下内容：
 
 \begin{itemize}
 \item
-EXISTS <path-to-file-or-directory>: Checks if a file or directory exists.
+一个值是否在列表中：<VARIABLE|STRING> IN\_LIST <VARIABLE>
 
 \item
-This resolves symbolic links (it returns true if the target of the symbolic link exists).
+在此版本的CMake中是否可以调用一个命令： COMMAND <command-name>
 
 \item
-<file1> IS\_NEWER\_THAN <file2>: Checks which file is newer.
-
-This returns true if file1 is newer than (or equal to) file2 or if one of the two files doesn’t exist.
+是否存在一个CMake策略： POLICY <policy-id> (这将在第4章，设置您的第一个CMake项目中介绍)
 
 \item
-IS\_DIRECTORY path-to-directory: Checks if a path is a directory.
+是否使用add\_test()添加了CTest测试： TEST <test-name>
 
 \item
-IS\_SYMLINK file-name: Checks if a path is a symbolic link.
-
-\item
-IS\_ABSOLUTE path: Checks if a path is absolute.
+是否定义了一个构建目标： TARGET <target-name>
 \end{itemize}
 
-Additionally, since 3.24 CMake supports a simple path comparison check, that will collapse multiple path separators but won’t do any other normalization:
+我们将在第5章，使用目标中探讨构建目标，但现在，让我们说目标是通过add\_executable()，add\_library()或add\_custom\_target()命令创建的项目构建过程的基本单元。
+
+\mySamllsubsection{检查文件系统}
+
+CMake提供了许多处理文件的方法。我们很少需要直接操作它们，通常更愿意使用高级方法。作为参考，本书将在附录中提供与文件相关的命令的简短列表。但最常需要以下操作符（仅对绝对路径行为有明确定义）：
+
+\begin{itemize}
+\item
+EXISTS <path-to-file-or-directory>: 检查文件或目录是否存在。
+
+\item
+ 这将解析符号链接（如果符号链接的目标存在，则返回真）。
+
+\item
+<file1> IS\_NEWER\_THAN <file2>: 检查哪个文件更新。
+
+如果文件1比文件2新（或等于）或者两个文件中有一个不存在，则返回真。
+
+\item
+IS\_DIRECTORY path-to-directory: 检查路径是否为目录。
+
+\item
+IS\_SYMLINK file-name: 检查路径是否为符号链接。
+
+\item
+IS\_ABSOLUTE path: 检查路径是否为绝对路径。
+\end{itemize}
+
+另外，从3.24版本开始，CMake支持简单的路径比较检查，这将折叠多个路径分隔符，但不会进行其他标准化：
 
 \begin{cmake}
 if ("/a////b/c" PATH_EQUAL "/a/b/c") # returns true
 \end{cmake}
 
-For more advanced path manipulation, refer to the documentation on the cmake\_path() command.
+对于更高级的路径操作，请参阅cmake\_path()命令的文档。
 
-This completes the syntax for conditional commands; the next control structure we’ll discuss is a loop.
+这完成了条件命令的语法；接下来我们将讨论的控制结构是循环。
 
-\mySubsubsection{2.5.2}{Loops}
+\mySubsubsection{2.5.2}{循环}
 
-Loops in CMake are fairly straightforward – we can use either a while() loop or a foreach() loop to repeatedly execute the same set of commands. Both of these commands support loop control mechanisms:
+在CMake中，循环相当直接——我们可以使用while()循环或foreach()循环来重复执行同一组命令。这两个命令都支持循环控制机制：
 
 \begin{itemize}
 \item
-The break() loop stops the execution of the remaining block and breaks from the enclosing loop.
+break()循环将停止执行剩余的块并跳出包围的循环。
 
 \item
-The continue() loop stops the execution of the current iteration and starts at the top of the next one.
+continue()循环将停止当前迭代的执行，并从下一个迭代的开头开始。
 \end{itemize}
 
-Note that no local variable scope is created in any of the loop blocks.
+请注意，在任何循环块中都不会创建局部变量作用域。
 
 \mySamllsection{while()}
 
-The loop block is opened with a while() command and closed with an endwhile() command. Any enclosed commands will be executed as long as the <condition> expression provided in while() is true. The syntax for phrasing the condition is the same as for the if() command:
+循环块使用while()命令打开，并使用endwhile()命令关闭。只要while()中提供的<条件>表达式为真，任何封闭的命令都将被执行。表述条件的语法与if()命令相同：
 
 \begin{shell}
 while(<condition>)
@@ -242,13 +242,13 @@ while(<condition>)
 endwhile()
 \end{shell}
 
-You probably guessed that – with some additional variables – the while loop can replace a for loop. Actually, it’s way easier to use a foreach() loop for that – let’s take a look.
+你可能已经猜到了——通过一些额外的变量——while循环可以替代for循环。实际上，使用foreach()循环来做这个要容易得多——让我们来看看。
 
-\mySamllsection{foreach() loops}
+\mySamllsection{foreach() 循环}
 
-There are several variations of the foreach() block, which execute the enclosed commands for each value in the given list. Like other blocks, it has opening and closing commands: foreach() and endforeach().
+foreach()块有几种变体，它们为给定列表中的每个值执行封闭的命令。像其他块一样，它有打开和关闭命令：foreach()和endforeach()。
 
-The simplest form of foreach() is meant to provide a C++-style for loop:
+foreach()的最简单形式旨在提供类似C++的for循环：
 
 \begin{shell}
 foreach(<loop_var> RANGE <max>)
@@ -256,19 +256,19 @@ foreach(<loop_var> RANGE <max>)
 endforeach()
 \end{shell}
 
-CMake will iterate from 0 to <max> (inclusive). If we need more control, we can use the second variant, providing <min>, <max>, and, optionally, <step>. All arguments must be non-negative integers, and <min> has to be smaller than <max>:
+CMake将从0迭代到<max>（包括）。如果我们需要更多控制，可以使用第二个变体，提供<min>，<max>，以及可选的<step>。所有参数都必须是非负整数，且<min>必须小于<max>：
 
 \begin{shell}
 foreach(<loop_var> RANGE <min> <max> [<step>])
 \end{shell}
 
-However, foreach() shows its true colors when it is working with lists:
+然而，当foreach()处理列表时，它才真正显示出其特色：
 
 \begin{shell}
 foreach(<loop_variable> IN [LISTS <lists>] [ITEMS <items>])
 \end{shell}
 
-CMake will retrieve elements from one or more specified <lists> list variables, as well as a list of <items> values defined in-line, and put them in <loop variable>. Then, it will execute all commands for each item in the list. You can choose to provide only lists, only values, or both:
+CMake将从一个或多个指定的<lists>列表变量中检索元素，以及一行定义的<项>值列表，并将它们放入<loop variable>中。然后，它将针对列表中的每个项执行所有命令。你可以选择只提供列表，只提供值，或者两者都提供：
 
 \filename{ch02/06-loops/foreach.cmake}
 
@@ -279,7 +279,7 @@ foreach(VAR IN LISTS MyList ITEMS e f)
 endforeach()
 \end{cmake}
 
-The preceding code will print the following:
+前面的代码将打印以下内容：
 
 \begin{shell}
 1
@@ -289,19 +289,19 @@ e
 f
 \end{shell}
 
-Or, we can use a short version (skipping the IN keyword) for the same result:
+或者，我们可以使用简短版本（跳过IN关键字）得到相同的结果：
 
 \begin{cmake}
 foreach(VAR 1 2 3 e f)
 \end{cmake}
 
-Since version 3.17, foreach() has learned how to zip lists (ZIP\_LISTS):
+自从3.17版本以来，foreach()学会了如何压缩列表（ZIP\_LISTS）：
 
 \begin{shell}
 foreach(<loop_var>... IN ZIP_LISTS <lists>)
 \end{shell}
 
-The process of zipping lists involves iterating through multiple lists and operating on corresponding items that have the same index. Let’s look at an example:
+压缩列表的过程涉及迭代多个列表并对具有相同索引的对应项进行操作。让我们看一个例子：
 
 \filename{ch02/06-loops/foreach.cmake}
 
@@ -313,16 +313,16 @@ foreach(num IN ZIP_LISTS L1 L2)
 endforeach()
 \end{cmake}
 
-CMake will create a num\_<N> variable for each list provided, which it will fill with items from each list.
+CMake将为提供的每个列表创建一个num\_<N>变量，它将用每个列表中的项填充这些变量。
 
-You can pass multiple variable names (one for every list) and each list will use a separate variable to store its items:
+你可以传递多个变量名（每个列表一个），每个列表将使用单独的变量来存储其项：
 
 \begin{cmake}
 foreach(word num IN ZIP_LISTS L1 L2)
     message("word=${word}, num=${num}")
 \end{cmake}
 
-Both examples on ZIP\_LISTS will produce the same output:
+ZIP\_LISTS的两个例子都将产生相同的输出：
 
 \begin{shell}
 word=one, num=1
@@ -331,40 +331,38 @@ word=three, num=3
 word=four, num=4
 \end{shell}
 
-In the event that the item counts between lists vary, variables for the shorter lists will be empty.
+如果列表之间的项数不同，较短的列表的变量将保持为空。
 
-It is worth noting that, as of version 3.21, the loop variables in foreach() are restricted to the local scope of the loop. This concludes our discussion on loops.
+值得注意的是，自从3.21版本以来，foreach()中的循环变量被限制在循环的局部作用域内。这结束了我们对循环的讨论。
 
-\mySubsubsection{2.5.3}{Command definitions}
+\mySubsubsection{2.5.3}{命令定义}
 
-There are two ways to define your own command: you can use the macro() command or the function() command. The easiest way to explain the differences between these commands is by comparing them to C-style preprocessor macros and actual C++ functions:
+有两种方法可以定义您自己的命令：您可以使用macro()命令或function()命令。解释这两个命令之间差异的最简单方法是将其与C风格的预处理器宏和实际的C++函数进行比较：
 
-A macro() command works more like a find-and-replace instruction than an actual subroutine call such as function(). Contrary to functions, macros don’t create a separate entry on a call stack.
-This means that calling return() in a macro will return to the calling statement one level higher than it would for a function (possibly terminating the execution if we’re already in the top scope).
+macro()命令更像是查找并替换指令，而不是像function()那样的实际子程序调用。与函数相反，宏不会在调用堆栈上创建单独的条目。 这意味着在宏中调用return()将返回到比函数调用高一级的调用语句（如果已经在顶级作用域中，可能会终止执行）。
 
-The function() command creates a local scope for its variables, unlike the macro() command, which works in the variable scope of the caller. This may lead to confusing results. Let’s talk about these details in the next section.
-
-Both methods of defining commands allow the defining of named arguments that can be referred to in the local scope of the defined command. Moreover, CMake offers the following variables for accessing call-related values:
+function()命令为其变量创建局部作用域，这与在调用者变量作用域中工作的macro()命令不同。这可能会导致令人困惑的结果。让我们在下一节中讨论这些细节。
+这两种定义命令的方法都允许定义可以在定义命令的局部作用域中引用的命名参数。此外，CMake提供了以下变量来访问与调用相关的值：
 
 \begin{itemize}
 \item
-\$\{ARGC\}: The count of arguments
+\$\{ARGC\}: 参数计数
 
 \item
-\$\{ARGV\}: All arguments as list
+\$\{ARGV\}: 所有参数作为列表
 
 \item
-\$\{ARGV<index>\}: The value of an argument at a specific index (starting from 0), regardless of whether this argument was expected or not
+\$\{ARGV<index>\}: 特定索引（从0开始）处的参数值，无论此参数是否预期
 
 \item
-\$\{ARGN\}: A list of anonymous arguments that were passed by a caller after the last expected argument
+\$\{ARGN\}: 调用者在最后一个预期参数后传递的匿名参数列表
 \end{itemize}
 
-Accessing a numeric argument with an index outside of the ARGC bounds is an undefined behavior. To handle advanced scenarios (usually with an unknown number of arguments), you may be interested to read about cmake\_parse\_arguments() in the official documentation. If you decide to define a command with named arguments, every call has to pass all of them or it will be invalid.
+使用超出ARGC范围的索引访问数字参数是未定义的行为。要处理高级场景（通常参数数量未知），您可能感兴趣的是在官方文档中阅读关于cmake\_parse\_arguments()的内容。如果您决定使用带有命名参数的命令，每次调用都必须传递所有这些参数，否则调用将无效。
 
-\mySamllsection{Macros}
+\mySamllsection{宏}
 
-Defining a macro is similar to any other block:
+定义宏与定义其他块类似：
 
 \begin{shell}
 macro(<name> [<argument>…])
@@ -372,9 +370,9 @@ macro(<name> [<argument>…])
 endmacro()
 \end{shell}
 
-After this declaration, we may execute our macro by calling its name (function calls are case- insensitive).
+在此声明之后，我们可以通过调用其名称来执行我们的宏（函数调用不区分大小写）。
 
-As we know, macros don’t create a separate entry on a call stack or a variable scope. The following example highlights some of the problems relating to this behavior in macros:
+众所周知，宏不会在调用堆栈或变量作用域上创建单独的条目。以下示例突出显示了宏行为相关的一些问题：
 
 \filename{ch02/08-definitions/macro.cmake}
 
@@ -389,7 +387,7 @@ MyMacro("called value")
 message("myVar is now: ${myVar}")
 \end{cmake}
 
-Here’s the output from this script:
+以下是这个脚本的输出
 
 \begin{shell}
 $ cmake -P ch02/08-definitions/macro.cmake
@@ -398,13 +396,13 @@ argument: called value
 myVar is now: new value
 \end{shell}
 
-What happened? Despite explicitly setting myVar to new value, it didn’t affect the output for message("argument: \$\{myVar\}")! This is because arguments passed to macros aren’t treated as real variables but rather, as constant find-and-replace instructions.
+发生了什么？尽管明确地将myVar设置为“新值”，但它并没有影响到message(“参数：\$\{myVar\}”)的输出！这是因为传递给宏的参数不是作为真正的变量处理，而是作为常量的查找并替换指令。
 
-On the other hand, the myVar variable in the global scope was changed from first value to new value. This behavior is a side effect and is considered a bad practice, as it’s impossible to tell which global variables will be changed by a macro without reading it. It is advisable to utilize functions whenever possible, as they are likely to prevent many issues.
+另一方面，全局作用域中的myVar变量从“初始值”更改为“新值”。这种行为是一种副作用，被认为是一种不良实践，因为如果不阅读宏，就无法知道哪些全局变量会被宏更改。建议尽可能使用函数，因为它们可能会防止许多问题。
 
-\mySamllsection{Functions}
+\mySamllsection{函数}
 
-To declare a command as a function, follow this syntax:
+要将命令声明为函数，请遵循以下语法：
 
 \begin{shell}
 function(<name> [<argument>...])
@@ -412,11 +410,11 @@ function(<name> [<argument>...])
 endfunction()
 \end{shell}
 
-A function requires a name and optionally accepts a list of names of expected arguments. As mentioned before, functions create their own variable scopes. You can call set(), providing one of the named arguments of the function, and any change will be local to the function (unless PARENT\_SCOPE is specified, as we discussed in the How to correctly use variable scopes in CMake section).
+函数需要一个名称，并可以选择接受一系列预期的参数名称。如前所述，函数会创建自己的变量作用域。您可以使用set()，提供函数的一个命名参数，并且任何更改都将局限于函数内部（除非指定了PARENT\_SCOPE，正如我们在CMake中正确使用变量作用域部分讨论的那样）。
 
-Functions follow the rules of the call stack, enabling returning to the calling scope with the return() command. Starting from CMake 3.25, the return() command allows an optional PROPAGATE keyword followed by a list of variable names. Its purpose is similar to the one in the block() command – it transfers the values of the specified variables from the local scope to the scope of the call.
+函数遵循调用堆栈的规则，允许使用return()命令返回到调用作用域。从CMake 3.25开始，return()命令允许一个可选的PROPAGATE关键字，后跟一系列变量名称。其目的与block()命令中的类似——它将指定变量的值从局部作用域传递到调用作用域。
 
-CMake sets the following variables for each function (these have been available since version 3.17):
+CMake为每个函数设置了以下变量（这些变量自3.17版本起可用）：
 
 \begin{itemize}
 \item
@@ -432,7 +430,7 @@ CMAKE\_CURRENT\_FUNCTION\_LIST\_FILE
 CMAKE\_CURRENT\_FUNCTION\_LIST\_LINE
 \end{itemize}
 
-Let’s take a look at these function variables in practice:
+让我们看看这些函数变量在实际中的使用：
 
 \filename{ch02/08-definitions/function.cmake}
 
@@ -450,7 +448,7 @@ MyFunction("Value1" "Value2")
 message("FirstArg in global scope: ${FirstArg}")
 \end{cmake}
 
-Running this script with cmake -P function.cmake prints the following output:
+使用cmake -P function.cmake运行这个脚本将打印以下输出：
 
 \begin{shell}
 Function: MyFunction
@@ -461,15 +459,15 @@ ARGV0: Value1 ARGV1: Value2 ARGC: 2
 FirstArg in global scope: first value
 \end{shell}
 
-As you can see, the general syntax and concept of the functions are very similar to macros but less susceptible to implicit errors.
+如您所见，函数的总体语法和概念与宏非常相似，但不易受到隐式错误的影响。
 
-\mySamllsection{The procedural paradigm in CMake}
+\mySamllsection{CMake中的过程范式}
 
-Let us suppose that we want to write CMake code similar to how we write a program in C++. We’ll make a CMakeLists.txt listfile that will call three defined commands that may call defined commands of their own. Figure 2.3 illustrates that:
+假设我们想要编写类似于在C++中编写程序的CMake代码。我们将创建一个CMakeLists.txt列表文件，该文件将调用三个定义的命令，这些命令可能还会调用它们自己的定义命令。图2.3展示了这一点：
 
-\myGraphic{0.5}{content/chapter2/images/3.png}{Figure 2.3: A procedural call graph}
+\myGraphic{0.8}{content/chapter2/images/3.png}{图2.3：过程调用图}
 
-In CMake, writing in a procedural style can be problematic since you must provide command definitions before calling them. The CMake parser will not have it any other way. Your code could look something like this:
+在CMake中，以过程风格编写代码可能会出现问题，因为您必须在调用它们之前提供命令定义。CMake解析器不会接受其他方式。您的代码可能看起来像这样：
 
 \begin{cmake}
 cmake_minimum_required(...)
@@ -488,9 +486,9 @@ setup_second_target()
 setup_tests()
 \end{cmake}
 
-What a nightmare! Everything is reversed! It will be very difficult to understand because the code with the lowest level of abstraction is at the beginning of the file. A correctly structured piece of code lists the most general steps in the first subroutine, after which it provides the slightly more detailed subroutines, and keeps the most detailed steps at the very end of the file.
+真是噩梦！一切都颠倒了！由于最低抽象级别的代码位于文件开头，这将非常难以理解。一个结构正确的代码应该在第一个子程序中列出最一般的步骤，然后提供稍微详细一点的子程序，并将最详细的步骤放在文件的最后。
 
-There are solutions to this problem, such as moving command definitions to other files and partitioning scopes across directories (scoped directories will be explained in detail in Chapter 4, Setting Up Your First CMake Project ). But there is also a simple and elegant approach – declaring an entry-point macro at the top of the file and calling it at the very end of the file:
+这个问题有解决方案，比如将命令定义移动到其他文件中，并在目录之间划分作用域（第4章“设置您的第一个CMake项目”将详细解释作用域目录）。但还有一个简单而优雅的方法——在文件顶部声明一个入口点宏，并在文件末尾调用它：
 
 \begin{cmake}
 macro(main)
@@ -506,31 +504,31 @@ function(third_step)
 main()
 \end{cmake}
 
-With this approach, our code is written with a gradually narrowing scope, and because we’re not actually calling the main() macro until the very end, CMake won’t complain about the execution of undefined commands.
+这种方法使得我们的代码以逐渐缩小的作用域编写，并且因为我们在文件末尾才实际调用main()宏，所以CMake不会因为执行未定义的命令而抱怨。
 
-Why use a macro over a function in this case? It’s good to have unrestricted access to global variables, and since we’re not passing any arguments to main(), we don’t need to worry about the usual caveats.
+在这种情况下，为什么使用宏而不是函数？能够不受限制地访问全局变量是很好的，而且由于我们不向main()传递任何参数，所以我们不需要担心通常的陷阱。
 
-You’ll find a simple example of this concept in the ch02/09-procedural/CMakeLists.txt listfile in the GitHub repository for this book.
+您可以在本书的GitHub仓库中的ch02/09-procedural/CMakeLists.txt列表文件中找到这个概念的简单示例。
 
-\mySamllsection{A word on naming conventions}
+\mySamllsection{关于命名约定的几句话}
 
-Naming is famously hard in software development, but nevertheless, it’s very important to maintain a solution that is easy to read and understand. When it comes to CMake scripts and projects, we should follow the rules of the clean code approach, as we would with any software development solution:
+在软件开发中，命名众所周知是一项难题，但尽管如此，保持一个易于阅读和理解的解决方案仍然非常重要。对于CMake脚本和项目，我们应该遵循干净代码方法的规则，就像我们对任何软件开发解决方案所做的那样：
 
 \begin{itemize}
 \item
-Follow a consistent naming style (snake\_case is an accepted standard in the CMake community).
+遵循一致的命名风格（在CMake社区中，snake\_case是被接受的标准）。
 
 \item
-Use short but meaningful names (for example, avoid func(), f(), and similar).
+使用简短但有意义的名称（例如，避免使用func()，f()等）。
 
 \item
-Avoid puns and cleverness in your naming.
+ 避免在命名中使用双关语和过于聪明的东西。
 
 \item
-Use pronounceable, searchable names that don’t require mental mapping.
+使用可发音、可搜索的名称，不需要进行心智映射。
 \end{itemize}
 
-Now that we know how to properly invoke the commands with the correct syntax, let’s explore which commands will be the most beneficial to us to begin with.
+现在我们知道了如何使用正确的语法正确调用命令，让我们探讨一下哪些命令对我们来说最有益于开始使用。
 
 
 

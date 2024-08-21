@@ -1,6 +1,6 @@
-The compilation of C++ source code appears to be a fairly straightforward process. Let’s start with the classic Hello World example.
+C++源代码的编译看起来是一个相当直接的过程。我们从经典的Hello World示例开始。
 
-The following code is found in ch01/01-hello/hello.cpp, Hello world in the C++ language:
+以下代码位于ch01/01-hello/hello.cpp，这是C++语言中的Hello World：
 
 \begin{cpp}
 #include <iostream>
@@ -10,148 +10,147 @@ int main() {
 }
 \end{cpp}
 
-To produce an executable, we of course need a C++ compiler. CMake doesn’t come with one, so you’ll need to pick and install one on your own. Popular choices include:
+要产生一个可执行文件，我们当然需要一个C++编译器。CMake不包含编译器，所以你需要自己选择并安装一个。流行的选择包括：
 
 \begin{itemize}
 \item
-Microsoft Visual C++ compiler
+Microsoft Visual C++编译器
 
 \item
-The GNU compiler collection
+GNU编译器集合
 
 \item
 Clang/LLVM
 \end{itemize}
+大多数读者都熟悉编译器，因为它是学习C++时不可或缺的，所以我们不会深入讨论选择和安装。本书中的示例将使用GNU GCC，因为它是一个成熟的开源软件编译器，可以在许多平台上免费获得。
 
-Most readers are familiar with a compiler, as it is indispensable when learning C++, so we won’t go into picking one and installation. Examples in this book will use GNU GCC as it is a well-established, open-source software compiler available for free across many platforms.
-
-Assuming that we have our compiler already installed, running it is similar for most vendors and systems. We should call it with the filename as an argument:
+假设我们已经安装了编译器，运行它对于大多数供应商和系统来说都是类似的。我们应该以文件名作为参数调用它：
 
 \begin{shell}
 $ g++ hello.cpp -o hello
 \end{shell}
 
-Our code is correct, so the compiler will silently produce an executable binary file that our machine can understand. We can run it by calling its name:
+我们的代码是正确的，所以编译器会默默地产生一个可执行的二进制文件，我们的机器可以理解。我们可以通过调用它的名字来运行它：
 
 \begin{shell}
 $ ./hello
 Hello World!
 \end{shell}
 
-Running one command to build your program is simple enough; however, as our projects grow, you will quickly understand that keeping everything in a single file is simply not possible. Clean code practices recommend that source code files should be kept small and in well-organized structures. The manual compilation of every file can be a tiresome and fragile process. There must be a better way.
+运行一个命令来构建你的程序很简单；然而，随着我们的项目增长，你很快就会明白，将所有内容放在一个文件中是不可能的。干净的代码实践建议，源代码文件应该保持小而有序。手动编译每个文件可能会变得乏味和脆弱。必须有更好的方法。
 
-\mySubsubsection{1.2.1}{What is CMake?}
+\mySubsubsection{1.2.1}{什么是CMake？}
 
-Let’s say we automate building by writing a script that goes through our project tree and compiles everything. To avoid any unnecessary compilations, our script will detect whether the source has been modified since the last time we ran the script. Now, we’d like a convenient way to manage arguments that are passed to the compiler for each file – preferably, we’d like to do that based on configurable criteria. Additionally, our script should know how to link all of the compiled files into a single binary file or, even better, build whole solutions that can be reused and incorporated as modules into bigger projects.
+假设我们通过编写一个脚本来自动化构建，该脚本遍历我们的项目树并编译所有内容。为了避免不必要的编译，我们的脚本将检测源代码自上次运行脚本以来是否已修改。现在，我们希望有一种方便的方式来管理传递给编译器的每个文件的参数——最好是基于可配置的标准。此外，我们的脚本应该知道如何将所有编译文件链接成一个单一的二进制文件，甚至更好地构建整个解决方案，这些解决方案可以作为更大的项目中的模块重复使用和集成。
 
-Building software is a very versatile process and can span multiple different aspects:
-
-\begin{itemize}
-\item
-Compiling executables and libraries
-
-\item
-Managing dependencies
-
-\item
-Testing
-
-\item
-Installing
-
-\item
-Packaging
-
-\item
-Producing documentation
-
-\item
-Testing some more
-\end{itemize}
-
-It would take a very long time to come up with a truly modular and powerful C++ building utility that is fit for every purpose. And it did. Bill Hoffman at Kitware implemented the first versions of CMake over 20 years ago. As you might have already guessed, it was very successful. Today, it has a lot of features and extensive support from the community. CMake is being actively developed and has become the industry standard for C and C++ programmers.
-
-The problem of building code in an automated way is much older than CMake, so naturally, there are plenty of options out there: GNU Make, Autotools, SCons, Ninja, Premake, and more. But why does CMake have the upper hand?
-
-There are a couple of things about CMake that I find (granted, subjectively) important:
+软件构建是一个非常多样化的过程，可以涵盖多个不同的方面：
 
 \begin{itemize}
 \item
-It stays focused on supporting modern compilers and toolchains.
+编译可执行文件和库
 
 \item
-CMake is truly cross-platform – it supports building for Windows, Linux, macOS, and Cygwin.
+管理依赖关系
 
 \item
-It generates project files for popular IDEs: Microsoft Visual Studio, Xcode, and Eclipse CDT. Additionally, it is a project model for others, like CLion.
+测试
 
 \item
-CMake operates on just the right level of abstraction – it allows you to group files in reusable targets and projects.
+安装
 
 \item
-There are tons of projects that are built with CMake and offer an easy way to plug them into your project.
+打包
 
 \item
-CMake views testing, packaging, and installing as an inherent part of the build process.
+生成文档
 
 \item
-Old, unused features get deprecated to keep CMake lean.
+再测试
 \end{itemize}
 
-CMake provides a unified, streamlined experience across the board. It doesn’t matter whether you’re building your software in an IDE or directly from the command line; what’s really important is that it takes care of post-build stages as well.
+创建一个真正模块化和强大的C++构建工具，以适应各种目的，需要很长时间。Kitware的Bill Hoffman在20多年前实现了CMake的第一个版本。正如你可能已经猜到的，它非常成功。今天，它具有许多功能和广泛的社区支持。CMake正在积极开发中，并已成为C和C++程序员行业标准。
 
-Your CI/CD pipeline can easily use the same CMake configuration and build projects using a single standard even if all of the preceding environments differ.
+自动化构建代码的问题比CMake还要古老，因此自然而然地，有很多选择：GNU Make、Autotools、SCons、Ninja、Premake等。但是CMake为什么能胜出？
 
-\mySubsubsection{1.2.2}{How does it work?}
-
-You might be under the impression that CMake is a tool that reads source code on one end and produces binaries on the other – while that’s true in principle, it’s not the full picture.
-
-CMake can’t build anything on its own – it relies on other tools in the system to perform the actual compilation, linking, and other tasks. You can think of it as the orchestrator of your building process: it knows what steps need to be done, what the end goal is, and how to find the right workers and materials for the job.
-
-This process has three stages:
+CMake有几件事我觉得很重要：
 
 \begin{itemize}
 \item
-Configuration
+它专注于支持现代编译器和工具链。
 
 \item
-Generation
+CMake真正跨平台——它支持为Windows、Linux、macOS和Cygwin构建。
 
 \item
-Building
+它为流行的IDE生成项目文件：Microsoft Visual Studio、Xcode和Eclipse CDT。此外，它是其他项目的项目模型，如CLion。
+
+\item
+CMake在正确的抽象层次上操作——它允许你将文件分组为可重用的目标和项目。
+
+\item
+有大量使用CMake构建的项目，提供了一种简单的方式将它们集成到你的项目中。
+
+\item
+CMake将测试、打包和安装视为构建过程的固有部分。
+
+\item
+旧的、不常用的功能会被废弃，以保持CMake精简。
 \end{itemize}
 
-Let’s explore them in some detail.
+CMake提供了一致、流畅的体验。无论是使用IDE还是直接从命令行构建软件，最重要的是它也照顾到构建后的阶段。
 
-\mySamllsection{The configuration stage}
+你的CI/CD管道可以轻松使用相同的CMake配置和构建项目，即使所有先前环境都不同，也可以使用单一标准。
 
-This stage is about reading project details stored in a directory, called the source tree, and preparing an output directory or build tree for the generation stage.
+\mySubsubsection{1.2.2}{它是如何工作的？}
 
-CMake starts by checking whether the project was configured before and reads cached configuration variables from a CMakeCache.txt file. On a first run, this is not the case, so it creates an empty build tree and collects all of the details about the environment it is working in: for example, what the architecture is, what compilers are available, and what linkers and archivers are installed. Additionally, it checks whether a simple test program can be compiled correctly.
+你可能认为CMake是一个工具，在一端读取源代码，在另一端生成二进制文件——尽管这在原则上是对的，但这并不是全部。
 
-Next, the CMakeLists.txt project configuration file is parsed and executed (yes, CMake projects are configured with CMake’s coding language). This file is the bare minimum of a CMake project (source files can be added later). It tells CMake about the project structure, its targets, and its dependencies (libraries and other CMake packages).
+CMake不能独立构建任何东西——它依赖于系统中的其他工具来执行实际的编译、链接等任务。你可以把它看作是构建过程的指挥家：它知道需要完成哪些步骤，最终目标是什么，以及如何找到合适的工人和材料。
 
-During this process, CMake stores collected information in the build tree, such as system details, project configurations, logs, and temp files, which are used for the next step. Specifically, a CMakeCache.txt file is created to store more stable information (such as paths to compilers and other tools), which saves time when the whole build sequence is executed again.
+这个过程有三个阶段：
 
-\mySamllsection{The generation stage}
+\begin{itemize}
+\item
+配置
 
-After reading the project configuration, CMake will generate a buildsystem for the exact environment it is working in. Buildsystems are simply cut-to-size configuration files for other build tools (for example, Makefiles for GNU Make or Ninja and IDE project files for Visual Studio). During this stage, CMake can still apply some final touches to the build configuration by evaluating generator expressions.
+\item
+生成
+
+\item
+构建
+\end{itemize}
+
+让我们详细探讨它们。
+
+\mySamllsection{配置阶段}
+
+这个阶段是关于读取存储在目录中的项目详情，称为源代码树，并为生成阶段准备一个输出目录或构建树。
+
+CMake首先检查项目是否以前配置过，并从CMakeCache.txt文件中读取缓存的配置变量。首次运行时，情况并非如此，所以它会创建一个空的构建树，并收集它正在工作的环境的所有详细信息：例如，架构是什么，可用的编译器是什么，以及是否安装了链接器和打包器。此外，它还会检查一个简单的测试程序是否可以正确编译。
+
+接下来，CMakeLists.txt项目配置文件被解析并执行（是的，CMake项目使用CMake的编码语言进行配置）。这个文件是CMake项目的最小配置（源文件可以在稍后添加）。它告诉CMake关于项目结构、其目标和依赖项（库和其他CMake包）。
+
+在这个过程中，CMake将收集的信息存储在构建树中，例如系统详情、项目配置、日志和临时文件，这些信息用于下一阶段。具体来说，CMakeCache.txt文件用于存储更稳定的信息（例如编译器和工具的路径），这在整个构建序列再次执行时可以节省时间。
+
+\mySamllsection{生成阶段}
+
+在阅读项目配置后，CMake将为它正在工作的确切环境生成一个构建系统。构建系统只是为其他构建工具（例如，GNU Make的Makefiles或Ninja以及Visual Studio的IDE项目文件）定制的配置文件。在这个阶段，CMake仍然可以通过评估生成器表达式对构建配置进行一些最后的调整。
 
 \begin{myTip}{Tip}
-The generation stage is executed automatically after the configuration stage. For this reason, this book and other resources sometimes refer to both of these stages interchangeably when mentioning the “configuration” or “generation” of a buildsystem. To explicitly run just the configuration stage, you can use the cmake-gui utility
+生成阶段在配置阶段之后自动执行。因此，本书和其他资源有时会交替使用这两个阶段，当提到“配置”或“生成”构建系统时。要明确只运行配置阶段，你可以使用cmake-gui工具。
 \end{myTip}
 
-\mySamllsection{The building stage}
+\mySamllsection{构建阶段}
 
-To produce the final artifacts specified in our project (like executables and libraries), CMake has to run the appropriate build tool. This can be invoked directly, through an IDE, or using the appropriate CMake command. In turn, these build tools will execute steps to produce target artifacts with compilers, linkers, static and dynamic analysis tools, test frameworks, reporting tools, and anything else you can think of.
+为了生成项目中指定的最终产品（如可执行文件和库），CMake必须运行适当的构建工具。这可以通过直接调用、通过IDE或使用适当的CMake命令来执行。反过来，这些构建工具将执行一系列步骤，使用编译器、链接器、静态和动态分析工具、测试框架、报告工具以及你能想到的任何其他工具来生成目标产品。
 
-The beauty of this solution lies in the ability to produce buildsystems on demand for every platform with a single configuration (that is, the same project files):
+这种解决方案的美丽之处在于能够根据需要为每个平台生成构建系统（也就是说，使用相同的项目文件）：
 
-\myGraphic{0.5}{content/chapter1/images/1.png}{Figure 1.1: The stages of CMake}
+\myGraphic{0.9}{content/chapter1/images/1.png}{图1.1：CMake的各个阶段}
 
-Do you remember our hello.cpp application from the Understanding the basics section? It is really easy to build it with CMake. All we need is the following CMakeLists.txt file in the same directory as our source.
+你还记得我们在“理解基础知识”部分中的hello.cpp应用程序吗？使用CMake构建它真的非常简单。我们只需要在源文件所在的同一目录下创建以下CMakeLists.txt文件。
 
-\filename{ch01/01-hello/CMakeLists�txt}
+\filename{ch01/01-hello/CMakeLists.txt}
 
 \begin{cmake}
 cmake_minimum_required(VERSION 3.26)
@@ -159,18 +158,18 @@ project(Hello)
 add_executable(Hello hello.cpp)
 \end{cmake}
 
-After creating this file, execute the following commands in the same directory:
+创建此文件后，在该目录下执行以下命令：
 
 \begin{shell}
 cmake -B <build tree>
 cmake --build <build tree>
 \end{shell}
 
-Note that <build tree> is a placeholder that should be replaced with a path to a temporary directory that will hold generated files.
+请注意，是一个占位符，应该用一个临时目录的路径替换，该目录将包含生成的文件。
 
-Here is the output from an Ubuntu system running in Docker (Docker is a virtual machine that can run within other systems; we’ll discuss it in the Installing CMake on different platforms section).
+以下是在Ubuntu系统上运行的Docker（Docker是一个可以在其他系统上运行的虚拟机；我们将在“在不同平台上安装CMake”部分讨论它）的输出。
 
-The first command generates a buildsystem:
+第一个命令生成构建系统：
 
 \begin{shell}
 ~/examples/ch01/01-hello# cmake -B ~/build_tree
@@ -191,7 +190,7 @@ The first command generates a buildsystem:
 -- Build files have been written to: /root/build_tree
 \end{shell}
 
-The second command actually builds the project:
+第二个命令实际上构建项目：
 
 \begin{shell}
 ~/examples/ch01/01-hello# cmake --build ~/build_tree
@@ -201,19 +200,19 @@ Scanning dependencies of target Hello
 [100%] Built target Hello
 \end{shell}
 
-All that’s left is to run the compiled program:
+最后，运行编译后的程序：
 
 \begin{shell}
 ~/examples/ch01/01-hello# ~/build_tree/Hello
 Hello World!
 \end{shell}
 
-Here, we have generated a buildsystem that is stored in the build tree directory. Following this, we executed the build stage and produced a final binary that we were able to run.
+在这里，我们在构建树目录中生成了一个构建系统。接着，我们执行了构建阶段，并产生了一个我们可以运行的最终二进制文件。
 
-Now you know what the result looks like, I’m sure you will be full of questions: what are the prerequisites to this process? What do these commands mean? Why do we need two of them? How do I write my own project files? Don’t worry – these questions will be answered in the following sections.
+现在你知道结果是什么样子了，我敢肯定你会有很多问题：这个过程的先决条件是什么？这些命令是什么意思？为什么我们需要两个？我如何编写自己的项目文件？别担心——这些问题将在接下来的部分中得到解答。
 
 \begin{myNotic}{Note}
-This book will provide you with the most important information that is relevant to the current version of CMake (at the time of writing, this is 3.26). To provide you with the best advice, I have explicitly avoided any deprecated and no longer recommended features and I highly recommend using, at the very least, CMake version 3.15, which is considered the modern CMake. If you require more information, you can find the latest, complete documentation online at \url{https://cmake.org/cmake/help/}.
+这本书将为您提供与当前版本的CMake（撰写时为3.26）相关的最重要信息。为了为您提供最佳建议，我明确避免了任何废弃和不推荐使用的功能，并强烈建议至少使用CMake 3.15版本，这被认为是现代的CMake。如果您需要更多信息，您可以在网上找到最新的完整文档，网址为 \url{https://cmake.org/cmake/help/}。
 \end{myNotic}
 
 
