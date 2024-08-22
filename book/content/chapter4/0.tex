@@ -1,65 +1,33 @@
-We have now gathered enough information to start talking about the core function of CMake: building projects. In CMake, a project contains all the source files and the configuration necessary to manage the process of bringing our solutions to life. Configuration starts by performing all the checks: verifying if the target platform is supported, ensuring the presence of all essential dependencies and tools, and confirming the compatibility of the provided compiler with the required features.
+我们现在已经收集了足够的信息，可以开始讨论CMake的核心功能：构建项目。在CMake中，一个项目包含了所有源文件和必要的配置，以管理将我们的解决方案变为现实的过程。配置过程从执行所有检查开始：验证目标平台是否受支持，确保所有必需的依赖项和工具的存在，并确认提供的编译器与所需特性兼容。
 
-Once the preliminary checks are completed, CMake proceeds to generate a buildsystem tailored to the selected build tool. Then, the buildsystem is executed, which means compiling the source files and linking them together with their respective dependencies to create the output artifacts.
+完成初步检查后，CMake继续生成一个定制的构建系统，该构建系统针对所选的构建工具。然后，执行构建系统，这意味着编译源文件，并将它们与各自的依赖项链接在一起，以创建输出工件。
 
-The resulting artifacts can be distributed to consumers in different ways. They can be shared directly with users as binary packages, allowing them to install them on their systems using package managers. Alternatively, they can be distributed as single-executable installers. Additionally, end-users have the option to create the artifacts themselves by accessing projects shared in an open-source repository. In this scenario, users can utilize CMake to compile the projects on their own machines and subsequently install them.
+生成的工件可以通过不同的方式分发给消费者。它们可以直接与用户共享作为二进制包，允许用户使用包管理器将它们安装到自己的系统中。另一种方式是将它们作为单一的可执行安装程序分发。此外，最终用户还可以通过访问开源仓库中的项目自行创建工件。在这种情况下，用户可以使用CMake在自己的机器上编译项目，并随后安装它们。
 
-Leveraging CMake projects to their fullest extent can significantly enhance the development experience and the overall quality of the generated code. By harnessing the power of CMake, numerous mundane tasks can be automated, such as executing tests after the build and running code coverage checkers, formatters, validators, linters, and other tools. This automation not only saves time but also ensures consistency and promotes code quality throughout the development process.
+充分利用CMake项目可以显著提高开发体验和生成的代码的整体质量。通过利用CMake的力量，许多日常任务可以自动化，例如在构建后执行测试和运行代码覆盖检查器、格式化器、验证器、校验器和其他工具。这种自动化不仅节省了时间，还确保了一致性，并在整个开发过程中推广了代码质量。
 
-To unlock the power of CMake projects, we’ll make a few key decisions first: how to correctly configure the project as a whole and how to partition it and set up the source tree so that all files are neatly organized in the right directories. By establishing a coherent structure and organization from the beginning, the CMake project can be effectively managed and scaled as it evolves.
+要充分发挥CMake项目的潜力，我们首先需要做出一些关键决策：如何正确配置整个项目，以及如何分割项目和设置源树，以便所有文件都能整齐地组织在正确的目录中。从一开始就建立一个连贯的结构和组织，CMake项目就可以有效地管理和扩展。
 
-Next up, we’ll take a look at the project’s build environment. We’ll find out things like the architecture we’re working with, the tools at our disposal, the features they support, and the language standard we’re using. To make sure everything is in sync, we’ll compile a test C++ file and see if our chosen compiler meets the standard requirements we’ve set for our project. It’s all about ensuring a smooth fit between our project, the tools we’re using, and the standards we’ve chosen.
+接下来，我们将查看项目的构建环境。我们将了解我们正在使用的体系结构、可用的工具、它们支持的功能以及我们正在使用的语言标准。为了确保一切同步，我们将编译一个测试C++文件，并查看我们选择的编译器是否符合我们为项目设定的标准要求。这一切都是为了确保我们的项目、我们使用的工具以及我们选择的标准之间的无缝配合。
 
-In this chapter, we’re going to cover the following main topics:
+在本章中，我们将涵盖以下主要主题：
 
 \begin{itemize}
 \item
-Understanding the basic directives and commands
+理解基本指令和命令
 
 \item
-Partitioning your project
+分割你的项目
 
 \item
-Thinking about the project structure
+考虑项目结构
 
 \item
-Scoping the environment
+设置环境范围
 
 \item
-Configuring the toolchain
+配置工具链
 
 \item
-Disabling in-source builds
+禁用源内构建
 \end{itemize}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

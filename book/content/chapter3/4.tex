@@ -1,78 +1,77 @@
 
-The Visual Studio (VS) IDE is an IDE available for Windows developed by Microsoft. VS was available for macOS but is being deprecated in August 2024. It’s important to distinguish it from VS Code, the other IDE by Microsoft.
+The Visual Studio (VS) IDE is an IDE available for Windows developed by Microsoft. VS was available for macOS but is being deprecated in Visual Studio（VS）IDE是微软开发的一款适用于Windows的IDE。VS曾为macOS提供支持，但将在2024年8月被弃用。重要的是要将其与微软的另一个IDE——VS Code区分开来。
 
-VS comes in a few flavors: Community, Professional, and Enterprise. The Community version is free, allowing up to five users in a company. More mature companies will need to pay licensing fees, which start from \$45 per user monthly. Figure 3.5 shows what VS Community looks like:
+VS有几个版本：社区版、专业版和企业版。社区版是免费的，允许一家公司最多有五名用户。更成熟的公司需要支付许可费用，每月每位用户起价45美元。图3.5展示了VS 2022的外观：
 
-\myGraphic{1.0}{content/chapter3/images/5.png}{Figure 3.5: The main window of VS 2022}
+\myGraphic{1.0}{content/chapter3/images/5.png}{图3.5：VS 2022的主窗口}
 
-Like the other IDEs discussed in this chapter, you can enable dark mode if you prefer. Let’s move on to the noteworthy features of this IDE.
+像本章讨论的其他IDE一样，你也可以启用暗黑模式。让我们继续探讨这个IDE的一些值得注意的功能。
 
-\mySubsubsection{3.4.1}{Why you might like it}
+\mySubsubsection{3.4.1}{你可能喜欢它的原因}
 
-This IDE shares many features with VS Code, offering an experience of a similar flavor but in a much more refined form. The suite is full of features, many of which utilize GUIs, wizards, and visual elements. Most of these features are available straight out of the box, rather than through extensions (although there is still a large and extensive package marketplace for additional functionality). In other words, it’s like VSC but much more advanced.
+这个IDE与VS Code共享许多功能，提供类似但更加精致的体验。套件中充满了功能，其中许多功能利用了图形用户界面、向导和可视元素。大多数这些功能都是直接开箱即用的，而不是通过扩展（尽管仍然有一个大型且广泛的包市场以获取更多功能）。换句话说，它就像VSC但更加先进。
 
-Depending on the version, your testing tools will cover a wide range of tests: unit testing, performance testing, load testing, manual testing, Test Explorer, test coverage, IntelliTest, and code profiling. The profiler, in particular, is quite a valuable tool, and it’s available in the Community edition.
+根据版本的不同，你的测试工具将涵盖广泛的测试：单元测试、性能测试、负载测试、手动测试、Test Explorer、测试覆盖率、IntelliTest和代码分析。特别是分析器，这是一款非常宝贵的工具，在社区版中可用。
 
-If you’re designing Windows desktop applications, VS provides visual editors and a large collection of components. There’s extensive support for the Universal Windows Platform (UWP), which is the UI standard for Windows-based applications introduced in Windows 10. This support allows for a sleek, modern design, heavily optimized for adaptive controls that scale well on different screens.
+如果你正在设计Windows桌面应用程序，VS提供了可视编辑器和大量组件。对通用Windows平台（UWP）的支持非常广泛，这是Windows 10引入的Windows应用程序的UI标准。这种支持允许实现光滑、现代的设计，并且针对不同屏幕上的自适应控件进行了高度优化。
 
-Another thing worth mentioning is that even though VS is a Windows-only IDE, you can develop projects targeted for Linux and mobile platforms (Android and iOS). There’s also support for game developers using Windows-native libraries and Unreal Engine.
+值得一提的是，尽管VS是一个仅限Windows的IDE，但你仍然可以开发针对Linux和移动平台（Android和iOS）的项目。此外，还支持使用Windows本地库和Unreal Engine的游戏开发者。
+准备好亲自体验它的工作方式了吗？以下是开始的方法。
 
-Ready to see for yourself how it works? Here’s how to start.
+\mySubsubsection{3.4.2}{开始你的第一步}
 
-\mySubsubsection{3.4.2}{Take your first steps}
+这个IDE仅适用于Windows，并遵循标准的安装过程。首先从\url{https://visualstudio.microsoft.com/free-developeroffers/}下载安装程序。运行安装程序后，您将需要选择版本（社区版、专业版或企业版）并选择您想要的工作负载：
 
-This IDE is only available for Windows, and it follows a standard installation process. Start by downloading the installer from \url{https://visualstudio.microsoft.com/free-developeroffers/}. After running the installer, you’ll be asked to pick the version (Community, Professional, or Enterprise) and select the workloads you want:
+\myGraphic{1.0}{content/chapter3/images/6.png}{图3.6：VS IDE安装程序窗口}
 
-\myGraphic{1.0}{content/chapter3/images/6.png}{Figure 3.6: Installer window for the VS IDE}
-
-Workloads are simply feature sets that allow VS to support the specific language, environment, or format of the program. Some workloads include Python, Node.js, or .NET. We’re of course interested in the ones related to C++ (Figure 3.6); there’s extensive support available for different use cases:
+工作负载只是允许VS支持特定语言、环境或程序格式的功能集。一些工作负载包括Python、Node.js或.NET。当然，我们感兴趣的是与C++相关的那些（图3.6）；针对不同的用例提供了广泛的支持：
 
 \begin{itemize}
 \item
-Desktop development with C++
+使用C++的桌面开发
 
 \item
-Universal Windows Platform development
+使用C++的通用Windows平台开发
 
 \item
-Game development with C++
+使用C++的游戏开发
 
 \item
-Mobile development with C++
+使用C++的移动开发
 
 \item
-Linux development with C++
+使用C++的Linux开发
 \end{itemize}
 
-Pick the ones that fit your desired application and press Install. Don’t worry about installing all options just in case – you can always modify your selection later by running the installer again. If you decide to configure the workload components more precisely, ensure to keep the C++ CMake tools for Windows or C++ CMake tools for Linux option enabled to get access to CMake support.
+选择适合您所需应用程序的选项并点击安装。不用担心安装所有选项以防万一——你总是可以再次运行安装程序来修改你的选择。如果您决定更精确地配置工作负载组件，请确保启用C++ CMake工具选项以获得对CMake的支持。
 
-After installation, you can start the IDE and select Create a new project on the start window. You’ll be presented with multiple templates based on the workloads you installed previously. To work with CMake, choose the CMake Project template. Other options don’t necessarily use it. Upon creating your project, you can start it by pressing the green play button at the top of the window; the code will compile, and you’ll see the basic program executed with the following output:
+安装后，你可以启动IDE并选择启动窗口上的“创建新项目”。你将看到基于之前安装的工作负载的多个模板。要与CMake一起工作，请选择CMake项目模板。其他选项不一定使用CMake。创建项目后，你可以通过点击窗口顶部绿色的播放按钮开始它；代码将编译，你将看到基本的程序执行，输出如下：
 
 \begin{cmake}
 Hello CMake.
 \end{cmake}
 
-Now, you’re ready to work with CMake in Visual Studio.
+现在，你准备好使用Visual Studio与CMake一起工作了。
 
-\mySubsubsection{3.4.3}{Advanced feature: Hot Reload debugging}
+\mySubsubsection{3.4.3}{高级功能：热重载调试}
 
-While running Visual Studio might be more resource-intensive and take more time to start, it offers numerous unmatched features. One significant game-changer is Hot Reload. Here’s how it works: open a C++ project, start it with a debugger attached, make a change in a code file, press the Hot Reload button (or Alt + F10), and your changes will immediately be reflected in the running application while maintaining the state.
+尽管运行Visual Studio可能会更耗资源并且启动时间更长，但它提供了许多无与伦比的功能。其中一个重要的改变者是热重载。以下是它是如何工作的：打开一个C++项目，使用调试器启动它，在代码文件中进行更改，点击热重载按钮（或Alt + F10），你的更改将立即在运行的应用程序中反映出来，同时保持状态。
 
-To ensure Hot Reload support is enabled, set these two options in the Project > Properties > C/C++ > General menu:
+为了确保热重载支持已启用，请在项目 > 属性 > C/C++ > 常规菜单中设置这两个选项：
 
 \begin{itemize}
 \item
-Debug Information Format must be set to \textbf{Program Database for Edit and Continue /ZI}
+调试信息格式必须设置为 \textbf{用于编辑和继续的程序数据库 /ZI}
 
 \item
-Enable Incremental Linking must be set to \textbf{Yes /INCREMENTAL}
+启用增量链接必须设置为 \textbf{Yes /INCREMENTAL}
 \end{itemize}
 
-The behind-the-scenes mechanics of Hot Reload might seem like sorcery, but it’s an incredibly useful feature to have. There are some limitations, such as changes to global/static data, object layouts, or “time-traveling” changes (like altering the constructor of an already constructed object).
+热重载的背后机制可能看起来像魔法，但它是一个非常实用的功能。存在一些限制，例如对全局/静态数据、对象布局或“时间旅行”更改（如更改已构建对象的构造函数）的更改。
 
-You can find more about Hot Reload in the official documentation here: \url{https://learn.microsoft.com/en-us/visualstudio/debugger/hot-reload}.
+更多关于热重载的信息可以在官方文档中找到：\url{https://learn.microsoft.com/en-us/visualstudio/debugger/hot-reload}。
 
-This concludes our discovery of the three main IDEs. The initial learning curve might look steep, but I promise that the effort put in to learn any of these platforms will pay off very quickly when you move on to more advanced tasks.
+这就是我们对这三个主要IDE的探索的结束。起初的学习曲线可能看起来很陡峭，但我保证，如果你投入学习这些平台，当转向更高级的任务时，你会很快看到回报。
 
 
 

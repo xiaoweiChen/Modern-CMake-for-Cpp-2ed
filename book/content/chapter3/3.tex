@@ -1,25 +1,25 @@
 
-Visual Studio Code (VS Code) is a free, cross-platform IDE available for Windows, macOS, and Linux, developed by Microsoft. Don’t confuse it with another Microsoft product, the Visual Studio IDE (usually named after the year it was released, for example, Visual Studio 2022).
+Visual Studio Code（VS Code）是一款免费的、跨平台的IDE，适用于Windows、macOS和Linux，由微软开发。不要将它与另一款微软产品混淆，即Visual Studio IDE（通常以发布的年份命名，例如，Visual Studio 2022）。
 
-VS Code is favored for its vast extension ecosystem and support for hundreds of programming languages (an estimated are over 220 different languages!). When GitHub was acquired by Microsoft, VS Code was introduced as something of a replacement for Atom.
+VS Code因其广泛的扩展生态系统和对数百种编程语言的支持而受到青睐（据估计，超过220种不同的语言！）。当GitHub被微软收购时，VS Code被介绍为Atom的某种替代品。
 
-The overall design of the IDE is top-notch, as you can see in Figure 3.4.
+IDE的整体设计非常出色，如图3.4所示。
 
-\myGraphic{1.0}{content/chapter3/images/4.png}{Figure 3.4: The main window of VS Code}
+\myGraphic{1.0}{content/chapter3/images/4.png}{图3.4：VS Code的主窗口}
 
-Now, let’s find out what makes VS Code so special.
+现在，让我们找出VS Code之所以特别的原因。
 
-\mySubsubsection{3.3.1}{Why you might like it}
+\mySubsubsection{3.3.1}{你可能喜欢它的原因}
 
-C++ isn’t the priority in terms of languages supported by VSC, but it’s quite close to the top, thanks to the many sophisticated language extensions available. This trade-off is rewarded with the ability to switch between many languages as needed while working in the same environment.
+在VS Code支持的众多语言中，C++并不是优先考虑的，但它的地位非常接近顶部，多亏了可用的许多高级语言扩展。这种权衡带来的好处是能够在同一环境中根据需要切换多种语言。
 
-There’s a bit of a learning curve to this tool, as most extensions conform to the basic UI functionalities provided, rather than implementing advanced interfaces on their own. Many of the features will be available through the command palette (accessible by pressing F1), which requires you to type the name of the command instead of clicking an icon or a button. This is a reasonable sacrifice to keep VSC clean, fast, and free of charge. In fact, this IDE is so quick to load that I prefer to use it as a general-purpose text editor, even when I’m not working on a project.
+这个工具的学习曲线稍微有些陡峭，因为大多数扩展都符合基本UI功能，而不是自行实现高级界面。许多功能将通过命令面板（通过按F1访问）提供，这要求您输入命令名称而不是点击图标或按钮。为了保持VS Code干净、快速且免费，这是一个合理的牺牲。实际上，这个IDE加载速度非常快，以至于我更喜欢将它作为通用文本编辑器使用，即使在不工作时也是如此。
 
-That said, VS Code is truly powerful thanks to an enormous library of really good extensions, the vast majority of which are available for free. There are special extensions available for C++ and CMake, so let’s see how to configure them in the next section.
+话虽如此，VS Code的真正强大之处在于它拥有大量非常出色的扩展，其中大多数都是免费的。对于C++和CMake，有专门的扩展可用，我们将在下一节看看如何配置它们。
 
-\mySubsubsection{3.3.2}{Take your first steps}
+\mySubsubsection{3.3.2}{开始你的第一步}
 
-VSC is available from the official website: \url{https://code.visualstudio.com/}. The website provide quite an extensive list of downloads for Windows and macOS, as well as for many Linux distributions: Debian, Ubuntu, Red Hat, Fedora, and SUSE. Follow the usual process on your platform to install the software. After that, you’ll want to install a bunch of extensions by going to the Extensions Marketplace (Ctrl/Command + Shift + X). The following are recommended to start with:
+VS Code可以从官方网站获得：\url{https://code.visualstudio.com/}。该网站提供了Windows和macOS以及许多Linux发行版（Debian、Ubuntu、Red Hat、Fedora、SUSE）的广泛下载列表。按照您平台的常规流程安装软件。之后，您需要通过扩展市场（通过按Ctrl/Command + Shift + X）安装一堆扩展。以下是一些推荐的入门扩展
 
 \begin{itemize}
 \item
@@ -35,27 +35,28 @@ CMake by twxs
 CMake Tools by Microsoft
 \end{itemize}
 
-They will provide the usual code highlighting and the ability to compile, run, and debug code straight from the IDE, but you might need to install the toolchain yourself. Usually, VS Code will suggest extensions to install in a pop - up window as you start opening relevant files, so you don’t necessarily need to go out on a hunt.
+它们将提供标准的代码高亮和直接从IDE编译、运行和调试代码的能力，但您可能需要自己安装工具链。通常，VS Code会在您开始打开相关文件时在弹出窗口中建议安装扩展，所以您不必特意去寻找。
 
-I also suggest installing the Remote – SSH by Microsoft extension if you’re involved with remote projects, as this will make the experience much more coherent and comfortable; this extension not only takes care of file synchronization but will also enable you to remotely debug by attaching to the debugger on the remote machine.
+如果您参与远程项目，我建议安装Microsoft的Remote - SSH扩展，因为这会使体验更加连贯和舒适；这个扩展不仅处理文件同步，还允许您通过远程机器的调试器远程调试。
 
-However, there’s one more interesting extension that shifts the paradigm of working with projects; let’s see how.
+然而，还有一个更有趣的扩展，它改变了与项目工作方式，我们来看看它是如何做到的。
 
-\mySubsubsection{3.3.3}{Advanced feature: Dev Containers}
+\mySubsubsection{3.3.3}{高级功能：Dev Containers}
 
-If you’re deploying your application to a production environment, whether you’re shipping the compiled artifact or running a build process, it’s crucial to ensure that all dependencies are present. Otherwise, you’ll get all sorts of problems. Even with all dependencies accounted for, different versions or configurations might cause your solution to behave differently from the development or staging environment. I’ve experienced such cases on numerous occasions. Before virtualization became prevalent, dealing with environmental issues was just a part of life.
+如果您要将应用程序部署到生产环境，无论是发送编译的工件还是运行构建过程，确保所有依赖项都存在至关重要。否则，您将遇到各种问题。即使考虑了所有依赖项，不同的版本或配置也可能导致您的解决方案与开发或测试环境的行为不同。我多次遇到过这种情况。在虚拟化变得普遍之前，处理环境问题只是生活的一部分。
 
-With the introduction of lightweight containers like Docker, things got much simpler. Suddenly, you were able to run a minified operating system with your service isolated to its own space. This isolation allowed all dependencies to be packaged with the container, freeing developers from a major headache.
+随着轻量级容器如Docker的引入，事情变得更加简单。突然间，您可以运行一个包含您服务的最小化操作系统，并将其隔离到自己的空间中。这种隔离允许将所有依赖项打包到容器中，从而使开发人员摆脱了一个主要头痛问题。
 
-Until recently, developing inside a container involved manually building, running, and connecting to the container with a remote session from the IDE. This process wasn’t overly difficult, but it required manual steps that could be executed differently by various developers.
+直到最近，开发容器涉及手动构建、运行和通过IDE的远程会话连接到容器。这个过程并不太难，但它需要手动步骤，不同开发人员可能会以不同的方式执行。
 
-In recent years, Microsoft released an open standard called Dev Containers (\url{https://containers.dev/}) to help address this slight inconvenience. The specification mainly consists of a devcontainer.json file that you can place in your project repository, instructing IDEs on how to set up their development environment in a container.
+近年来，微软发布了一个名为Dev Containers（\url{https://containers.dev/}）的开放标准，以帮助解决这个小小的不便。该规范主要由一个devcontainer.json文件组成，您可以在项目仓库中放置该文件，指导IDE如何在一个容器中设置其开发环境。
 
-To use this feature, simply install the Dev Containers by Microsoft extension and point it to a repository of an appropriately prepared project. If you’re undeterred by the challenges of switching the main CMakeLists.txt, feel free to try it with the book’s repository:
+要使用此功能，只需安装Microsoft的Dev Containers扩展，并将其指向一个适当准备的项目仓库。如果您不介意切换主CMakeLists.txt，可以尝试使用本书的仓库：
 
 \url{git@github.com:PacktPublishing/Modern-CMake-for-Cpp-2E.git}
 
-I can confirm that other IDEs, like CLion, are adopting this standard, so it seems like a good practice to adopt if you’re facing the circumstances described. Time to move on to the next product from the Microsoft family.
+我可以确认，其他IDE，如CLion，也在采用这个标准，所以如果你面临描述的情况，这似乎是一个很好的实践。现在是时候转向微软家族的下一个产品了。
+
 
 
 

@@ -1,52 +1,52 @@
-CLion is a paid, cross-platform IDE available for Windows, macOS, and Linux, developed by JetBrains. That’s right – this piece of software is subscription-based; starting from \$99.00 (early 2024), you can get a one-year license for individual use. Bigger organizations pay more, and startups pay less. If you’re a student or release an open-source project, you can get a free license. On top of that, there’s a 30-day trial to test the software. This is the only IDE in this listing that doesn’t offer a “community” or stripped-down version available free of charge. Regardless, this is a solid piece of software that is developed by a reputable company, and it very well might be worth the cost.
 
-Figure 3.1 shows how the IDE looks in light mode (dark mode is the default option):
+CLion是一款付费的跨平台IDE，适用于Windows、macOS和Linux，由JetBrains开发。是的，这款软件是基于订阅的；截至2024年初，你可以以99.00美元的价格获得一年的个人使用许可。更大的组织支付更多，初创企业支付更少。如果你是学生或发布开源项目，你可以获得免费许可。此外，还有30天的试用期来测试软件。这是列表中唯一一款不提供免费“社区”或精简版的IDE。无论如何，这是一款由知名公司开发的坚实软件，很可能会物有所值。
 
-\myGraphic{1.0}{content/chapter3/images/1.png}{Figure 3.1: The main window of the CLion IDE}
+图3.1显示了CLion IDE在浅色模式（深色模式是默认选项）的外观：
 
-As you can see, this is a fully featured IDE, ready for anything and everything you might throw at it. Let’s talk about how it stands out.
+\myGraphic{1.0}{content/chapter3/images/1.png}{图3.1：CLion IDE的主窗口}
 
-\mySubsubsection{3.2.1}{Why you might like it}
+如您所见，这是一个功能齐全的IDE，准备好应对您可能抛给它的任何事情。让我们谈谈它如何脱颖而出。
 
-Unlike the alternatives, C and C++ are the first and only languages supported by CLion. Many features of this IDE are specifically designed to support this environment and align with the C/ C++ mindset. This is very visible when we compare features from other IDEs: code analysis, code navigation, integrated debugger, and refactoring tools can be found in competing software like the Visual Studio IDE. However, they are not as deeply and robustly oriented toward C/C++. This, of course, is a very difficult thing to measure objectively.
+\mySubsubsection{3.2.1}{你可能喜欢它的原因}
 
-Regardless, CMake is fully integrated into CLion out of the box and is the primary choice for the project format in this IDE. However, alternatives like Autotools and Makefile projects are in early support and can be used to eventually migrate toward CMake. It’s worth noting that CLion natively supports CMake’s CTest with many unit-testing frameworks and has dedicated flows to generate code, run tests, and collect and present results. You can use Google Test, Catch, Boost.Test, and doctest.
+与替代方案不同，CLion支持C和C++，这是它支持的第一种和唯一一种语言。这个IDE的许多功能都是专门为支持这个环境而设计的，并与C/C++思维方式保持一致。当我们比较其他IDE的功能时，这一点非常明显：代码分析、代码导航、集成的调试器和重构工具可以在像Visual Studio IDE这样的竞争软件中找到。然而，它们并不是那么深入和强大地面向C/C++。当然，这很难客观地衡量。
 
-A feature I especially like is the ability to work with Docker to develop C++ programs in containers – more on that later. Meanwhile, let’s see how to start with CLion.
+无论如何，CMake完全集成到CLion中，是这个IDE中的首选项目格式。然而，Autotools和Makefile项目处于早期支持状态，可以用来最终迁移到CMake。值得注意的是，CLion原生支持CMake的CTest，并与许多单元测试框架集成，还有专门的流程来生成代码、运行测试和收集展示结果。您可以使用Google Test、Catch、Boost.Test和doctest。
 
-\mySubsubsection{3.2.2}{Take your first steps}
+我特别喜欢的一个功能是能够使用Docker在容器中开发C++程序——稍后会详细介绍。同时，让我们看看如何开始使用CLion。
 
-After downloading CLion from the official website (\url{https://www.jetbrains.com/clion}), you can proceed with the usual installation process on the platform you’re using. CLion comes with an adequate visual installer on Windows (Figure 3.2) and macOS (Figure 3.3).
+\mySubsubsection{3.2.2}{开始你的第一步}
 
-\myGraphic{1.0}{content/chapter3/images/2.png}{Figure 3.2: CLion Setup for Windows}
+从官方网站下载CLion（\url{https://www.jetbrains.com/clion}）后，您可以按照您使用的平台进行通常的安装过程。CLion在Windows（图3.2）和macOS（图3.3）上提供了一个合理的视觉安装程序。
 
-\myGraphic{1.0}{content/chapter3/images/3.png}{Figure 3.3: CLion Setup for macOS}
+\myGraphic{1.0}{content/chapter3/images/2.png}{图3.2：CLion的Windows安装程序}
 
-On Linux, you’ll need to unpack the downloaded archive and run the installation script:
+\myGraphic{1.0}{content/chapter3/images/3.png}{图3.3：CLion的macOS安装程序}
+
+在Linux上，您需要解压下载的存档并运行安装脚本：
 
 \begin{shell}
 tar -xzf CLion-<version>.tar.gz
 ./CLion-<version>/bin/CLion.sh
 \end{shell}
 
-These instructions may be outdated, so make sure to confirm with the CLion website.
+这些说明可能已经过时，所以请务必确认CLion网站。
 
-On the first run, you’ll be asked to provide a license code or to start a 30-day free trial. Selecting the second option will allow you to experiment with the IDE and determine if it’s right for you. Next, you’ll be able to create a new project and select the targeted C++ version. Immediately after, CLion will detect the available compilers and CMake versions and attempt to build a test project to confirm everything is set up correctly. On some platforms (like macOS), you may get an automatic prompt to install developer tools as needed. On others, you may need to set them up yourself and ensure they’re available in the PATH environment variable.
+首次运行时，您将被要求提供许可证代码或开始30天的免费试用期。选择第二个选项将允许您试用IDE并确定它是否适合您。接下来，您将能够创建新项目并选择目标C++版本。立即之后，CLion将检测可用的编译器和CMake版本，并尝试构建一个测试项目以确认一切设置正确。在某些平台（如macOS）上，您可能会自动提示安装所需的开发者工具。在其他平台，您可能需要自己设置它们，并确保它们在PATH环境变量中可用。
 
-Next, ensure your toolchain is configured according to your needs. Toolchains are configured per project, so go ahead and create a default CMake project. Then, navigate to your Settings/Preferences (Ctrl/Command + Alt + S) and select Build, Execution, Deployment > CMake. On this tab, you can configure the build profile (Figure 3.3). It may be useful to add a Release profile to build optimized artifacts without the debugging symbols. To add one, simply press the plus icon above the profile list. CLion will create a default Release profile for you. You can switch between profiles using the dropdown at the top of the main window.
+接下来，确保您的工具链已根据您的需求进行配置。工具链是按项目配置的，因此创建一个默认的CMake项目。然后，导航到您的设置/首选项（Ctrl/Command + Alt + S）并选择构建、执行、部署 > CMake。在这个选项卡上，您可以配置构建配置文件（图3.3）。可能很有用的是添加一个Release配置文件来构建没有调试符号的优化工件。要添加一个，只需在上方配置文件列表上按加号按钮。CLion将为您创建一个默认的Release配置文件。您可以在主窗口顶部下拉菜单中切换配置文件。
 
-Now, you can simply press F9 to compile and run the program with the debugger attached. Follow up by reading the official documentation of CLion, as there are plenty of useful features to explore. I’d like to introduce you to one of my favorites: the debugger.
+现在，您可以简单地按F9来编译并运行带有调试器的程序。接下来，阅读CLion的官方文档，因为其中有很多有用的功能可以探索。我想向您介绍我最喜欢的一个：调试器。
 
-\mySubsubsection{3.2.3}{Advanced feature: Debugger on steroids}
+\mySubsubsection{3.2.3}{高级功能：强大的调试器}
 
-The debugging capabilities of CLion are truly cutting-edge and especially designed for C++. I was very pleased to discover one of the latest additions, CMake debugging, which includes many standard debugging features: stepping through code, breakpoints, watches, inlined value exploration, and more. The ability to explore variables in different scopes (cache, ENV, and the current scope) is extremely convenient when things don’t quite work as expected.
+CLion的调试功能确实非常先进，特别是为C++量身定制。我非常高兴地发现了一个最新的添加功能——CMake调试，它包括许多标准的调试功能：通过代码、断点、观察、内联值探索等。当事情并不像预期那样工作时，能够探索不同作用域（缓存、ENV和当前作用域）中的变量是非常方便的。
 
-For C++ debugging, you will get many standard features provided by the GNU Project Debugger (GDB), such as assembly view, breakpoints, step through, watchpoints, and so on, but there are also some major enhancements. In CLion, you’ll find a parallel stack view, which enables you to see all the threads in a graph-like diagram with all the current stack frames for each thread.
-There’s an advanced memory view feature to see the layout of the running program in RAM and modify the memory on the fly. CLion provides multiple other tools to help you understand what’s happening: register view, code disassembly, debugger console, core dump debugging, debugging of arbitrary executables, and many more.
+对于C++调试，您将获得GNU项目调试器（GDB）提供的许多标准功能，例如汇编视图、断点、单步执行、观察点等，但也有重大改进。在CLion中，您会发现一个并行堆栈视图，它允许您以图形化的方式查看所有线程及其当前堆栈帧。此外，还有一个高级内存视图功能，用于查看运行程序在RAM中的布局，并实时修改内存。CLion还提供了多种其他工具来帮助您了解发生了什么：寄存器视图、代码反汇编、调试器控制台、核心转储调试、任意可执行文件的调试等。
 
-To top it off, CLion has a very well-executed Evaluate Expression feature, which works wonders and even allows you to modify objects during program execution. Just right-click on a line of code and select this feature from the menu.
+最后，CLion有一个非常出色执行的评估表达式功能，它非常神奇，甚至允许您在程序执行过程中修改对象。只需右键点击代码行，然后从菜单中选择此功能。
 
-That’s all on CLion; it’s time to take a look at another IDE.
+这就是关于CLion的全部内容；现在是时候看看另一个IDE了。
 
 
 
