@@ -1,28 +1,28 @@
-Many CMake users don’t encounter generator expressions in their private explorations as they are quite advanced concepts. However, they are crucial for projects that are preparing for the general availability stage, or first release to the wider audience, as they play an important role in exporting, installing, and packaging. If you’re trying to just learn the basics of CMake quickly and focus on the C++ aspect, feel free to skip this chapter for now and return to it later. On the other hand, we discuss generator expressions at this time, because the following chapters will reference this knowledge when explaining the more in-depth aspects of CMake.
+许多CMake用户在他们的私人探索中并未遇到生成器表达式，因为这些概念相当高级。然而，对于准备进入普遍可用阶段或首次向更广泛受众发布的项目来说，它们在导出、安装和打包方面起着重要的作用。如果您只是想快速学习CMake的基础知识并专注于C++方面，可以暂时跳过本章，以后再回来阅读。另一方面，我们现在讨论生成器表达式，因为接下来的章节在解释CMake更深入的内容时将引用这些知识。
 
-We’ll start by introducing the subject of generator expressions: what they are, what their uses are, and how they are formed and expanded. This will be followed by a short presentation of the nesting mechanism and a more thorough description of the conditional expansion, which allows the use of Boolean logic, comparison operations, and queries. Of course, we’ll do a deep dive into the vastness of the available expressions.
+我们将从介绍生成器表达式的主题开始：它们是什么，它们有什么用途，以及它们是如何形成和扩展的。接下来将简要介绍嵌套机制，并对条件扩展进行更详细的描述，这允许使用布尔逻辑、比较操作和查询。当然，我们将深入探讨可用的表达式的大量内容。
 
-But first, we’ll study the transformations of strings, lists, and paths, as it’s good to get the basics out of the way before focusing on the main subject. Ultimately, generator expressions are used in practice to fetch the information available in later stages of building and present it in the appropriate context. Determining that context is a huge part of their value. We’ll discover how to parametrize our build process based on the build configuration selected by the user, the platform at hand, and the current toolchain. That is, what compiler is being used, what its version is, and which capabilities it has, that’s not all: we’ll figure out how to query the properties of build targets and their related information.
+但首先，我们将研究字符串、列表和路径的转换，因为在专注于主要内容之前，了解基础知识是很有用的。最终，生成器表达式在实际应用中被用来获取在构建后期阶段可用的信息，并在适当的上下文中呈现。确定这个上下文是它们价值的一个巨大部分。我们将发现如何根据用户选择的构建配置、当前平台和当前工具链来参数化我们的构建过程。也就是说，我们要确定正在使用的编译器、其版本以及它具有哪些功能，不仅如此：我们还将找出如何查询构建目标及其相关信息的属性。
 
-To make sure we can fully appreciate the value of the generator expressions, I have included a few interesting examples of use as the final part of this chapter. Oh, and there’s a quick explanation of how to see the output of generator expressions as this is a bit tricky. Don’t worry though, generator expressions aren’t as complex as they might seem, and you will be using them in no time.
+为了确保我们能够充分理解生成器表达式的价值，我在本章的最后部分包含了一些有趣的使用示例。哦，还有一个关于如何查看生成器表达式输出的快速解释，因为这有点棘手。不过别担心，生成器表达式并不像它们看起来那么复杂，您很快就会使用它们。
 
-In this chapter, we’re going to cover the following main topics:
+在本章中，我们将包含以下内容：
 
 \begin{itemize}
 \item
-What are generator expressions?
+生成器表达式是什么？
 
 \item
-Learning the basic rules of general expression syntax
+学习通用表达式语法的基本规则
 
 \item
-Conditional expansion
+条件展开
 
 \item
-Querying and transforming
+查询和转换
 
 \item
-Trying out examples
+尝试示例
 \end{itemize}
 
 

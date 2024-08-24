@@ -1,106 +1,105 @@
 
 
-It’s no secret that as a project grows, it becomes harder and harder to find things in it – both in listfiles and in the source code. Therefore, it is very important to maintain the project hygiene right from the start.
+众所周知，随着项目的增长，在项目列表文件和源代码中找到所需内容变得越来越困难。因此，从项目开始就保持项目整洁非常重要。
 
-Imagine a scenario where you need to deliver some important, time-sensitive changes, and they don’t fit well in either of the two directories in your project. Now, you need to additionally push a cleanup commit to restructure the file hierarchy to fit your changes neatly. Or, worse, you decide to just shove them anywhere and add a TODO to deal with the issue later.
+设想一个场景，你需要交付一些重要且时间紧迫的更改，但这些更改不适合项目中的任一目录。现在，你需要额外推送一个清理提交来重新组织文件层次结构，以便你的更改可以整齐地融入。或者更糟，你决定随意放置它们，并添加一个TODO，以后再处理这个问题。
 
-Over the course of the year, these problems accumulate, the technical debt grows, and so does the cost of maintaining the code. This becomes extremely troublesome when there’s a crippling bug in a live system that needs a quick fix or when people unfamiliar with the codebase need to introduce occasional changes.
+在一年时间里，这些问题累积起来，技术债务增加，维护代码的成本也随之上升。当实时系统出现严重故障需要快速修复，或者不熟悉代码库的人需要引入偶尔的更改时，这种情况变得极其麻烦。
 
-So, we need a good project structure. But what does this mean? There are a few rules that we can borrow from other areas of software development like system design. The project should have the following characteristics:
-
-\begin{itemize}
-\item
-Easy to navigate and extend
-
-\item
-Well bounded (project-specific files should be contained to the project directory)
-
-\item
-Individual targets follow the hierarchical tree
-\end{itemize}
-
-There isn’t one definitive solution, but out of the various project structure templates available online, I suggest using this one as it is simple and extensible:
-
-\myGraphic{0.7}{content/chapter4/images/1.png}{Figure 4.1: An example of a project structure}
-
-This project outlines the directories for the following components:
+因此，我们需要一个好的项目结构。但这意味着什么呢？我们可以从软件开发的其他领域，如系统设计，借鉴一些规则。项目应该具有以下特点：
 
 \begin{itemize}
 \item
-cmake: Shared macros and functions, find\_modules, and one-off scripts
+易于导航和扩展
 
 \item
-src: Source and header files for binaries and libraries
+边界清晰（项目特定文件应包含在项目目录中）
 
 \item
-test: Source code for automated tests
+单个目标遵循层次树结构
 \end{itemize}
 
-In this structure, the CMakeLists.txt file should exist in the following directories: the top-level project directory, test, and src and all its subdirectories. The main listfile shouldn’t declare any build steps on its own, but instead, it should configure the general aspects of the project and delegate the responsibility of building to the nested listfiles with the add\_subdirectory() command. In turn, these listfiles may delegate this work to even deeper layers if needed.
+没有一个确定的解决方案，但在网上可用的各种项目结构模板中，我建议使用以下这个简单且可扩展的模板：
+
+\myGraphic{0.7}{content/chapter4/images/1.png}{图4.1：项目结构的一个示例}
+
+此项目为以下组件定义了目录：
+
+\begin{itemize}
+\item
+cmake:共享宏和函数，find\_modules 和一次性脚本
+
+\item
+src: 二进制文件和库的源文件和头文件
+
+\item
+test: 自动化测试的源代码
+\end{itemize}
+
+在此结构中，CMakeLists.txt文件应存在于以下目录中：顶级项目目录、test和src及其所有子目录。主列表文件不应自行声明任何构建步骤，而应配置项目的一般方面，并通过add\_subdirectory()命令将构建责任委托给嵌套的列表文件。如有需要，这些列表文件可以进一步将工作委托给更深的层次。
 
 \begin{myNotic}{Note}
-Some developers suggest separating the executables from the libraries and creating two top-level directories instead of one: src and lib. CMake treats both artifacts the same, and separation at this level doesn’t really matter. Feel free to follow that model if it’s your preference.
+一些开发者建议将可执行文件与库分开，并创建两个顶级目录而不是一个：src和lib。CMake对这两种工件的处理方式相同，在这个层次上的分离其实并不重要。如果你更喜欢这种模型，可以自由遵循。
 \end{myNotic}
 
-Having multiple directories in the src directory comes in handy for bigger projects. But if you’re building just a single executable or library, you may skip them and store your source files directly in src. In any case, remember to add a CMakeLists.txt file there and execute any nested listfiles as well. This is how your file tree might look for a single, simple target:
+对于较大的项目，src目录中有多个子目录会非常方便。但如果你只构建一个可执行文件或库，可以省略它们，直接在src中存储源文件。无论如何，记得在那里添加一个CMakeLists.txt文件，并执行任何嵌套的列表文件。对于一个简单目标的文件树可能如下所示：
 
-\myGraphic{0.7}{content/chapter4/images/2.png}{Figure 4.2: The directory structure of an executable}
+\myGraphic{0.7}{content/chapter4/images/2.png}{图4.2：可执行文件的目录结构}
 
-In Figure 4.1, we see a CMakeLists.txt file in the root of the src directory – it will configure the key project settings and include all listfiles from nested directories. The app1 directory (visible in Figure 4.2) contains another CMakeLists.txt file along with the .cpp implementation files: class\_a.cpp and class\_b.cpp. There’s also the main.cpp file with the executable’s entry point.
+在图4.1中，我们看到src目录根目录下有一个CMakeLists.txt文件——它将配置关键的项目设置，并包含来自嵌套目录的所有列表文件。app1目录（如图4.2所示）包含另一个CMakeLists.txt文件以及.cpp实现文件：class\_a.cpp和class\_b.cpp。还有一个main.cpp文件，其中包含可执行文件的入口点。
 
-The CMakeLists.txt file should define a target that uses these sources to build an executable – again, we’ll learn how to do that in the next chapter.
+CMakeLists.txt文件应定义一个目标，使用这些源文件构建一个可执行文件——我们将在下一章学习如何做到这一点。
 
-Our header files are placed in the include directory and can be used to declare symbols for other C++ translation units.
-Next, we have a lib3 directory, which contains a library specific to this executable only (libraries used elsewhere in the project or exported externally should live in the src directory). This structure offers great flexibility and allows for easy project extensions. As we continue adding more classes, we can conveniently group them into libraries to improve compilation speed. Let’s see what a library looks like:
+我们的头文件放置在include目录中，可以用来为其他C++翻译单元声明符号。接下来，我们有一个仅对此可执行文件特定的库的lib3目录（项目中其他地方使用的库或对外部提供的库应位于src目录中）。这种结构提供了极大的灵活性，并允许轻松扩展项目。随着我们继续添加更多类，我们可以方便地将它们分组到库中以提高编译速度。让我们看看一个库的样子：
 
-\myGraphic{0.7}{content/chapter4/images/3.png}{Figure 4.3: The directory structure of a library}
+\myGraphic{0.7}{content/chapter4/images/3.png}{图4.3：库的目录结构}
 
-Libraries should adhere to the same structure as executables, with a minor distinction: an optional lib1 directory is added to the include directory. This directory is included when the library is intended for external use beyond the project. It contains public header files that other projects will consume during compilation. We’ll return to this subject when we start building our own libraries in Chapter 7, Compiling C++ Sources with CMake.
+库应遵循与可执行文件相同的结构，但有细微的区别：在include目录中添加了一个可选的lib1目录。当库打算超出项目范围供外部使用时，会包含此目录。它包含其他项目在编译期间将使用的公共头文件。我们将在第7章“使用CMake编译C++源代码”中构建自己的库时再次讨论这个主题。
 
-So, we have discussed how files are laid out in a directory structure. Now, it’s time to take a look at how individual CMakeLists.txt files come together to form a single project and what their role is in a bigger scenario.
+我们已经讨论了文件如何在目录结构中布局。现在，是时候看看单个CMakeLists.txt文件如何组合成一个项目，以及它们在更大场景中的角色。
 
-\myGraphic{0.7}{content/chapter4/images/4.png}{Figure 4.4: How CMake merges listfiles together in a single project}
+\myGraphic{0.7}{content/chapter4/images/4.png}{图4.4：CMake如何将列表文件合并到单个项目中}
 
-In the preceding figure, each box represents a CMakeLists.txt listfile residing in each directory, while the labels in italics represent the actions executed by each file (from top to bottom). Let’s analyze this project once more from CMake’s perspective (for all the details, look at the example in the ch04/05-structure directory):
+在前面的图中，每个框代表一个位于每个目录中的CMakeLists.txt列表文件，而其中的斜体标签代表每个文件执行的操作（从上到下）。让我们再次从CMake的角度分析这个项目（有关详细信息，请查看ch04/05-structure目录中的示例）：
 
 \begin{enumerate}
 \item
-The execution starts from the root of the project – that is, from a CMakeLists.txt listfile residing at the top of the source tree. This file will set the minimum required CMake version with the appropriate policies, set the project name, supported languages, and global variables, and include the files from the cmake directory, so that their contents are available globally.
+执行从项目的根开始——即源树顶部的CMakeLists.txt列表文件。该文件将设置所需的最低CMake版本和相应的策略，设置项目名称、支持的语言和全局变量，并包含cmake目录中的文件，以便它们的内容全局可用。
 
 \item
-The next step is to enter the scope of the srcdirectory by calling the add\_subdirectory(src bin) command (we’d like to put compiled artifacts in <binary\_tree>/bin rather than <binary\_tree>/src).
+下一步是调用add\_subdirectory(src bin)命令进入src目录的范围（我们希望将编译后的工件放在<binary\_tree>/bin而不是/bin中）。
 
 \item
-CMake reads the src/CMakeLists.txt file and discovers that its only purpose is to add four nested subdirectories: app1, app2, lib1, and lib2.
+CMake读取src/CMakeLists.txt文件，并发现其唯一目的是添加四个嵌套子目录：app1、app2、lib1和lib2。
 
 \item
-CMake enters the variable scope of app1 and learns about another nested library, lib3, which has its own CMakeLists.txt file; then the scope of lib3 is entered. As you may have noticed, this is a depth-first traversal of the directory structure.
+CMake进入app1的变量范围，并了解到另一个嵌套库lib3，它有自己的CMakeLists.txt文件；然后进入lib3的范围。你可能已经注意到，这是对目录结构的深度优先遍历。
 
 \item
-The lib3 library adds a static library target with the same name. CMake returns to the parent scope of app1.
+lib3库添加了一个同名静态库目标。CMake返回到app1的父范围。
 
 \item
-The app1 subdirectory adds an executable that depends on lib3. CMake returns to the parent scope of src.
+app1子目录添加了一个依赖于lib3的可执行文件。CMake返回到src的父范围。
 
 \item
-CMake will continue entering the remaining nested scopes and executing their listfiles until all add\_subdirectory() invocations have been completed.
+CMake将继续进入剩余的嵌套范围并执行它们的列表文件，直到所有add\_subdirectory()调用完成。
 
 \item
-CMake returns to the top-level scope and executes the remaining command add\_subdirectory(test). Each time, CMake enters the new scope and executes commands from the appropriate listfile.
+CMake返回到顶级范围并执行剩余的命令add\_subdirectory(test)。每次，CMake进入新的范围并执行相应列表文件中的命令。
 
 \item
-All the targets are collected and checked for their correctness. CMake now has all the necessary information to generate a buildsystem.
+收集并检查所有目标的正确性。CMake现在有了生成构建系统所需的所有必要信息。
 \end{enumerate}
 
-It’s important to note that the previous steps occur in the exact order in which we wrote the commands in our listfiles. In some cases, this order is significant, while in others, it may not be as crucial. We will delve deeper into this topic in the next chapter, Chapter 5, Working with Targets, to understand its implications.
+重要的是要注意，前面的步骤按照我们在列表文件中编写命令的确切顺序发生。在某些情况下，这个顺序是重要的，而在其他情况下，可能没有那么关键。我们将在下一章，第5章“处理目标”中深入探讨这个话题，以理解其含义。
 
-So, when is the right time to create the directories to contain all of the elements of the project? Should we do it right from the start – create everything needed for the future and keep the directories empty – or wait until we actually have the files that need to go in their own category? This is a choice – we could follow the Extreme Programming (XP) rule YAGNI (you aren’t gonna need it), or we could try to make our project future-proof and lay good foundations for new developers to come.
+那么，何时是创建包含项目所有元素的目录的正确时机呢？我们应该一开始就做——为未来创建所需的一切并保持目录为空——还是等到我们实际上有了需要放入自己类别的文件再说？这是一个选择——我们可以遵循极限编程（XP）的规则YAGNI（你不会需要它），或者我们可以尝试使我们的项目未来无忧，并为新来的开发者打下良好的基础。
 
-Try to aim for a good balance between these approaches – if you suspect that your project might someday need an extern directory, then add it (your version control system may require an empty .keep file to check a directory into the repository).
+尝试在这两种方法之间找到良好的平衡——如果你怀疑你的项目可能有一天需要extern目录，那么就添加它（你的版本控制系统可能需要一个空的.keep文件来将目录签入仓库）。
 
-Another effective approach to guide others in placing their external dependencies is by creating a README file that outlines the recommended structure. This can be particularly beneficial for less experienced programmers who will work on the project in the future. You may have observed this yourself: developers are reluctant to create directories, especially in the root of the project. If we provide a good project structure, others will be inclined to follow it.
+另一种有效的做法是通过创建一个README文件来指导他人放置他们的外部依赖，该文件概述了推荐的结构。这对于将来将要处理项目的经验不足的程序员特别有益。你可能自己已经观察到了：开发者不愿意创建目录，尤其是在项目的根目录下。如果我们提供了一个好的项目结构，其他人就会倾向于遵循它。
 
-Some projects can be built in almost every environment, while others are quite particular about their requirements. The top-level listfile is the perfect place to determine the appropriate course of action. Let’s see how to do this.
+有些项目几乎可以在任何环境中构建，而有些项目对它们的要求非常特殊。顶级列表文件是确定适当行动方案的最佳位置。让我们看看如何做到这一点。
 
 
 

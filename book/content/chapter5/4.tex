@@ -1,7 +1,7 @@
-Understanding targets is critical to writing clean, modern CMake projects. In this chapter, we have not only discussed what constitutes a target and how to define three different types of targets: executables, libraries, and custom targets. We have also explained how targets depend on each other through a dependency graph and we learned how to visualize it using the Graphviz module. With this general understanding, we were able to learn about the key feature of targets – properties. We not only went through a few commands to set regular properties on targets but we also solved the mystery of Transitive Usage Requirements also known as propagated properties.
+理解目标是编写清晰、现代的CMake项目的关键。在本章中，我们不仅讨论了什么是目标以及如何定义三种不同类型的目标：可执行文件、库和自定义目标。我们还解释了目标如何通过依赖关系图相互依赖，并学习了如何使用Graphviz模块可视化它。有了这种基本的理解，我们能够了解目标的关键特性——属性。我们不仅介绍了一些在目标上设置常规属性的命令，还解决了传播属性，也称为传递使用要求的谜团。
 
-This was a hard one to crack, as we had to not only understand how to control which properties are propagated but also how that propagation affects subsequent targets. Furthermore, we discovered how to guarantee the compatibility of properties consumed from multiple sources.
+这是一个难以攻克的问题，因为我们需要理解的不仅是如何控制哪些属性被传播，还有这种传播如何影响后续的目标。此外，我们还发现了如何确保从多个来源消费的属性的兼容性。
 
-We then briefly discussed pseudo targets: imported targets, alias targets, and interface libraries. All of them will come in handy later in our projects, especially when we know how to connect them with propagated properties for our benefit. Then, we talked about generated build targets and how the configuration stage affects them. Afterward, we spent some time looking at a mechanism that is similar to targets, but not exactly it: the custom commands. We touched on how they can generate files consumed by other targets (compiled, translated, and so on) and their hooking function: executing additional steps when a target is built.
+然后，我们简要讨论了伪目标：导入的目标、别名目标和接口库。所有这些在以后的项目中都会派上用场，特别是当我们知道如何将它们与传播属性连接起来以获取利益时。接着，我们讨论了生成的构建目标以及配置阶段如何影响它们。之后，我们花了一些时间研究一种与目标相似但又不完全是目标的机制：自定义命令。我们提到了它们如何生成被其他目标（编译、翻译等）消费的文件，以及它们的钩子功能：在构建目标时执行额外步骤。
 
-With such a solid foundation, we are ready for the next topic – compiling C++ sources into executables and libraries.
+有了如此坚实的基础，我们准备好进行下一个主题——将C++源代码编译成可执行文件和库。

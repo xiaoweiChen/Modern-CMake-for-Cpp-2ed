@@ -1,7 +1,7 @@
 
-In Chapter 1, First Steps with CMake, we talked about in-source builds, and how it is recommended to always specify the build path to be out of source. This not only allows for a cleaner build tree and a simpler .gitignore file, but it also decreases the chances you’ll accidentally overwrite or delete any source files.
+在第1章《CMake的初步步骤》中，我们讨论了源内构建，以及如何建议总是指定构建路径在源代码之外。这不仅允许更清晰的构建树和更简单的.gitignore文件，而且还能降低意外覆盖或删除任何源文件的风险。
 
-To stop the build early you may use the following check:
+若要提前停止构建，可以使用以下检查：
 
 \filename{ch04/09-in-source/CMakeLists.txt}
 
@@ -14,15 +14,15 @@ endif()
 message("Build successful!")
 \end{cmake}
 
-If you would like more information about the STR prefix and variable references, please revisit Chapter 2, The CMake Language.
+如果你想要了解更多关于STR前缀和变量引用的信息，请重温第2章，《CMake语言》。
 
-Notice, however, that no matter what you do in the preceding code, it seems like CMake will still create a CMakeFiles/ directory and a CMakeCache.txt file.
+然而，需要注意的是，无论你在前面的代码中做了什么，CMake似乎仍然会创建一个CMakeFiles/目录和一个CMakeCache.txt文件。
 
 \begin{myNotic}{Note}
-You might find online suggestions to use undocumented variables to make sure that the user can’t write in the source directory under any circumstances. Relying on undocumented variables to restrict writing in the source directory is not recommended. They may not work in all versions and can be subject to removal or modification without warning.
+你可能会在线上找到建议使用未记录的变量来确保用户无论如何都不能在源目录中写入。不建议依赖未记录的变量来限制在源目录中写入。它们可能不会在所有版本中都有效，并且可能会在没有警告的情况下被移除或修改。
 \end{myNotic}
 
-If you’re worried about users leaving those files in the source directory, add them to the .gitignore (or equivalent), and change the message to request a manual cleanup.
+如果你担心用户将这些文件留在源目录中，将它们添加到.gitignore（或等同的文件中），并更改消息，请求手动清理。
 
 
 

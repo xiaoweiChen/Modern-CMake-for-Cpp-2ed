@@ -1,4 +1,4 @@
-In Chapter 1, First Steps with CMake, we already looked at a simple project definition. Let’s revisit it. It is a directory with a CMakeLists.txt file that contains a few commands configuring the language processor:
+在第1章《CMake的第一步》中，我们已经看了一个简单的项目定义。让我们再次回顾一下。这是一个带有CMakeLists.txt文件的目录，其中包含几个配置语言处理器的命令：
 
 \filename{chapter01/01-hello/CMakeLists.txt}
 
@@ -8,28 +8,27 @@ project(Hello)
 add_executable(Hello hello.cpp)
 \end{cmake}
 
-In the same chapter, in the section named Project files, we learned about a few basic commands. Let’s explain them in depth here.
+在同一章节的“项目文件”部分，我们学习了一些基本命令。让我们在这里深入解释它们。
 
-\mySubsubsection{4.2.1.}{Specifying the minimum CMake version}
+\mySubsubsection{4.2.1.}{指定最低CMake版本}
 
-It’s important to use the cmake\_minimum\_required() command at the very top of your project files and scripts. This command not only verifies if the system has the correct CMake version but also implicitly triggers another command, cmake\_policy(VERSION), which specifies the policies to be used for the project. These policies define how commands behave within CMake, and they have been introduced over the course of CMake’s development to accommodate changes and improvements in the supported languages and CMake itself.
+在您的项目文件和脚本的顶部使用cmake\_minimum\_required()命令非常重要。这个命令不仅验证系统是否具有正确的CMake版本，还会隐式触发另一个命令cmake\_policy(VERSION)，后者指定项目要使用的策略。这些策略定义了命令在CMake中的行为方式，它们随着CMake的发展以及对支持的语言和CMake本身的改进而引入。
 
-To keep the language clean and simple, the CMake team introduced policies whenever there was a backward-incompatible change. Each policy enables the new behavior associated with that change. These policies ensure that projects can adapt to the evolving features and functionalities of CMake, while preserving compatibility with older codebases.
+为了保持语言的清晰和简单，CMake团队在出现向后不兼容的更改时引入了策略。每个策略都启用了与该更改相关的新行为。这些策略确保项目可以适应CMake不断发展的特性和功能，同时保持与旧代码库的兼容性。
 
-By calling cmake\_minimum\_required(), we tell CMake that it needs to apply the default policies configured at the version provided in the argument. When CMake gets upgraded, we don’t need to worry about it breaking our project, as the new policies coming with the new version won’t be enabled.
+通过调用cmake\_minimum\_required()，我们告诉CMake它需要应用在参数中提供的版本配置的默认策略。当CMake升级时，我们不必担心它会破坏我们的项目，因为新版本带来的新策略不会被启用。
 
-Policies can affect every single aspect of CMake, including other important commands like project(). For that reason, it is important to start your CMakeLists.txt file by setting the version you’re working with. Otherwise, you will get warnings and errors.
-Each CMake version introduces numerous policies. However, it’s not necessary to delve into details unless you encounter challenges when upgrading older projects to the latest CMake version. In such cases, it is recommended to refer to the official documentation on policies for comprehensive information and guidance: \url{https://cmake.org/cmake/help/latest/manual/cmake-policies.7.html}.
+策略可能会影响CMake的每一个方面，包括project()等其他重要命令。因此，在您的CMakeLists.txt文件开始时设置您正在使用的版本非常重要。否则，您将得到警告和错误。每个CMake版本都引入了许多策略。然而，除非您在将旧项目升级到最新CMake版本时遇到挑战，否则没有必要深入细节。在这种情况下，建议您参考官方文档中关于策略的全面信息和指导：\url{https://cmake.org/cmake/help/latest/manual/cmake-policies.7.html}。
 
-\mySubsubsection{4.2.2.}{Defining languages and metadata}
+\mySubsubsection{4.2.2.}{定义语言和元数据}
 
-It’s recommended to put the project() command just after cmake\_minimum\_required(), even though it’s technically not. Doing so will ensure that we use the right policies when configuring the project. We can use one of its two forms:
+建议在cmake\_minimum\_required()之后立即放置project()命令，尽管技术上不是必须的。这样做将确保我们在配置项目时使用正确的策略。我们可以使用以下两种形式之一：
 
 \begin{shell}
 project(<PROJECT-NAME> [<language-name>...])
 \end{shell}
 
-Or:
+或者：
 
 \begin{shell}
 project(<PROJECT-NAME>
@@ -39,7 +38,7 @@ project(<PROJECT-NAME>
         [LANGUAGES <language-name>...])
 \end{shell}
 
-We need to specify <PROJECT-NAME>, but the other arguments are optional. Calling this command will implicitly set the following variables:
+我们需要指定<PROJECT-NAME>，但其他参数是可选的。调用此命令将隐式设置以下变量：
 
 \begin{shell}
 PROJECT_NAME
@@ -49,11 +48,11 @@ PROJECT_SOURCE_DIR, <PROJECT-NAME>_SOURCE_DIR
 PROJECT_BINARY_DIR, <PROJECT-NAME>_BINARY_DIR
 \end{shell}
 
-What languages are supported? Quite a few. And you can use more than one at a time! Here’s a list of language keywords you can use to configure your project:
+支持哪些语言？相当多。而且您可以在同一时间使用多种语言！以下是可以用来配置项目的语言关键字列表：
 
 \begin{itemize}
 \item
-ASM, ASM\_NASM, ASM\_MASM, ASMMARMASM, ASM-ATT: Dialects of Assembler
+ASM, ASM\_NASM, ASM\_MASM, ASMMARMASM, ASM-ATT: 汇编语言
 
 \item
 C: C
@@ -62,7 +61,7 @@ C: C
 CXX: C++
 
 \item
-CUDA: Compute Unified Device Architecture by Nvidia
+CUDA: Nvidia的统一计算设备架构
 
 \item
 OBJC: Objective-C
@@ -74,21 +73,21 @@ OBJCXX: Objective-C++
 Fortran: Fortran
 
 \item
-HIP: Heterogeneous(-compute) Interface for Portability (for Nvidia and AMD platforms)
+HIP: 用于Nvidia和AMD平台的异构(计算)接口便携性
 
 \item
-ISPC: Implicit SPMD Program Compiler’s language
+ISPC: 隐式SPMD程序编译器的语言
 
 \item
 CSharp: C\#
 
 \item
-Java: Java (requires extra steps, see official documentation)
+Java: Java (需要额外步骤，请参阅官方文档)
 \end{itemize}
 
-CMake enables both C and C++ by default, so you may want to explicitly specify only CXX for your C++ projects. Why? The project() command will detect and test the available compilers for your chosen language, so stating the required ones will allow you to save time during the configuration stage, by skipping any checks for unused languages.
+CMake默认启用C和C++，因此您可能只想为C++项目明确指定CXX。为什么？因为project()命令将检测和测试您选择的语言的可用编译器，所以声明所需的编译器将允许您在配置阶段跳过对未使用语言的任何检查，从而节省时间。
 
-Specifying the VERSION keyword will automatically set the variables that can be used to configure packages, or exposed in the header files to be consumed during the compilation (we’ll cover this in the Configuring the headers section of Chapter 7, Compiling C++ Sources with CMake):
+指定VERSION关键字将自动设置可以用来配置包的变量，或者在编译期间在头文件中暴露的变量（我们将在第7章《使用CMake编译C++源代码》的“配置头文件”部分介绍这一点）
 
 \begin{shell}
 PROJECT_VERSION, <PROJECT-NAME>_VERSION
@@ -99,13 +98,13 @@ PROJECT_VERSION_PATCH, <PROJECT-NAME>_VERSION_PATCH
 PROJECT_VERSION_TWEAK, <PROJECT-NAME>_VERSION_TWEAK
 \end{shell}
 
-We can also set DESCRIPTION and HOMEPAGE\_URL, which will set the following variables for similar purposes:
+我们还可以设置DESCRIPTION和HOMEPAGE\_URL，这将为了类似目的设置以下变量：
 
 \begin{shell}
 PROJECT_DESCRIPTION, <PROJECT-NAME>_DESCRIPTION
 PROJECT_HOMEPAGE_URL, <PROJECT-NAME>_HOMEPAGE_URL
 \end{shell}
 
-The cmake\_minimum\_required() and project() commands will allow us to create a basic listfile and initialize an empty project. While the structure may not have been a significant concern for the small, single-file projects, it becomes crucial as the codebase expands. How do you prepare for that?
+cmake\_minimum\_required()和project()命令将允许我们创建一个基本的项目列表文件并初始化一个空项目。虽然对于小型、单文件项目来说，结构可能不是一个大问题，但随着代码库的扩展，它变得至关重要。您如何为此做准备？
 
 

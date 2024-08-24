@@ -1,11 +1,10 @@
-As our solutions grow in terms of lines of code and the number of files they contain, it becomes apparent that we must address the looming challenge: either we begin partitioning the project, or risk being overwhelmed by its complexity. There are two ways we can tackle this problem: splitting the CMake code and relocating the source files to subdirectories. In both cases, we aim to follow the design principle called separation of concerns. Put simply, we break down the code into smaller parts, grouping together closely related functionality while keeping other pieces of code separate to establish clear boundaries.
+随着我们的解决方案在代码行数和包含的文件数量上的增长，我们必须面对一个迫在眉睫的挑战：要么开始划分项目，要么面临被其复杂性所淹没的风险。解决这个问题有两种方法：分割 CMake 代码，并将源文件重新定位到子目录中。在这两种情况下，我们的目标都是遵循一个称为“关注点分离”的设计原则。简单来说，我们将代码分解成更小的部分，将紧密相关的功能组合在一起，同时保持其他代码片段的分离，以建立清晰的界限。
 
-We talked a bit about partitioning CMake code when discussing listfiles in Chapter 1, First Steps with CMake. We spoke about the include() command, which allows CMake to execute the code from an external file.
+我们在第一章《CMake 的第一步》中讨论 listfiles 时简要提到了项目划分。我们谈到了 include() 命令，它允许 CMake 执行外部文件中的代码。
 
-This method helps with the separation of concerns, but only a little – specialized code is extracted to separate files and can even be shared across unrelated projects, but it can still pollute the global variable scope with its internal logic, if the author is not careful.
+这种方法有助于分离关注点，但作用有限——专业代码被提取到单独的文件中，甚至可以在不相关的项目之间共享，但如果作者不小心，它仍然会以其内部逻辑污染全局变量范围。
 
-You see, calling include() doesn’t introduce any additional scopes or isolations beyond what is already defined within the file. Let’s see why this is a potential problem by considering an example, a piece of software that supports a small car rental company. It will have many source files defining different aspects of the software: managing customers, cars, parking spots, long-term contracts, maintenance records, employee records, and so on. If we were to put all these files in a single directory, finding anything would be a nightmare. Therefore, we create a number of directories in the main directory of our project and move the related files inside it. Our CMakeLists.
-txt file might look similar to this:
+你看，调用 include() 并不会在文件中已经定义的范围之外引入任何额外的范围或隔离。让我们通过一个例子来看看为什么这是一个潜在的问题，这个例子是支持小型汽车租赁公司的软件。它将有多个源文件定义软件的不同方面：管理客户、汽车、停车位、长期合同、维护记录、员工记录等。如果我们把所有这些文件都放在一个目录中，查找任何东西都会是一场噩梦。因此，我们在项目的主目录中创建了一些目录，并将相关的文件移动到其中。我们的 CMakeLists.txt 文件可能看起来像这样：
 
 \filename{ch04/01-partition/CMakeLists.txt}
 
@@ -19,7 +18,7 @@ add_executable(Rental
 )
 \end{cmake}
 
-That’s all great, but as you can see, we still have the list of source files from the nested directory in a top-level file! To increase the separation of concerns, we could extract the list of sources to another listfile and store it in a sources variable:
+这都很棒，但正如你所看到的，我们仍然在顶层文件中包含了来自嵌套目录的源文件列表！为了增加关注点的分离，我们可以将源文件列表提取到另一个 listfile 中，并将其存储在 sources 变量中：
 
 \filename{ch04/02-include/cars/cars.cmake}
 
@@ -30,7 +29,7 @@ set(sources
 )
 \end{cmake}
 
-Now we can reference this file with the include() command to gain access to the sources variable:
+现在我们可以使用 include() 命令引用这个文件，以访问 sources 变量：
 
 \filename{ch04/02-include/CMakeLists.txt}
 
@@ -44,52 +43,50 @@ add_executable(Rental
 )
 \end{cmake}
 
-CMake would effectively set sources in the same scope as add\_executable, filling the variable with all the files. This solution works, but it has a few flaws:
+CMake 会在与 add\_executable 相同的作用域中设置 sources，用所有文件填充该变量。这个解决方案有效，但它有几个缺点：
 
 \begin{itemize}
 \item
-\textbf{The variables from the nested directory will pollute the top-level scope (and vice versa):} While it’s not an issue in a simple example, in more complex, multi-level trees with multiple variables used in the process, it can quickly become a hard-to-debug problem. What if we have multiple included listfiles that define their sources variable?
+\textbf{嵌套目录中的变量将污染顶层作用域（反之亦然）：} 在一个简单的例子中这不是问题，但在更复杂的多级树结构中，使用了多个变量，这可以迅速成为一个难以调试的问题。如果我们有多个 included listfiles 定义了它们的 sources 变量呢？
 
 \item
-\textbf{All of the directories will share the same configuration: }This issue shows its true colors as projects mature over the years. Without any granularity, we have to treat every source file the same, and we cannot specify different compilation flags, choose a newer language version for some parts of the code, and silence warnings in chosen areas of the code. Everything is global, meaning that we need to introduce changes to all of the translation units at the same time.
+ \textbf{所有目录将共享相同的配置：} 这个问题在项目经过多年的成熟后会真正显现出来。没有粒度，我们必须统一对待每个源文件，我们不能为代码的某些部分指定不同的编译标志，选择更新的语言版本，以及在代码的选定区域消除警告。一切都是全局的，这意味着我们需要同时对所有翻译单元进行更改。
 
 \item
-\textbf{There are shared compilation triggers:} Any changes to the configuration will mean that all the files will have to be recompiled, even if the change is meaningless for some of them.
+\textbf{存在共享的编译触发器：} 任何配置的更改都意味着所有文件都需要重新编译，即使对其中一些文件来说这种更改是无意义的。
 
-\item
-\textbf{All the paths are relative to the top level:} Note that in cars.cmake, we had to provide a full path to the cars/car.cpp file. This results in a lot of repeated text ruining the readability and going against the Don’t Repeat Yourself (DRY) principle of clean coding (unnecessary repetition leads to mistakes).
-Renaming a directory would be a struggle.
+\textbf{所有路径都是相对于顶级目录的：} 注意在 cars.cmake 中，我们必须提供到 cars/car.cpp 文件的完整路径。这导致了很多重复的文本，损害了可读性，并且违反了干净编码的“不要重复自己”（DRY）原则（不必要的重复会导致错误）。重命名目录将是一场挣扎。
 \end{itemize}
 
-The alternative is to use the add\_subdirectory() command, which introduces a variable scope and more. Let’s take a look.
+另一种方法是使用 add\_subdirectory() 命令，它引入了变量作用域等等。让我们来看一看。
 
-\mySubsubsection{4.3.1.}{Managing scope with subdirectories}
+\mySubsubsection{4.3.1.}{使用子目录管理作用域}
 
-It’s a common practice to structure your project following the natural structure of the filesystem, where nested directories represent the discrete elements of the application, the business logic, GUI, API, and reporting, and finally, separate directories with tests, external dependencies, scripts, and documentation. To support this concept, CMake offers the following command:
+按照文件系统的自然结构来构建项目是一种常见的做法，其中嵌套的目录代表应用程序的离散元素，业务逻辑、GUI、API 和报告，最后是包含测试、外部依赖、脚本和文档的独立目录。为了支持这个概念，CMake 提供了以下命令：
 
 \begin{shell}
 add_subdirectory(source_dir [binary_dir] [EXCLUDE_FROM_ALL])
 \end{shell}
 
-As already established, this adds a source directory to our build. Optionally, we may provide a path that built files will be written to (binary\_dir or the build tree). The EXCLUDE\_FROM\_ALL keyword will disable the automatic building of targets defined in the subdirectory (we’ll cover targets in the next chapter). This may be useful for separating parts of the project that aren’t needed for the core functionality (like examples or extensions).
+正如已经确立的，这将添加一个源目录到我们的构建中。可选地，我们可以提供一个路径，构建的文件将写入该路径（binary\_dir 或构建树）。EXCLUDE\_FROM\_ALL 关键字将禁用子目录中定义的目标的自动构建（我们将在下一章讨论目标）。这可能有用于分隔项目中不需要核心功能的部分（例如示例或扩展）。
 
-add\_subdirectory() will evaluate the source\_dir path (relative to the current directory) and parse the CMakeLists.txt file in it. This file is parsed within the directory scope, eliminating the issues mentioned in the previous method:
+add\_subdirectory() 将评估 source\_dir 路径（相对于当前目录）并解析其中的 CMakeLists.txt 文件。这个文件是在目录作用域内解析的，消除了前一种方法中提到的问题：
 
 \begin{itemize}
 \item
-Variables are isolated to the nested scope
+变量被隔离到嵌套作用域。
 
 \item
-The nested artifacts can be configured independently.
+嵌套工件可以独立配置。
 
 \item
-Modifying the nested CMakeLists.txt file doesn’t require rebuilding unrelated targets.
+修改嵌套的 CMakeLists.txt 文件不需要重新构建不相关的目标。
 
 \item
-Paths are localized to the directory and can be added to the parent include path if desired.
+路径被定位到目录，并且如果需要，可以添加到父级包含路径。
 \end{itemize}
 
-This is what the directory structure looks like for our add\_subdirectory() example:
+这是我们的 add\_subdirectory() 示例的目录结构：
 
 \begin{shell}
 |--CMakeLists.txt
@@ -100,7 +97,7 @@ This is what the directory structure looks like for our add\_subdirectory() exam
 |-- main.cpp
 \end{shell}
 
-Here, we have two CMakeLists.txt files. The top-level file will use the nested directory, cars:
+在这里，我们有两个 CMakeLists.txt 文件。顶层文件将使用嵌套目录 cars：
 
 \filename{ch04/03-add\_subdirectory/CMakeLists.txt}
 
@@ -112,9 +109,9 @@ add_subdirectory(cars)
 target_link_libraries(Rental PRIVATE cars)
 \end{cmake}
 
-The last line is used to link the artifacts from the cars directory to the Rental executable. It is a target-specific command, which we’ll discuss in depth in the next chapter: Chapter 5, Working with Targets.
+最后一行用于将 cars 目录的工件链接到 Rental 可执行文件。这是一个特定于目标的命令，我们将在下一章“第 5 章：使用目标”中详细讨论。
 
-Let’s see what the nested listfile looks like:
+让我们看看嵌套的 listfile 长什么样：
 
 \filename{ch04/03-add\_subdirectory/cars/CMakeLists.txt}
 
@@ -126,27 +123,27 @@ add_library(cars OBJECT
 target_include_directories(cars PUBLIC .)
 \end{cmake}
 
-In this example, I have used add\_library() to produce a globally visible target cars, and added the cars directory to its public include directories with target\_include\_directories(). This informs CMake where the cars.h resides, so when target\_link\_libraries() is used, the main.cpp file can consume the header without providing a relative path:
+在这个例子中，我使用了 add\_library() 来生成一个全局可见的目标 cars，并使用 target\_include\_directories() 将 cars 目录添加到其公共包含目录中。这告诉 CMake cars.h 所在的位置，所以当使用 target\_link\_libraries() 时，main.cpp 文件可以在不提供相对路径的情况下使用该头文件：
 
 \begin{cpp}
 #include "car.h"
 \end{cpp}
 
-We can see the add\_library() command in the nested listfile, so did we start working with libraries in this example? Actually, no. Since we used the OBJECT keyword, we’re indicating we’re only interested in producing the object files (exactly as we did in the previous example). We just grouped them under a single logical target (cars). You may already have a sense of what a target is. Hold that thought – we’ll explain the details in the next chapter.
+我们可以在嵌套的 listfile 中看到 add\_library() 命令，那么我们在这个例子中开始使用库了吗？实际上，没有。因为我们使用了 OBJECT 关键字，我们表示我们只对生成对象文件感兴趣（与上一个例子完全一样）。我们只是将它们分组在一个逻辑目标（cars）下。你可能已经对目标有了一些概念。保持这个想法——我们将在下一章解释细节。
 
-\mySubsubsection{4.3.2.}{When to use nested projects}
+\mySubsubsection{4.3.2.}{何时使用嵌套项目}
 
-In the previous section, we briefly mentioned the EXCLUDE\_FROM\_ALL argument used in the add\_subdirectory() command to indicate extraneous elements of our codebase. The CMake documentation suggests that if we have such parts living inside the source tree, they should have their own project() commands in their CMakeLists.txt files so that they can generate their own buildsystems and can be built independently.
+在前一节中，我们简要提到了在 add\_subdirectory() 命令中使用的 EXCLUDE\_FROM\_ALL 参数，用于指示代码库中的外部元素。CMake 文档建议，如果我们有这样的部分存在于源树中，它们应该在它们的 CMakeLists.txt 文件中有自己的 project() 命令，以便它们可以生成自己的构建系统并且可以独立构建。
 
-Are there any other scenarios where this would be useful? Sure. For example, one scenario would be when you’re working with multiple C++ projects built in one CI/CD pipeline (perhaps when building a framework or a set of libraries). Alternatively, maybe you’re porting the buildsystem from a legacy solution, such as GNU Make, which uses plain makefiles. In such a case, you might want an option to slowly break things down into more independent pieces – possibly to put them in a separate build pipeline, or just to work on a smaller scope, which could be loaded by an IDE such as CLion. You can achieve that by adding the project() command to the listfile in the nested directory. Just don’t forget to prepend it with cmake\_minimum\_required().
+还有其他场景这种情况会有用吗？当然。例如，一种场景是当你正在使用一个 CI/CD 管道中构建的多个 C++ 项目时（可能是在构建框架或一组库时）。或者，也许你正在将构建系统从传统的解决方案（如使用纯 makefile 的 GNU Make）移植过来。在这种情况下，你可能希望有一个选项，慢慢地将事物分解成更独立的片段——可能将它们放入单独的构建管道中，或者只是在更小的范围内工作，这样可以通过像 CLion 这样的 IDE 加载。你通过在嵌套目录的 listfile 中添加 project() 命令来实现这一点。只是不要忘记在它前面加上 cmake\_minimum\_required()。
 
-Since project nesting is supported, could we somehow connect related projects that are built side by side?
+既然支持项目嵌套，我们能否以某种方式连接并排构建的相关项目？
 
-\mySubsubsection{4.3.3.}{Keeping external projects external}
+\mySubsubsection{4.3.3.}{保持外部项目外部化}
 
-While it is technically possible to reference the internals of one project from another in CMake, it is not a regular or recommended practice. CMake does provide some support for this, including the load\_cache() command to load values from another project’s cache. However, using this approach can result in problems with cyclical dependencies and project coupling. It’s best to avoid this command and make a decision: should our related projects be nested, connected through libraries, or merged into a single project?
+虽然在 CMake 中从另一个项目引用内部是技术上可能的，但这不是常规或推荐的做法。CMake 确实为这种情况提供了一些支持，包括使用 load\_cache() 命令从另一个项目的缓存中加载数据。然而，使用这种方法可能会导致循环依赖和项目耦合的问题。最好避免使用这个命令并做出决定：我们的相关项目应该是嵌套的，通过库连接，还是合并成一个项目？
 
-These are the partitioning tools at our disposal: including listfiles, adding subdirectories, and nesting projects. But how should we use them so our projects stay maintainable and easy to navigate and extend? To do this, we need a well-defined project structure.
+这些是我们可用的划分工具：包括引入listfiles、添加子目录和嵌套项目。但是，我们应该如何使用它们，以保持项目易于维护、导航和扩展呢？为此，我们需要一个明确定义的项目结构。
 
 
 
