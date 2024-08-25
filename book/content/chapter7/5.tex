@@ -1,17 +1,17 @@
 
-As programmers and build engineers, we must also consider other aspects of compilation such as the time it takes to complete and the ease with which we can identify and rectify mistakes made during the solution-building process.
+作为程序员和构建工程师，我们还必须考虑编译的其他方面，比如完成编译所需的时间以及我们在解决方案构建过程中识别和纠正错误的速度。
 
-\mySubsubsection{7.5.1.}{Reducing compilation time}
+\mySubsubsection{7.5.1.}{减少编译时间}
 
-In busy projects that require frequent recompilations (possibly several times an hour), it’s paramount to ensure the compilation process is as quick as possible. This not only affects the efficiency of your code-compile-test loop but also your concentration and workflow.
+在需要频繁重新编译的项目（可能每小时多次）中，确保编译过程尽可能快是至关重要的。这不仅影响你的代码-编译-测试循环的效率，还会影响你的专注度和工作流程。
 
-Luckily, C++ is already pretty good at managing compilation time, thanks to separate translation units. CMake will take care to only recompile sources that were impacted by recent changes. However, if we need to improve things even more, there are a couple of techniques we can use: header precompilation and unity builds.
+幸运的是，由于单独的翻译单元，C++在管理编译时间方面已经做得很好了。CMake将仅重新编译受最近更改影响的源文件。然而，如果我们需要进一步改进，可以使用一些技术：头文件预编译和统一构建。
 
-\mySamllsection{Precompilation of headers}
+\mySamllsection{头文件预编译}
 
-Header files (.h) are included in the translation unit by the preprocessor before the actual compilation begins. This means they must be recompiled every time the .cpp implementation files change. Moreover, if multiple translation files are using the same shared header, it has to be compiled every time it’s included. This is inefficient, but it has been the standard for a long time.
+头文件（.h）在编译开始前由预处理器包含在翻译单元中。这意味着每次.cpp实现文件更改时，它们都必须重新编译。此外，如果多个翻译文件使用相同的共享头文件，每次包含时都必须编译它。这种方式效率低下，但长期以来一直是标准做法。
 
-Luckily, since version 3.16, CMake offers a command to enable header precompilation. This allows the compiler to process headers separately from the implementation file, thereby speeding up the compilation process. This is the syntax for the provided command:
+幸运的是，自从3.16版本以来，CMake提供了一个命令来启用头文件预编译。这允许编译器单独处理头文件，从而加快编译过程。以下是该命令的语法：
 
 \begin{shell}
 target_precompile_headers(<target>
@@ -20,15 +20,15 @@ target_precompile_headers(<target>
 ...])
 \end{shell}
 
-The list of added headers is stored in the PRECOMPILE\_HEADERS target property. As we discussed in Chapter 5, Working with Targets, in the What are transitive usage requirements? section, we can use the propagated properties to share the headers with any depending targets by choosing the PUBLIC or INTERFACE keyword; however, this shouldn’t be done for targets exported with the install() command. Other projects shouldn’t be forced to consume our precompiled headers as this is not a conventional practice.
+添加的头文件列表存储在PRECOMPILE\_HEADERS目标属性中。正如我们在第5章“使用目标”的“What are transitive usage requirements?”部分讨论的那样，我们可以通过选择PUBLIC或INTERFACE关键字使用传播属性将头文件与任何依赖目标共享；但是，不应该对使用install()命令导出的目标执行此操作。其他项目不应该被迫使用我们的预编译头文件，因为这不是常规做法。
 
 \begin{myNotic}{Note}
-Use the \$<BUILD\_INTERFACE:...> generator expression described in Chapter 6, Using Generator Expressions, to prevent precompiled headers from appearing in the usage requirements of targets when they’re installed. However, they will still be added to targets exported from the build tree with the export() command. Don’t worry if this seems confusing right now – it will be fully explained in Chapter 14, Installing and Packaging.
+使用第6章“使用生成器表达式”中描述的\$<BUILD\_INTERFACE:…>生成器表达式，防止预编译头文件在安装时出现在目标的用法要求中。然而，它们仍然会被通过export()命令从构建树导出的目标添加。如果现在这似乎令人困惑 - 不要担心，这将在第14章“安装和打包”中完全解释。
 \end{myNotic}
 
-CMake will put all headers’ names in a cmake\_pch.h or cmake\_pch.hxx file, which will then be precompiled to a compiler-specific binary file with a .pch, .gch, or .pchi extension.
+CMake将所有头文件的名称放入cmake\_pch.h或cmake\_pch.hxx文件中，然后将其预编译为具有.pch、.gch或.pchi扩展名的编译器特定二进制文件。
 
-We can use it in our listfile like so:
+我们可以在列表文件中这样使用它：
 
 \filename{ch07/06-precompile/CMakeLists.txt}
 
@@ -37,7 +37,7 @@ add_executable(precompiled hello.cpp)
 target_precompile_headers(precompiled PRIVATE <iostream>)
 \end{cmake}
 
-We can also use it in the corresponding source file:
+我们也可以在相应的源文件中使用它：
 
 \filename{ch07/06-precompile/hello.cpp}
 
@@ -47,114 +47,113 @@ int main() {
 }
 \end{cmake}
 
-Note that in our main.cpp file, we don’t need to include cmake\_pch.h or any other header – it will be included by CMake with compiler-specific command-line options.
+请注意，在我们的main.cpp文件中，我们不需要包含cmake\_pch.h或任何其他头文件 - CMake会使用编译器特定的命令行选项包含它。
 
-In the previous example, I used a built-in header; however, you can easily add your own headers with class or function definitions. Use one of the two forms to reference the header:
+在前面的示例中，我使用了一个内置头文件；然而，你可以轻松地添加你自己的带有类或函数定义的头文件。使用以下两种形式之一引用头文件：
 
 \begin{itemize}
 \item
-header.h (a direct path) is interpreted as relative to the current source directory and will be included with an absolute path.
+header.h 直接路径）将被解释为相对于当前源目录的路径，并将使用绝对路径包含。
 
 \item
-The [["header.h"]] (double brackets and quotes) path will be scanned according to the target’s INCLUDE\_DIRECTORIES property, which can be configured with target\_include\_directiories().
+[["header.h"]]（双括号和引号）路径将根据目标的INCLUDE\_DIRECTORIES属性进行扫描，该属性可以使用target\_include\_directiories()进行配置。
 \end{itemize}
 
-Some online references may discourage precompiling headers that aren’t part of a standard library, such as <iostream>, or using precompiled headers altogether. This is because changing the list or editing a custom header will cause recompilation of all translation units in the target. With CMake, this concern is not as significant, especially if you structure your project correctly (with relatively small targets focused on a narrow domain). Each target has a separate precompiled header file, which limits the impact of the header changes.
+一些在线参考资料可能不鼓励预编译不是标准库（如）一部分的头文件，或者根本不使用预编译头文件。这是因为更改列表或编辑自定义头文件将导致目标中的所有翻译单元重新编译。使用CMake，这个问题并不那么严重，特别是如果你正确地结构化你的项目（具有相对较小的目标，专注于狭窄的领域）。每个目标都有一个单独的预编译头文件，这限制了头文件更改的影响。
 
-If your headers are considered relatively stable, you might decide to reuse precompiled headers in your targets. For this purpose, CMake provides a convenient command:
+如果你的头文件相对稳定，你可能会决定在你的目标中重用预编译头文件。为此，CMake提供了一个方便的命令：
 
 \begin{shell}
 target_precompile_headers(<target> REUSE_FROM <other_target>)
 \end{shell}
 
-This sets the PRECOMPILE\_HEADERS\_REUSE\_FROM property of the target reusing the headers and creates a dependency between these targets. Using this method, the consuming target can no longer specify its own precompiled headers. Additionally, all compile options, compile flags, and compile definitions must match between targets.
+这将设置重用头文件的目标的PRECOMPILE\_HEADERS\_REUSE\_FROM属性，并在这些目标之间创建依赖关系。使用此方法，消费目标不能再指定自己的预编译头文件。此外，所有编译选项、编译标志和编译定义必须在目标之间匹配。
 
-Pay attention to requirements, especially if you have any headers that use the double bracket format ([["header.h"]]). Both targets need to set their include paths appropriately to make sure those headers are found by the compiler.
+注意要求，特别是如果你的头文件使用双括号格式([[“header.h”]])。两个目标都需要适当地设置它们的包含路径，以确保这些头文件被编译器找到。
 
-\mySamllsection{Unity builds}
+\mySamllsection{统一构建}
 
-CMake 3.16 introduced another compilation time optimization feature – unity builds, also known as unified builds or jumbo builds. Unity builds work by combining multiple implementation source files by utilizing the \#include directive. This has some interesting implications, some of which are beneficial, while others could be potentially harmful.
+CMake 3.16引入了另一个编译时间优化功能——统一构建，也称为统一构建或超大构建。统一构建通过利用\#include指令将多个实现源文件组合在一起。这带来了一些有趣的含义，其中一些是有益的，而其他一些可能是有害的。
 
-The most obvious advantage is avoiding the recompilation of headers in different translation units when CMake creates a unified build file:
+最明显的优势是在CMake创建统一构建文件时避免在不同翻译单元中重新编译头文件：
 
 \begin{cpp}
 #include "source_a.cpp"
 #include "source_b.cpp"
 \end{cpp}
 
-When both sources contain a \#include "header.h" line, the referenced file will be parsed only once, thanks to include guards (assuming they have been properly added). While not as refined as precompiled headers, it is an alternative.
+当两个源文件都包含一个\#include "header.h"行时，引用的文件将只被解析一次，感谢include guards（假设它们已经正确添加）。虽然这不如预编译头文件那样精细，但它是一种替代方案。
 
-The second benefit of this type of build is the fact that the optimizer may now act on a greater scale and optimize interprocedural calls across all bundled sources. This is similar to link-time optimization, which we discussed in Chapter 4, Setting Up Your First CMake Project, in the Interprocedural optimization section.
+这种构建类型的第二个好处是，优化器现在可以在更大的范围内进行操作，并对捆绑的所有源文件中的跨过程调用进行优化。这与我们在第4章“设置你的第一个CMake项目”中讨论的链接时间优化类似。
 
-However, these benefits come with trade-offs. As we reduced the number of object files and processing steps, we also increased the amount of memory needed to process larger files. Additionally, we reduced the amount of parallelizable work. Compilers aren’t exceptionally good at multithreaded compiling, as they don’t typically need to be – the buildsystem will usually start many compilation tasks to execute all the files simultaneously on different threads. Grouping all files together complicates this, as CMake now has fewer files to compile in parallel.
+然而，这些好处是有代价的。随着我们减少了对象文件和处理步骤的数量，我们也增加了处理更大文件所需的内存量。此外，我们减少了可并行工作的量。编译器并不是特别擅长多线程编译，因为它们通常不需要——构建系统通常会启动许多编译任务，以便在不同的线程上同时执行所有文件。将所有文件组合在一起会复杂化这个问题，因为CMake现在可以并行编译的文件更少了。
 
-With unity builds, you also need to consider some C++ semantic implications that might not be so obvious to catch – anonymous namespaces hiding symbols across files are now scoped to the unity file, rather than to an individual translation unit. The same thing happens with static global variables, functions, and macro definitions. This may cause name collisions, or incorrect function overloads to be executed.
+在统一构建中，你还需要考虑一些C++语义上的影响，这些影响可能并不那么明显——匿名命名空间隐藏跨文件的符号现在被限定在统一文件中，而不是单个翻译单元。同样，静态全局变量、函数和宏定义也会发生这种情况。这可能导致名称冲突，或者执行错误的函数重载。
 
-Jumbo builds are suboptimal when recompiling, as they will compile many more files than needed. They work best when the code is meant to compile all files as fast as possible. Tests done on Qt Creator (a popular GUI library) show that you can expect an improvement anywhere between 20\% to 50\% (depending on the compiler used).
+在重新编译时，超大构建的性能并不理想，因为它们会编译许多不必要的文件。它们在代码需要尽可能快地编译所有文件时表现最佳。在Qt Creator（一个流行的GUI库）上进行的测试显示，你可以期待性能提升在20\%到50\%之间（取决于使用的编译器）。
 
-To enable unity builds, we have two options:
+要启用统一构建，我们有两种选择：
 
 \begin{itemize}
 \item
-Set the CMAKE\_UNITY\_BUILD variable to true – it will initialize the UNITY\_BUILD property on every target defined thereafter.
+将CMAKE\_UNITY\_BUILD变量设置为true——它将在定义的所有目标上初始化UNITY\_BUILD属性。
 
 \item
-Manually set the UNITY\_BUILD target property to true on every target that should use unity builds.
+手动将UNITY\_BUILD目标属性设置为true，适用于应该使用统一构建的所有目标。
 \end{itemize}
 
-The second option is achieved by calling the following:
+第二个选项是通过以下方式实现的：
 
 \begin{shell}
 set_target_properties(<target1> <target2> ...
                       PROPERTIES UNITY_BUILD true)
 \end{shell}
 
-Manually setting these properties on many targets is of course more work and increases the cost of maintenance, but you may need to do so to control this setting on a finer level.
+当然，手动设置许多目标的这些属性会增加工作量和维护成本，但你可能需要这样做以在更精细的层面上控制这个设置。
 
-By default, CMake will create builds containing eight source files, as specified by the UNITY\_BUILD\_BATCH\_SIZE property of a target (copied at the creation of a target from the CMAKE\_UNITY\_BUILD\_BATCH\_SIZE variable). You can change the target property or default variable.
+默认情况下，CMake将创建包含八个源文件的构建，这是通过目标的目标属性UNITY\_BUILD\_BATCH\_SIZE指定的（在创建目标时从CMAKE\_UNITY\_BUILD\_BATCH\_SIZE变量复制）。你可以更改目标属性或默认变量。
 
-Starting from version 3.18, you can explicitly define how files should be bundled with named groups. To do so, change the target’s UNITY\_BUILD\_MODE property to GROUP (the default is BATCH). Then, assign your source files to groups by setting their UNITY\_GROUP property to the name of your choosing:
+从版本3.18开始，你可以显式定义文件应该如何分组，并为它们命名。为此，请将目标的UNITY\_BUILD\_MODE属性更改为GROUP（默认是BATCH）。然后，通过设置它们的UNITY\_GROUP属性为你选择的名称来将源文件分配给组：
 
 \begin{shell}
 set_property(SOURCE <src1> <src2> PROPERTY UNITY_GROUP "GroupA")
 \end{shell}
 
-CMake will then disregard UNITY\_BUILD\_BATCH\_SIZE and add all files from the group to a single unity build.
+CMake将忽略UNITY\_BUILD\_BATCH\_SIZE，并将所有来自该组的文件添加到一个统一的构建中。
 
-CMake’s documentation advises against enabling unity builds for public projects by default. It is recommended that the end user of your application should be able to decide whether they want jumbo builds or not by providing the -DCMAKE\_UNITY\_BUILD command-line argument. If unity builds cause issues due to the way your code is written, you should explicitly set the target’s property to false. However, you are free to enable this feature for code that will be used internally, such as within a company or for your private project.
+Make的文档建议不要为公共项目默认启用统一构建。建议应用程序的最终用户能够通过提供-DCMAKE\_UNITY\_BUILD命令行参数来决定他们是否想要超大构建。如果你的代码编写方式导致统一构建出现问题，你应该明确地将目标的属性设置为false。然而，对于内部使用的代码（如在公司内部或你的私人项目中），你可以自由启用这个特性。
 
-These are the most important aspects of reducing compilation time with CMake. There are other aspects of programming that often cost us a lot of time – one of the most notorious is debugging.
-Let’s see how we can improve things there.
+这些是使用CMake减少编译时间的最重要的方面。编程的其他方面往往也会花费我们很多时间——其中最臭名昭著的是调试。 让我们看看我们如何改进这一点。
 
-\mySubsubsection{7.5.2.}{Finding mistakes}
+\mySubsubsection{7.5.2.}{发现错误}
 
-As programmers, we spend a substantial amount of time hunting for bugs. This, sadly, is a fact of our profession. The process of identifying errors and rectifying them can often get under our skin, especially when it requires long hours. The difficulty is amplified when we’re left flying blind, without the necessary tools to help us navigate through these challenging situations. For this reason, it is crucial that we pay great attention to setting up our environment in a way that simplifies this process, making it as easy and bearable as possible. One way we can achieve this is by configuring the compiler with target\_compile\_options(). So, which compile options could assist us in this endeavor?
+作为程序员，我们花大量时间寻找bug。不幸的是，这是我们的职业事实。识别错误并纠正它们的过程往往令人沮丧，尤其是当它需要长时间时。当我们没有必要的工具来帮助我们导航这些挑战性的情况时，难度会进一步增加。因此，我们必须要非常关注我们的环境设置，以便简化这个过程，使其尽可能容易和可承受。一种实现这一目标的方法是通过配置编译器使用target\_compile\_options()。那么，哪些编译选项可以帮助我们呢？
 
-\mySamllsection{Configuring errors and warnings}
+\mySamllsection{配置错误和警告}
 
-There are many stressful things about software development – fixing critical bugs in the middle of the night, working on high-visibility, costly failures in large systems, and dealing with annoying compilation errors. Some errors are hard to understand, while others are tediously challenging to fix. In your quest to simplify your work and reduce the chance of failure, you’ll find many recommendations on how to configure your compiler’s warnings.
+软件开发中有许多令人压力大的事情——在半夜修复关键bug，在大系统中处理高可见性、成本高昂的失败，以及处理恼人的编译错误。有些错误很难理解，而另一些则需要艰苦努力来修复。在简化你的工作并减少失败的机会的探索中，你会发现许多关于如何配置编译器警告的建议。
 
-One such fine piece of advice is to enable the -Werror flag as default for all builds. On the surface, this flag’s function is deceptively simple – it treats all the warnings as errors, preventing the code from compiling until you resolve each one. While it may seem like a beneficial approach, it seldom is.
+一个很好的建议是默认为所有构建启用-Werror标志。这个标志的功能表面上很简单——它将所有的警告视为错误，阻止代码编译，直到你解决每一个。虽然这可能看起来是一个有益的方法，但很少是这样。
 
-You see, warnings are not classified as errors for a reason: they’re designed to caution you. It’s up to you to decide how to address these warnings. Having the liberty to overlook a warning, particularly when you’re experimenting or prototyping your solution, is often invaluable.
+你看，警告没有被分类为错误是有原因的：它们是为了警告你。决定如何处理这些警告取决于你。当你在实验或原型解决方案时，忽略一个警告的权限往往是无价的。
 
-On the other hand, if you have a perfect, no-warnings, all-shiny piece of code, it seems a shame to allow future modifications to tarnish this pristine state. What harm could come from enabling it and just keeping it there? Seemingly none, at least until your compiler gets upgraded, that is. New compiler versions tend to be stricter about deprecated features or more adept at offering improvement suggestions. While this is beneficial when warnings remain as warnings, it can lead to unexpected build failures with unchanged code or, even more frustratingly, when you need to quickly rectify a problem unrelated to the new warning.
+另一方面，如果你的代码是完美的、没有警告、闪闪发光的，那么允许未来的修改破坏这个完美的状态似乎是遗憾的。开启它并让它保持在那里有什么害处？至少在编译器升级之前，似乎没有什么害处。新版本的编译器往往对过时的特性更严格，或者更擅长提供改进建议。虽然当警告保持为警告时这是有益的，但它可能导致未更改的代码出现意外的构建失败，或者更令人沮丧的是，当你需要快速修复与新警告无关的问题时。
 
-So, when is it acceptable to enable all possible warnings? The short answer is when you’re creating a public library. In these cases, you’ll want to preempt issue tickets that fault your code for misbehavior in stricter environments than yours. If you opt to enable this setting, ensure you stay updated with the new compiler versions and the warnings they introduce. It’s also important to explicitly manage this update process, separately from making any code changes.
+那么，什么时候允许启用所有可能的警告呢？答案是当你创建一个公共库时。在这种情况下，你希望预先阻止任何问题，指出你的代码在比你的环境更严格的环境中行为不当。如果你选择启用这个设置，确保你保持对新编译器版本及其引入的警告的更新。此外，明确管理这个更新过程也很重要，这与进行任何代码更改分开。
 
-Otherwise, let warnings be what they are, and concentrate on errors. If you feel compelled to be pedantic, use the -Wpedantic flag. This particular flag enables all warnings demanded by strict ISO C and ISO C++ standards. However, bear in mind that this flag doesn’t confirm conformance with the standard; it only identifies non-ISO practices that require a diagnostic message.
+否则，让警告保持原样，专注于错误。如果你觉得有必要追求完美，可以使用-Wpedantic标志。这个特定的标志启用了由严格的ISO C和ISO C++标准要求的警告。然而，请注意，这个标志并不确认符合标准；它只是标识需要诊断消息的非ISO实践。
 
-More lenient and down-to-earth coders will be satisfied with -Wall, optionally coupled with -Wextra for an extra touch of sophistication, which should suffice. These warnings are considered genuinely useful, and you should address them in your code when time allows.
+更宽松、更接地气的程序员会满足于-Wall，可以选择与-Wextra结合，增加一点复杂性，这应该就足够了。这些警告被认为是真正有用的，当时间允许时，你应该在代码中处理它们。
 
-There are plenty of other warning flags that may be useful depending on your project type. I recommend that you read the manual for your chosen compiler to see what options are available.
+根据你的项目类型，可能还有其他一些警告标志对你有帮助。我建议你阅读你选择的编译器的手册，看看有哪些选项可用。
 
-\mySamllsection{Debugging the build}
+\mySamllsection{调试构建}
 
-Occasionally, the compilation will break. This usually happens when we try to refactor a significant amount of code or clean up our buildsystem. At times, issues can be resolved easily; however, there are more complex problems that require a thorough investigation into the configuration steps. We already know how to print more verbose CMake outputs (as discussed in Chapter 1, First Steps with CMake), but how do we analyze what actually happens under the hood at each stage?
+偶尔，编译会失败。这通常发生在我们尝试重构大量代码或清理我们的构建系统时。有时，问题可以轻松解决；然而，有些更复杂的问题需要深入调查配置步骤。我们已经在第1章“CMake入门”中讨论了如何打印更详细的CMake输出，但如何分析在每个阶段实际发生了什么？
 
-\mySamllsubsection{Debugging individual stages}
+\mySamllsubsection{调试各个阶段}
 
-The -save-temps, which can be passed to both GCC and Clang compilers, allows us to debug individual stages of compilation. This flag will instruct the compilers to store the output of certain compilation stages in files, rather than in memory.
+-save-temps，它可以传递给GCC和Clang编译器，允许我们调试编译的各个阶段。这个标志将指示编译器将某些编译阶段的输出存储在文件中，而不是内存中。
 
 \filename{ch07/07-debug/CMakeLists.txt}
 
@@ -163,9 +162,10 @@ add_executable(debug hello.cpp)
 target_compile_options(debug PRIVATE -save-temps=obj)
 \end{cmake}
 
-Enabling this option will produce two extra files (.ii and .s) per translation unit.
+启用这个选项将产生两个额外的文件（.ii和.s）每个翻译单元。
 
-The first one, <build-tree>/CMakeFiles/<target>.dir/<source>.ii, stores the output of the preprocessing stage, with comments explaining where each part of the source code comes from:
+
+第一个，<build-tree>/CMakeFiles/<target>.dir/<source>.ii，存储了预处理阶段的输出，其中包含注释，解释了源代码的每个部分来自哪里：
 
 \begin{shell}
 # 1 "/root/examples/ch07/06-debug/hello.cpp"
@@ -184,7 +184,7 @@ namespace std
 ...
 \end{shell}
 
-The second one, <build-tree>/CMakeFiles/<target>.dir/<source>.s, contains the output of the linguistic analysis stage, ready for the assembler stage:
+第二个，<build-tree>/CMakeFiles/<target>.dir/<source>.s, 包含了语言分析阶段的输出，准备进入汇编阶段：
 
 \begin{shell}
         .file "hello.cpp"
@@ -205,13 +205,13 @@ main:
 ( ... )
 \end{shell}
 
-Depending on the type of problem, we can often uncover the actual issue. For instance, the preprocessor’s output can help us identify bugs, such as incorrect include paths (which may provide the wrong version of libraries), or mistakes in definitions that lead to erroneous \#ifdef evaluations.
+根据问题的类型，我们通常可以揭示实际的问题。例如，预处理器的输出可以帮助我们识别bug，如错误的include路径（可能提供错误的库版本），或者定义错误导致的错误的\#ifdef评估。
 
-Meanwhile, the output of the linguistic analysis is particularly beneficial for targeting specific processors and resolving critical optimization problems.
+同时，语言分析的输出对于针对特定处理器和解决关键优化问题特别有益。
 
-\mySamllsubsection{Debugging issues with header file inclusion}
+\mySamllsubsection{调试头文件包含问题}
 
-Debugging incorrectly included files can be a challenging task. I should know – in my first corporate job, I had to port an entire code base from one buildsystem to another. If you ever find yourself in a situation that requires a precise understanding of the paths used to include a requested header, consider using the -H compile option:
+调试错误包含的文件可能是一项具有挑战性的任务。我应该知道——在我第一份公司工作时，我不得不将整个代码库从一个构建系统移植到另一个构建系统。如果你发现自己处于需要精确理解请求头文件包含路径的情况，可以考虑使用-H编译选项：
 
 \filename{ch07/07-debug/CMakeLists.txt}
 
@@ -220,7 +220,7 @@ add_executable(debug hello.cpp)
 target_compile_options(debug PRIVATE -H)
 \end{cmake}
 
-The produced output will look similar to this:
+产生的输出将类似于以下内容：
 
 \begin{shell}
 [ 25%] Building CXX object
@@ -233,10 +233,9 @@ The produced output will look similar to this:
 .. /usr/include/c++/9/ostream
 \end{shell}
 
-After the name of the object file, each row in the output contains a path to a header. In this example, a single dot at the beginning of the line indicates a top-level inclusion (where the \#include directive is in hello.cpp). Two dots signify that this file is included by the subsequent file (<iostream>).
-Each additional dot denotes another level of nesting.
+在对象文件名称之后，输出中的每一行都包含一个头文件的路径。在这个例子中，行首的一个点表示顶级包含（包含指令在hello.cpp中）。两个点表示该文件被后续文件（iostream）包含。每个额外的点表示嵌套的另一个级别。
 
-At the end of this output, you may also find suggestions for possible improvements to your code:
+在这个输出的末尾，你可能会找到一些代码改进的建议：
 
 \begin{shell}
 Multiple include guards may be useful for:
@@ -245,31 +244,31 @@ Multiple include guards may be useful for:
 /usr/include/c++/9/cstdlib
 \end{shell}
 
-While you’re not required to address issues in the standard library, you may see some of your own headers listed. In such cases, you might want to consider making corrections.
+虽然你不需要处理标准库中的问题，但你可能会看到一些自己的头文件被列出。在这种情况下，你可能会考虑进行修改。
 
-\mySamllsection{Providing information for the debugger}
+\mySamllsection{为调试器提供信息}
 
-Machine code is a cryptic list of instructions and data, encoded in a binary format. It doesn’t convey any greater meaning or objective. This is because the CPU doesn’t care what the goal of the program is or what the sense of all of the instructions is. The only requirement is the correctness of the code. The compiler will translate all of the preceding into numeric identifiers of CPU instructions, store data to initialize memory where needed, and provide tens of thousands of memory addresses. In other words, the final binary doesn’t need to contain the actual source code, variable names, signatures of functions, or any other details that programmers care about. That’s the default output of the compiler – raw and bare.
+机器代码是一系列指令和数据的神秘列表，这些指令和数据以二进制格式编码。它不传达任何更大的意义或目标。这是因为CPU不在乎程序的目标是什么，或者所有指令的含义是什么。唯一的要求是代码的正确性。编译器会将所有这些内容转换为CPU指令的数字标识符，并在需要时存储数据以初始化内存，并提供成千上万的内存地址。换句话说，最终的二进制文件不需要包含实际的源代码、变量名、函数签名或其他程序员关心的细节。这是编译器的默认输出——原始而简单。
 
-This is done primarily to save space and execute without too much overhead. Coincidentally, we are also somewhat protecting our application from reverse engineering. Yes, you can understand what each CPU instruction does without the source code (for example, copy this value to that register). But even basic programs contain too many of these instructions to make sense of them.
+这样做主要是为了节省空间并执行时避免过多的开销。巧合的是，我们也以某种方式保护了我们的应用程序免受逆向工程的影响。是的，你可以理解每个CPU指令做什么，而无需源代码（例如，将这个值复制到那个寄存器）。但是，即使是基本的程序也包含太多的这些指令，以至于难以理解它们。
 
-If you’re a particularly driven individual, you can use a tool called a disassembler, and with a lot of knowledge (and a bit of luck), you’ll be able to decipher what might be happening. However, this approach isn’t very practical, as disassembled code doesn’t have original symbols, making it incredibly hard and slow to untangle what goes where.
+如果你是一个特别有动力的人，你可以使用一个叫做反汇编器的工具，并且凭借大量的知识（以及一些运气），你将能够解码可能发生的事情。然而，这种方法并不实用，因为反汇编代码没有原始符号，这使得很难和慢地弄清楚它们去了哪里。
 
-Instead, we can ask the compiler to store the source code in the produced binary along with the map of references between compiled and original code. Then, we can attach a debugger to a running program and see which source line is being executed at any given moment. This is indispensable when we’re working on code, such as writing new functionality or correcting errors.
+相反，我们可以要求编译器将源代码存储在生成的二进制文件中，并与编译后的代码和原始代码之间的引用映射一起。然后，我们可以将调试器附加到一个正在运行的程序上，并查看在任何给定的时刻执行的是哪一行源代码。当我们编写新功能或更正错误时，这是必不可少的。
 
-These two use cases are the reason for two build configs: Debug and Release. As we’ve seen earlier, CMake will provide some flags to the compiler by default to manage this process, storing them first in global variables:
+这两个用例是存在两种构建配置的原因：Debug和Release。如我们之前所见，CMake会默认向编译器提供一些标志来管理这个过程，首先存储在全局变量中：
 
 \begin{itemize}
 \item
-CMAKE\_CXX\_FLAGS\_DEBUG contains -g
+CMAKE\_CXX\_FLAGS\_DEBUG 包含 -g
 
 \item
-CMAKE\_CXX\_FLAGS\_RELEASE contains -DNDEBUG
+CMAKE\_CXX\_FLAGS\_RELEASE 包含 -DNDEBUG
 \end{itemize}
 
-The -g flag simply means “add debugging information.” It’s provided in the OS’s native format: stabs, COFF, XCOFF, or DWARF. These formats can then be accessed by debuggers such as gdb (the GNU debugger). Usually, this is sufficient for IDEs such as CLion (as they use gdb under the hood). In other cases, refer to the manual of the provided debugger and check what the appropriate flag is for the compiler of your choice.
+-g标志的意思是“添加调试信息”。它以操作系统的原生格式提供：stabs、COFF、XCOFF或DWARF。这些格式随后可以被像gdb（GNU调试器）这样的调试器访问。通常，这对像CLion这样的IDE来说已经足够了（因为它们在幕后使用gdb）。在其他情况下，请参考提供的调试器手册，并检查您选择的编译器的适当标志。
 
-For the Release configuration, CMake will add the -DNDEBUG flag. It’s a preprocessor definition, which simply means “not a debug build.” Some debug-oriented macros will be deliberately disabled by this option. One of them is assert, available in the <assert.h> header file. If you decide to use assertions in your production code, they simply won’t work:
+对于Release配置，CMake将添加-DNDEBUG标志。这是一个预处理器定义，意味着“不是调试构建”。这个选项会故意禁用一些面向调试的宏。其中之一是assert，它在<assert.h>头文件中可用。如果你决定在你的生产代码中使用断言，它们将不起作用：
 
 \begin{cpp}
 int main(void)
@@ -280,18 +279,18 @@ int main(void)
 }
 \end{cpp}
 
-The assert(false) call won’t have any effect in the Release configuration, but it will stop the execution just fine in Debug. What do you do if you’re practicing assertive programming and still need to use assert() for release builds? Either change the defaults that are provided by CMake (remove NDEBUG from CMAKE\_CXX\_FLAGS\_RELEASE) or implement a hardcoded override by undefining the macro before the header inclusion:
+在Release配置中，assert(false)调用不会有任何效果，但在Debug中它会停止执行。如果你在实践断言性编程，但仍需要在Release构建中使用assert()，你可以改变CMake提供的默认设置（从CMAKE\_CXX\_FLAGS\_RELEASE中移除NDEBUG），或者通过在包含头文件之前取消定义宏来实现硬编码覆盖：
 
 \begin{cpp}
 #undef NDEBUG
 #include <assert.h>
 \end{cpp}
 
-Refer to the assert reference for more information: \url{https://en.cppreference.com/w/c/error/assert}.
+更多信息请参阅assert参考：\url{https://en.cppreference.com/w/c/error/assert}。
 
-You can consider replacing assert() with static\_assert(), which was introduced in C++11, if your assertions can be done during compilation time, as this function isn’t protected with the \#ifndef(NDEBUG) preprocessor directive like assert().
+你可以考虑用C++11引入的static\_assert()替换assert()，如果你的断言可以在编译时完成，因为这个函数不像assert()那样受到\#ifndef(NDEBUG)预处理器指令的保护。
 
-With this, we have learned how to manage the process of compilation.
+通过这些，我们已经学会了如何管理编译过程。
 
 
 

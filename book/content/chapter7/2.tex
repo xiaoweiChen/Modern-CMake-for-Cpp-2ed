@@ -1,142 +1,142 @@
 
-Compilation can be roughly described as a process of translating instructions written in a high-level programming language into low-level machine code. This allows us to create our applications using abstract concepts such as classes and objects and sparing us the tedious intricacies of processor-specific assembly languages. We don’t need to work directly with CPU registers, think about short or long jumps, or manage stack frames. Compiled languages are more expressive, readable, and secure, and they encourage the creation of maintainable code, all while delivering as much performance as possible.
+编译可以大致描述为将用高级编程语言编写的指令转换为低级机器代码的过程。这使得我们能够使用类和对象等抽象概念来创建应用程序，而无需处理特定处理器的汇编语言中的繁琐细节。我们不需要直接与CPU寄存器打交道，考虑短跳或长跳，或管理栈帧。编译语言更具表现力、可读性和安全性，它们鼓励创建可维护的代码，同时尽可能提供性能。
 
-In C++, we use static compilation – meaning an entire program must be translated into native code before it can be executed. This is a different approach compared to languages such as Java or Python, which interpret and compile the program on the fly each time a user runs it. Each method has its own unique advantages. C++ aims to offer a multitude of high-level tools, while simultaneously delivering native performance. A C++ compiler can produce a self-contained application for almost every architecture out there.
+在C++中，我们使用静态编译——这意味着整个程序必须转换为本地代码后才能执行。这与Java或Python等语言不同，后者在用户每次运行程序时都会实时解释和编译程序。每种方法都有其独特的优势。C++旨在提供大量高级工具，同时提供本地性能。C++编译器可以为几乎所有的架构生成独立的应用程序。
 
-Creating and running a C++ program involves several steps:
+创建和运行C++程序涉及以下步骤：
 
 \begin{enumerate}
 \item
-Design your application: This includes planning the application’s functionality, structure, and behavior. Once your design is finalized, carefully write the source code following best practices for code readability and maintainability.
+设计你的应用程序：这包括规划应用程序的功能、结构和行为。设计完成后，按照最佳实践仔细编写源代码，以保持代码的可读性和可维护性。
 
 \item
-Compile individual .cpp implementation files, also known as translation units, into object files: This step involves converting the high-level language code that you’ve written into low-level machine code.
+将单独的.cpp实现文件（也称为翻译单元）编译成目标文件：这一步涉及将你编写的高级语言代码转换为低级机器代码。
 
 \item
-Link object files together into a single executable: During this step, all other dependencies, including dynamic and static libraries, are also linked. This process creates an executable that can be run on the intended platform.
+将目标文件链接成单一的可执行文件：在此步骤中，还会链接所有其他依赖项，包括动态和静态库。这个过程创建了一个可以在预期平台上运行的可执行文件。
 \end{enumerate}
 
-To run the program, the operating system (OS) will use a tool called loader to map the program’s machine code and all required dynamic libraries into virtual memory. The loader then reads the program headers to determine where execution should start and begins running the instructions.
+要运行程序，操作系统(OS)将使用一个名为加载器的工具，将程序的机器代码和所有必需的动态库映射到虚拟内存中。加载器然后读取程序头部，以确定执行应从何处开始，并开始运行指令。
 
-At this stage, the program’s start-up code comes into play. A special function called \_start, provided by the system’s C library, is invoked. The \_start function collects command-line arguments and environment variables, initiates threading, initializes static symbols, and registers cleanup callbacks. Only after this will it call main(), the function that programmers fill with their own code.
+在此阶段，程序的启动代码发挥作用。系统C库提供的名为\_start的特殊函数被调用。\_start函数收集命令行参数和环境变量，启动线程，初始化静态符号，并注册清理回调。只有在此之后，它才会调用main()，程序员会在其中填入自己的代码。
 
-As you can see, a considerable amount of work takes place behind the scenes. This chapter focuses on the second step from the earlier list. By considering the bigger picture, we can better understand where potential issues might originate. There’s no such thing as magic in software development, despite the seeming impenetrability of the complexity involved. Everything has an explanation and a reason. We need to understand that things can go wrong during the runtime of a program due to how we compiled it, even if the compilation step itself appeared to be successful. It’s simply not possible for a compiler to check all edge cases during its operation. So, let’s find out what actually happens when the compiler does its job.
+如你所见，幕后进行了大量工作。本章关注前面列表中的第二步。通过考虑大局，我们可以更好地理解潜在问题可能起源于何处。尽管软件开发的复杂性看似难以理解，但其中并没有魔法。一切都有解释和原因。我们需要理解，程序在运行时可能会因我们的编译方式而出错，即使编译步骤本身看起来是成功的。编译器在其操作过程中无法检查所有边缘情况。因此，让我们找出编译器执行工作时实际发生的情况。
 
-\mySubsubsection{7.2.1.}{How compilation works}
+\mySubsubsection{7.2.1.}{编译如何工作}
 
-As mentioned before, compilation is the process of translating a high-level language into a low-level language. Specifically, this involves generating machine code, which are instructions that a specific processor can directly execute, in a binary object file format unique to a given platform. On Linux, the most commonly used format is the Executable and Linkable Format (ELF). Windows uses a PE/COFF format specification, and on macOS, we’ll encounter Mach objects (the Mach-O format).
+如前所述，编译是将高级语言转换为低级语言的过程。具体来说，这涉及生成机器代码，即特定处理器可以直接执行的指令，以特定于给定平台的二进制目标文件格式。在Linux上，最常用的格式是可执行和可链接格式(ELF)。Windows使用PE/COFF格式规范，而在macOS上，我们会遇到Mach对象（Mach-O格式）。
 
-Object files are the direct translation of individual source files. Each of these files must be compiled separately and subsequently combined by a linker into a single executable or library. This modular process can significantly save time when modifying code, as only the files updated by the programmer need to be recompiled.
+目标文件是单个源文件的直接翻译。每个文件都必须单独编译，然后由链接器组合成单一的可执行文件或库。这种模块化过程在修改代码时可以显著节省时间，因为只有程序员更新的文件需要重新编译。
 
-The compiler has to execute the following stages to create an object file:
-
-\begin{itemize}
-\item
-Preprocessing
-
-\item
-Linguistic analysis
-
-\item
-Assembly
-
-\item
-Optimization
-
-\item
-Code emission
-\end{itemize}
-
-Let’s explain them in more detail.
-
-Preprocessing, although automatically invoked by most compilers, is considered a preparatory step prior to actual compilation. Its role is to perform rudimentary manipulations on the source code; it executes \#include directives, substitutes identifiers with defined values through \#define directives and -D flags, invokes simple macros, and conditionally includes or excludes parts of code based on the \#if, \#elif, and \#endif directives. The preprocessor remains blissfully unaware of the actual C++ code. In essence, it functions as an advanced find-and-replace tool.
-
-Nevertheless, the role of the preprocessor is vital for building advanced programs. The ability to divide code into parts and share declarations across multiple translation units is the foundation of code reusability.
-
-Next up is linguistic analysis, where the compiler conducts more intricate operations. It scans the preprocessed file (which now includes all the headers inserted by the preprocessor) character by character. Through a process known as lexical analysis, it groups characters into meaningful tokens – these could be keywords, operators, variable names, and more.
-
-The tokens are then assembled into chains and examined to verify whether their order and presence adhere to the syntax rules of C++ – a process called syntax analysis or parsing. This is typically the stage where most of the error messages are generated, as it identifies syntactical issues.
-
-Lastly, the compiler carries out semantic analysis. In this phase, the compiler checks whether the statements in the file are logically sound. For instance, it ensures that all type correctness checks are met (you cannot assign an integer to a string variable). This analysis makes sure the program makes sense within the rules of the programming language.
-
-The assembly phase is essentially a translation of these tokens into CPU-specific instructions based on the available instruction set for the platform. Some compilers actually generate an assembly output file, which is subsequently passed to a dedicated assembler program. This program produces the machine code that the CPU can execute. Other compilers produce this machine code directly in memory. Typically, such compilers also provide an option to generate a textual output of human-readable assembly code. However, just because this code can be read doesn’t necessarily mean it’s easy to understand or beneficial to do so.
-
-Optimization is not confined to a single step in the compilation process but occurs incrementally at each stage. There is, however, a distinct phase after the initial assembly is produced, which focuses on minimizing register usage and eliminating redundant code.
-
-An interesting and noteworthy optimization technique is inline expansion or inlining. In this process, the compiler effectively “cuts” the body of a function and “pastes” it in place of its call.
-
-The C++ standard doesn’t explicitly define the circumstances under which this occurs – it is implementation dependent. Inline expansion can enhance execution speed and reduce memory usage, but it also poses significant drawbacks for debugging, as the executed code no longer corresponds to the original line in the source code.
-
-The code emission phase involves writing the optimized machine code into an object file in a format that aligns with the target platform’s specifications. However, this object file isn’t ready for execution just yet – it needs to be passed to the next tool in the chain, the linker. The linker’s job is to appropriately relocate the sections of our object file and resolve references to external symbols, effectively preparing the file for execution. This step marks the transformation from the American Standard Code for Information Interchange (ASCII) source code into binary executable files that can be directly processed by a CPU.
-
-Each of these stages is significant and can be configured to meet our specific needs. Let’s look at how we can manage this process with CMake.
-
-\mySubsubsection{7.2.2.}{Initial configuration}
-
-CMake provides several commands that can affect each stage of the compilation:
+编译器必须执行以下阶段以创建目标文件：
 
 \begin{itemize}
 \item
-target\_compile\_features(): This requires a compiler with specific features to compile this target.
+预处理
 
 \item
-target\_sources(): This adds sources to an already defined target.
+语言学分析
 
 \item
-target\_include\_directories(): This sets up the preprocessor include paths.
+汇编
 
 \item
-target\_compile\_definitions(): The sets up preprocessor definitions.
+优化
 
 \item
-target\_compile\_options(): This sets compiler-specific command-line options.
-
-\item
-target\_precompile\_headers(): This sets external header files to be optimized with precompilation.
+代码生成
 \end{itemize}
 
-Each of these commands accepts similar arguments in the following format:
+让我们更详细地解释它们。
+
+尽管大多数编译器会自动调用，但预处理被视为实际编译之前的准备步骤。其作用是执行源代码的基本操作；它执行\#include指令，通过\#define指令和-D标志用定义的值替换标识符，调用简单宏，并根据\#ifdef、\#elif和\#endif指令有条件地包含或排除代码部分。预处理器对实际的C++代码一无所知。从本质上讲，它充当一个高级的查找和替换工具。
+
+然而，预处理器在构建高级程序中的作用至关重要。将代码划分为部分并在多个翻译单元之间共享声明是代码可重用性的基础。
+
+接下来是语言学分析，编译器进行更复杂的操作。它逐字符扫描预处理后的文件（现在包括预处理器插入的所有头文件）。通过称为词法分析的过程，它将字符组合成有意义的令牌——可能是关键字、运算符、变量名等。
+
+然后，将这些令牌组装成链，并检查它们的顺序和存在是否遵守C++的语法规则——这个过程称为语法分析或解析。这通常是生成大多数错误消息的阶段，因为它会识别语法问题。
+
+最后，编译器进行语义分析。在此阶段，编译器检查文件中的语句是否逻辑上合理。例如，它确保满足所有类型正确性检查（你不能将整数分配给字符串变量）。这种分析确保程序在编程语言的规则内有意义。
+
+汇编阶段本质上是将这些令牌根据平台的可用指令集转换为CPU特定的指令。一些编译器实际生成汇编输出文件，然后将其传递给专用的汇编程序。这个程序生成CPU可以执行的机器代码。其他编译器直接在内存中生成此机器代码。通常，这类编译器还提供生成人类可读汇编代码的文本输出的选项。然而，仅仅因为这段代码可以阅读，并不意味着它易于理解或有益于这样做。
+
+优化并不局限于编译过程中的单一步骤，而是每个阶段逐渐进行。然而，在初始汇编产生之后，有一个明确的阶段专注于最小化寄存器使用和消除冗余代码。
+
+一种有趣且值得注意的优化技术是内联展开或内联。在这个过程中，编译器有效地“剪切”函数体，并将其“粘贴”到其调用的位置。
+
+C++标准并未明确定义这种情况发生的条件——它取决于实现。内联展开可以提高执行速度和减少内存使用，但同时也为调试带来了重大缺陷，因为执行的代码不再对应于源代码中的原始行。
+
+代码生成阶段涉及将优化后的机器代码写入目标文件，格式与目标平台的规范相符。然而，这个目标文件尚未准备好执行——它需要被传递到链中的下一个工具，即链接器。链接器的工作是适当地重定位目标文件的部分，并解析对外部符号的引用，有效地准备文件执行。这一步骤标志着从美国信息交换标准代码(ASCII)源代码到可以直接由CPU处理的二进制可执行文件的转变。
+
+这些阶段每一个都很重要，并且可以根据我们的具体需求进行配置。让我们看看如何使用CMake管理这个过程。
+
+\mySubsubsection{7.2.2.}{初始配置}
+
+CMake提供了几个可以影响编译每个阶段的命令：
+
+\begin{itemize}
+\item
+target\_compile\_features(): 这要求编译器具有特定的功能来编译这个目标。
+
+\item
+target\_sources(): 这向已定义的目标添加源文件。
+
+\item
+target\_include\_directories(): 这设置预处理器包含路径。
+
+\item
+target\_compile\_definitions(): 这设置预处理器定义。
+
+\item
+target\_compile\_options(): 这设置编译器特定的命令行选项。
+
+\item
+target\_precompile\_headers():这设置要优化的外部头文件。
+\end{itemize}
+
+这些命令接受以下格式的类似参数：
 
 \begin{shell}
 target_...(<target name> <INTERFACE|PUBLIC|PRIVATE> <arguments>)
 \end{shell}
 
-This means that properties set with this command propagate through transitive usage requirements, as discussed in Chapter 5, Working with Targets, in the What are transitive usage requirements? section and can be utilized for both executables and libraries. Also, it’s worth noting that all these commands support generator expressions.
+这意味着使用此命令设置的属性会通过传递使用要求，如第5章“处理目标”中所述，并且可以用于可执行文件和库。还值得注意的是，所有这些命令都支持生成器表达式。
 
-\mySamllsection{Requiring specific features from the compiler}
+\mySamllsection{要求编译器的特定功能}
 
-As discussed in the Checking for supported compiler features section in Chapter 4, Setting Up Your First CMake Project, it’s crucial to anticipate issues and aim to provide your software’s users with a clear message when something goes wrong – for instance, when an available compiler, X, doesn’t provide a required feature, Y. This approach is far more user friendly than having users decipher the errors produced by an incompatible toolchain they might be using. We don’t want users to misattribute the incompatibility issues to our code instead of their outdated environment.
+如第4章“设置您的第一个CMake项目”中的“检查支持的编译器功能”部分所讨论，预测问题并提供清晰的错误消息给软件用户至关重要——例如，当可用的编译器X不提供所需的功能Y时。这种方法比让用户解析他们可能使用的兼容工具链产生的错误要友好得多。我们不想让用户将不兼容性问题归咎于我们的代码，而不是他们过时的环境。
 
-You can use the following command to specify all the features that your target needs to build:
+您可以使用以下命令指定目标构建所需的所有功能：
 
 \begin{shell}
 target_compile_features(<target> <PRIVATE|PUBLIC|INTERFACE>
                         <feature> [...])
 \end{shell}
 
-CMake understands C++ standards and supported compiler features for these compiler\_ids:
+CMake理解以下compiler\_id的C++标准和支持的编译器功能：
 
 \begin{itemize}
 \item
-AppleClang: Apple Clang for Xcode versions 4.4+
+AppleClang: 适用于Xcode版本4.4+的Apple Clang
 
 \item
-Clang: Clang Compiler versions 2.9+
+Clang: Clang编译器版本2.9+
 
 \item
-GNU: GNU Compiler versions 4.4+
+GNU: GNU编译器版本4.4+
 
 \item
-MSVC: Microsoft Visual Studio versions 2010+
+MSVC: Microsoft Visual Studio版本2010+
 
 \item
-SunPro: Oracle Solaris Studio versions 12.4+
+SunPro: Oracle Solaris Studio版本12.4+
 
 \item
-Intel: Intel Compiler versions 12.1+
+Intel: Intel编译器版本12.1+
 \end{itemize}
 
-There are over 60 features supported by CMake, and you’ll find a full list in the official documentation, on the page explaining the CMAKE\_CXX\_KNOWN\_FEATURES variable. However, unless you’re after something very specific, I recommend picking a high-level meta feature indicating the general C++ standard:
+CMake支持超过60种功能，您可以在官方文档中找到完整列表，该文档解释了CMAKE\_CXX\_KNOWN\_FEATURES变量。然而，除非您需要非常具体的东西，否则我建议选择指示C++标准的高级元功能：
 
 \begin{itemize}
 \item
@@ -155,32 +155,32 @@ cxx\_std\_23
 cxx\_std\_26
 \end{itemize}
 
-Look at the following example:
+看看以下示例：
 
 \begin{cmake}
 target_compile_features(my_target PUBLIC cxx_std_26)
 \end{cmake}
 
-This is essentially equal to set(CMAKE\_CXX\_STANDARD 26) with set(CMAKE\_CXX\_STANDARD\_REQUIRED ON) introduced in Chapter 4, Setting Up Your First CMake Project. However, the difference is that target\_compile\_features() works on a per-target basis and not globally for the project, which may be cumbersome if you need to add it for all targets in the project.
+这本质上等同于在第4章“设置您的第一个CMake项目”中引入的set(CMAKE\_CXX\_STANDARD 26)和set(CMAKE\_CXX\_STANDARD\_REQUIRED ON)。然而，不同之处在于target\_compile\_features()按目标工作，而不是全局地针对项目，如果您需要为项目中的所有目标添加它，可能会很繁琐。
 
-Find more details on CMake’s supported compilers in the official manual (See the Further reading section for the URL).
+关于CMake支持的编译器的详细信息，请参阅官方手册（请查看“进一步阅读”部分中的URL）。
 
-\mySubsubsection{7.2.3.}{Managing sources for targets}
+\mySubsubsection{7.2.3.}{管理目标源文件}
 
-We already know how to tell CMake which source files constitute a single target, whether it’s an executable or a library. We do this by supplying a list of files when using the add\_executable() or add\_library() commands.
+我们已经知道如何告诉CMake哪些源文件构成一个单独的目标，无论是可执行文件还是库。我们通过在add\_executable()或add\_library()命令中提供文件列表来实现这一点。
 
-As your solution expands, the list of files for each target also grows. This can lead to some rather lengthy add\_...() commands. How do we deal with that? A tempting approach might be to utilize the file() command in GLOB mode, which can gather all files from subdirectories and store them in a variable. We could pass it as an argument to the target declaration and not bother with the file list again:
+随着解决方案的扩展，每个目标的文件列表也会增长。这可能导致一些相当长的add\_…()命令。我们如何处理这种情况？一个吸引人的方法可能是使用GLOB模式的file()命令，它可以收集子目录中的所有文件并将它们存储在变量中。我们可以将其作为目标声明的参数传递，不再担心文件列表：
 
 \begin{cmake}
 file(GLOB helloworld_SRC "*.h" "*.cpp")
 add_executable(helloworld ${helloworld_SRC})
 \end{cmake}
 
-However, this method is not recommended. Let’s understand why. CMake generates buildsystems based on the changes in the listfiles. So, if no changes are detected, your builds might fail without any warning (a developer’s nightmare). Besides, omitting all sources in the target declaration can disrupt code inspection in IDEs like CLion, which knows how to parse certain CMake commands to understand your project.
+然而，这种方法并不推荐。让我们理解为什么。CMake根据列表文件的变化生成构建系统。因此，如果没有检测到任何变化，你的构建可能会在没有警告的情况下失败（这是开发者的噩梦）。此外，省略目标声明中的所有源文件可能会干扰像CLion这样的IDE中的代码检查，因为它知道如何解析某些CMake命令以理解你的项目。
 
-Using variables in target declarations is not advisable for another reason: it creates a layer of indirection, causing the developers to have to unpack the target definition when reading the project. To follow this advice, we’re faced with another question: how do we conditionally add source files? This is a common scenario when dealing with platform-specific implementation files, such as gui\_linux.cpp and gui\_windows.cpp.
+在目标声明中使用变量并不建议的另一个原因是：它创建了一个间接层，导致开发者在阅读项目时必须解包目标定义。遵循这一建议，我们面临另一个问题：我们如何条件性地添加源文件？这是一个常见的场景，当处理特定于平台的实现文件时，如gui\_linux.cpp和gui\_windows.cpp。
 
-The target\_sources() command allows us to append source files to a previously created target:
+target\_sources()命令允许我们将源文件附加到已创建的目标：
 
 \filename{ch07/01-sources/CMakeLists�txt}
 
@@ -198,9 +198,9 @@ supported.")
 endif()
 \end{cmake}
 
-This way, each platform gets its own set of compatible files. That’s great, but what about long lists of sources? Well, we’ll just have to accept that some things aren’t perfect just yet and keep adding them manually. If you are struggling with a really long list, you’re probably doing something wrong with the structure of your project: perhaps it could use partitioning sources into libraries.
+这样，每个平台都获得了自己的兼容文件集。但长列表的源文件怎么办？好吧，我们只能接受有些事情还不完美，并继续手动添加。如果你在处理一个非常长的列表，你可能会发现你的项目结构有些问题：也许它可以将源文件划分为库。
 
-Now that we’ve covered the essentials of compilation, let’s delve into the first step – preprocessing. Like all things in computer science, the devil is in the details.
+既然我们已经了解了编译的基本知识，让我们深入探讨第一步——预处理。就像计算机科学中的所有事情一样，细节是魔鬼。
 
 
 

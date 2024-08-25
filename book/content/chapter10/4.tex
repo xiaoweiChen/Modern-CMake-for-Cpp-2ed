@@ -1,58 +1,58 @@
 
-According to a blog post on Kitware’s page (see the Further reading section), CMake supports modules as early as version 3.25. Despite the fact that 3.28 makes the feature officially supported, this isn’t the only piece of the puzzle that we have to get right to enjoy the convenience of modules.
+根据Kitware网站上的博客文章（见“进一步阅读”部分），CMake最早在3.25版本就支持模块功能。尽管3.28版本正式支持此功能，但这并不是我们要享受模块便利性的唯一拼图。
 
-The next requirement focuses on the buildsystem: it needs to support dynamic dependencies. As of now, you have only two choices:
+下一个要求集中在构建系统上：它需要支持动态依赖。截至目前，你只有以下两个选择：
 
 \begin{itemize}
 \item
-Ninja 1.11 and newer (Ninja and Ninja Multi-Config)
+Ninja 1.11及更新版本（Ninja和Ninja Multi-Config）
 
 \item
-Visual Studio 17 2022 and newer
+Visual Studio 17 2022及更新版本
 \end{itemize}
 
-Similarly, your compiler needs to produce files that map source dependencies for CMake in a specific format. This format is described in a paper written by Kitware developers known as p1589r5. This paper has been submitted to all major compilers for implementation. Currently, only three compilers have managed to implement the required format:
+同样，你的编译器需要以特定格式生成映射源依赖的文件，以供CMake使用。这种格式在Kitware开发者撰写的一篇论文中有描述，这篇论文被称为p1589r5。该论文已提交给所有主流编译器以供实施。目前，只有以下三种编译器实现了所需的格式：
 
 \begin{itemize}
 \item
 Clang 16
 
 \item
-MSVC in Visual Studio 2022 17.4 (19.34)
+Visual Studio 2022 17.4 (19.34)中的MSVC
 
 \item
-GCC 14 (for the in-development branch, after 2023-09-20) and newer
+GCC 14（针对开发分支，2023年9月20日之后）及更新版本
 \end{itemize}
 
-Assuming you have all the necessary tools in your environment (you may use the Docker image we’re providing for this book), and your CMake project is ready for building, all that remains is to configure CMake to use the required toolchain. As you may recall from the first chapter, you can select the buildsystem generator using the -G command-line argument:
+假设你的环境中有所有必要的工具（你可以使用我们为本书提供的Docker镜像），并且你的CMake项目已准备好构建，剩下的就是配置CMake以使用所需的工具链。你可能还记得，从第一章中，你可以使用-G命令行参数选择构建系统生成器：
 
 \begin{shell}
 cmake -B <build tree> -S <source tree> -G "Ninja"
 \end{shell}
 
-This command will configure the project to use the Ninja buildsystem. The next step is to set the compiler. If your default compiler doesn’t support the modules and you have another one installed to try things out, you can do this by defining the global variable CMAKE\_CXX\_COMPILER like this:
+此命令将配置项目以使用Ninja构建系统。下一步是设置编译器。如果你的默认编译器不支持模块，并且你已安装了另一个编译器来尝试，你可以通过定义全局变量CMAKE\_CXX\_COMPILER来实现，如下所示：
 
 \begin{shell}
 cmake -B <build tree> -S <source tree> -G "Ninja" -D CMAKE_CXX_ COMPILER=clang++-18
 \end{shell}
 
-We chose Clang 18 in our example because it’s the latest version available at the time of writing (bundled in the Docker image). After successfully configuring (you might see some warnings about experimental features), you need to build the project:
+我们在这个例子中选择Clang 18，因为它是撰写本文时（包含在Docker镜像中）可用的最新版本。成功配置后（你可能会看到一些关于实验性功能的警告），你需要构建项目：
 
 \begin{shell}
 cmake --build <build tree>
 \end{shell}
 
-As always, be sure to replace the placeholders <build tree> and <source tree> with appropriate paths. If everything goes smoothly, you can run your program and observe the module function working as expected:
+和往常一样，确保用适当的路径替换占位符<build tree>和<source tree>。如果一切顺利，你可以运行你的程序，观察模块功能按预期工作：
 
 \begin{shell}
 $ ./main
 Addition 2 + 2 = 4
 \end{shell}
 
-There you have it, C++20 modules working in practice.
+就这样，C++20模块在实际中得以应用。
 
 \begin{myNotic}{Note}
-The Further reading section includes a blog post from Kitware and a proposal on the source dependency format for C++ compilers, providing more insights into the implementation and usage of C++20 modules.
+“进一步阅读”部分包括来自Kitware的博客文章和关于C++编译器的源依赖格式的提案，提供了更多关于C++20模块的实施和使用的深入见解。
 \end{myNotic}
 
 

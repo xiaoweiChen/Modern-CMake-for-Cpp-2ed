@@ -1,105 +1,106 @@
 
 
-Determining whether an expression should be expanded is supported with Boolean logic in generator expressions. While this is a great feature, its syntax can be inconsistent and difficult to read due to legacy reasons. It’s available in two forms. The first form supports both happy and sad paths:
+确定是否应该展开表达式，在生成器表达式中通过布尔逻辑来支持。虽然这是一个很棒的功能，但由于历史原因，其语法可能不一致且难以阅读。它有两种形式。第一种形式支持正面和负面路径：
 
 \begin{shell}
 $<IF:condition,true_string,false_string>
 \end{shell}
 
-The IF expression relies on nesting to be useful: you can replace any of the arguments with another expression and produce quite complex evaluations (you can even nest one IF condition in another). This form requires exactly three arguments, so we can’t omit anything. Our best option to skip a value in case of an unmet condition is the following:
+IF 表达式依赖于嵌套才能发挥作用：你可以将任何一个参数替换为另一个表达式，并产生相当复杂的评估（你甚至可以在一个 IF 条件中嵌套另一个）。这种形式需要正好三个参数，所以我们不能省略任何东西。在条件不满足时跳过值的最佳选项是以下这样：
 
 \begin{shell}
 $<IF:condition,true_string,>
 \end{shell}
 
-There’s a shorthand version that allows you to skip the IF keyword and the comma:
+有一个简写版本允许你省略 IF 关键字和逗号：
 
 \begin{shell}
 $<condition:true_string>
 \end{shell}
 
-As you can see, it breaks the convention of providing the EXPRESSION name as the first token. I assume that the intention here was to shorten the expression and avoid typing those precious few characters, but the outcome can be really hard to rationalize. Here’s one example from the CMake documentation:
+正如你所看到的，它打破了将表达式名称作为第一个标记提供的惯例。我猜这里的意图是为了缩短表达式并避免输入那些宝贵的几个字符，但结果可能真的很难理性化。以下是从 CMake 文档中取出的一例：
 
 \begin{shell}
 $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CXX_COMPILER_ID:AppleClang,Clang>>:COMPILING_CXX_WITH_CLANG>
 \end{shell}
 
-This expression returns COMPILING\_CXX\_WITH\_CLANG only for C++ code compiled with one of the Clang compilers. (it returns an empty string in all other cases). I wish the syntax was aligned with conditions for the regular IF command, but sadly that’s not the case. Now, you can recognize the second form if you see it somewhere, but you should avoid it in your own projects for the sake of readability.
+这个表达式只有在用 Clang 编译器编译的 C++ 代码中才返回 COMPILING\_CXX\_WITH\_CLANG（在其他所有情况下它返回一个空字符串）。我希望这个语法能够与常规 IF 命令的条件保持一致，但遗憾的是情况并非如此。现在，如果你在某个地方看到了第二种形式，你可以识别它，但为了可读性，你应该避免在自己的项目中使用它。
 
-\mySubsubsection{6.4.1.}{Evaluating to Boolean}
+\mySubsubsection{6.4.1.}{评估为布尔值}
 
-Generator expressions are evaluated to one of two types – Boolean or string. Boolean is represented by 1 (true) and 0 (false). There are no dedicated numerical types; everything that isn’t a Boolean is just a string.
+生成器表达式被评估为两种类型之一——布尔值或字符串。布尔值用 1（真）和 0（假）表示。没有专用的数值类型；除了布尔值之外的任何东西都只是字符串。
 
-It’s important to remember that nested expressions passed as conditions in conditional expressions are explicitly required to evaluate to Boolean.
+需要记住的是，作为条件表达式中的条件传递的嵌套表达式明确要求评估为布尔值。
 
-Boolean types can be converted to strings implicitly, but you’ll need to use an explicit BOOL operator (explained ahead) to do the opposite.
+布尔类型可以隐式转换为字符串，但你需要使用明确的 BOOL 运算符（稍后解释）来做相反的操作。
 
-There are three categories of expressions that get evaluated to Boolean: logical operators, comparison expressions, and queries. Let’s take a quick look at these types.
+有三类表达式被评估为布尔值：逻辑运算符、比较表达式和查询。让我们快速看一下这些类型。
 
-\mySamllsection{Logical operators}
+\mySamllsection{逻辑运算符}
 
-There are four logical operators:
-
-\begin{itemize}
-\item
-\$<NOT:arg>: This negates the Boolean argument.
-
-\item
-\$<AND:arg1,arg2,arg3...>: This returns true if all the arguments are true.
-
-\item
-\$<OR:arg1,arg2,arg3...>: This returns true if any of the arguments is true.
-
-\item
-\$<BOOL:string\_arg>: This converts arguments from a string to a Boolean type.
-\end{itemize}
-
-String conversion with \$<BOOL>will evaluate to Boolean true (1) if none of these conditions are met:
+有四个逻辑运算符：
 
 \begin{itemize}
 \item
-The string is empty.
+\$<NOT:arg>: 这否定布尔参数。
 
 \item
-The string is a case-insensitive equivalent of 0, FALSE, OFF, N, NO, IGNORE, or NOTFOUND.
+\$<AND:arg1,arg2,arg3...>: 如果所有参数都为真，则返回真。
 
 \item
-The string ends in the -NOTFOUND suffix (case-sensitive).
+\$<OR:arg1,arg2,arg3...>: 如果任一参数为真，则返回真。
+
+\item
+\$<BOOL:string\_arg>: 这将字符串参数从字符串转换为布尔类型。
 \end{itemize}
 
-\mySamllsection{Comparisons}
-
-Comparisons will evaluate to 1 if their condition is met and 0 otherwise. Here are a few of the most common operations that you might find useful:
+使用\$<BOOL>的字符串转换在以下条件都不满足时将评估为布尔真（1）：
 
 \begin{itemize}
 \item
-\$<STREQUAL:arg1,arg2>: This compares strings in a case-sensitive fashion.
+字符串为空。
 
 \item
-\$<EQUAL:arg1,arg2>: This converts a string to a number and compares equality.
+字符串是 0、FALSE、OFF、N、NO、IGNORE 或 NOTFOUND 的不区分大小写的等价物。
 
 \item
-\$<IN\_LIST:arg,list>: This checks whether the arg element is in the list list (case sensitive).
-
-\item
-\$<VERSION\_EQUAL:v1,v2>, \$<VERSION\_LESS:v1,v2>, \$<VERSION\_GREATER:v1,v2>, \$<VERSION\_LESS\_EQUAL:v1,v2>, and \$<VERSION\_GREATER\_EQUAL:v1,v2> compare versions in a component-wise fashion.
-
-\item
-\$<PATH\_EQUAL:path1,path2>: This compares the lexical representations of two paths without any normalization (since CMake 3.24).
+字符串以 -NOTFOUND 后缀结尾（区分大小写）。
 \end{itemize}
 
-\mySamllsection{Queries}
+\mySamllsection{比较}
 
-Queries simply return the Boolean value directly from a variable, or as a result of an operation.
+如果满足条件，比较将评估为 1，否则为 0。以下是一些你可能觉得有用的常见操作：
 
-One of the simplest queries is:
+\begin{itemize}
+\item
+\$<STREQUAL:arg1,arg2>: 这以区分大小写的方式比较字符串。
+
+\item
+\$<EQUAL:arg1,arg2>: 这将字符串转换为数字并比较相等性。
+
+\item
+\$<IN\_LIST:arg,list>: 这检查 arg 元素是否在 list 列表中（区分大小写）。
+
+\item
+\$<VERSION\_EQUAL:v1,v2>, \$<VERSION\_LESS:v1,v2>, \$<VERSION\_GREATER:v1,v2>, \$<VERSION\_LESS\_EQUAL:v1,v2> 和 \$<VERSION\_GREATER\_EQUAL:v1,v2>以逐组件的方式比较版本。
+
+\item
+\$<PATH\_EQUAL:path1,path2>: 这比较两个路径的词法表示，不进行任何标准化（自从 CMake 3.24 起）。
+\end{itemize}
+
+\mySamllsection{查询}
+
+查询直接从变量返回布尔值，或者作为操作的结果。
+
+最简单的查询之一是：
 
 \begin{shell}
 $<TARGET_EXISTS:arg>
 \end{shell}
 
-As you might guess, it returns true if the target was defined in the configuration stage.
+你可能已经猜到了，如果目标在配置阶段被定义，它将返回真。
 
-Now, you know how to apply conditional expansion, use logical operators, comparison, and basic queries to evaluate to Boolean. That is useful on its own, but generator expressions have much more to offer, especially in the context of queries: they can be used in the IF conditional expansion, or on their own as arguments to commands. It’s time to introduce them in an appropriate context.
+现在，你知道如何应用条件展开，使用逻辑运算符、比较和基本查询来评估为布尔值。这本身就有用，但生成器表达式还有更多功能，特别是在查询的上下文中：它们可以在 IF 条件展开中使用，或者作为参数独立地传递给命令。是时候在适当的上下文中介绍它们了。
+
 
 

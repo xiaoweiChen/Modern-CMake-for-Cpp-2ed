@@ -1,59 +1,59 @@
 
-To use generator expressions, we’ll need to add them to a CMake listfile through a command that supports generator expression evaluation. Most of the target-specific commands do, and there are plenty of others (review the official documentation of a particular command to learn more).
+要使用生成器表达式，我们需要将它们添加到支持生成器表达式评估的CMake列表文件中通过命令。大多数特定于目标的命令都支持，还有许多其他命令（查看特定命令的官方文档以了解更多信息）。
 
-A command that is often used with generator exception is target\_compile\_definitions(). To use a generator expression, we’ll need to provide it as a command argument like so:
+一个经常与生成器异常一起使用的命令是target\_compile\_definitions()。要使用生成器表达式，我们需要将其作为命令参数提供，如下所示：
 
 \begin{cmake}
 target_compile_definitions(foo PUBLIC BAR=$<TARGET_FILE:baz>)
 \end{cmake}
 
-This command adds a -D definition flag to the compiler’s arguments (ignore PUBLIC for now) that sets the BAR preprocessor definition to the path at which the binary artifact of the foo target will be produced. This works because the generator expression is stored in the current form in a variable. The expansion is effectively postponed until the generation stage when many things are fully configured and known.
+这个命令向编译器的参数中添加了一个-D定义标志（现在先忽略PUBLIC），将BAR预处理器定义设置为foo目标产生的二进制工件的路径。这样做是因为生成器表达式以当前形式存储在变量中。这种扩展实际上被推迟到了生成阶段，那时许多事情都已经完全配置并已知。
 
-How is the generator expression formed?
+生成器表达式是如何形成的呢？
 
-\myGraphic{0.5}{content/chapter6/images/1.png}{Figure 6.1: The syntax of a generator expression}
+\myGraphic{0.5}{content/chapter6/images/1.png}{图6.1：生成器表达式的语法}
 
-As you can see in Figure 6.1, the structure seems fairly simple and readable:
+如图6.1所示，结构看起来相当简单且易读：
 
 \begin{itemize}
 \item
-Open with a dollar and a bracket (\$<).
+以美元符号和左括号（\$<）开始。
 
 \item
-Add the EXPRESSION name.
+添加EXPRESSION名称。
 
 \item
-If an expression requires arguments, add a colon (:) and provide the arg1, arg2 … argN values, separated with a comma (,).
+如果表达式需要参数，添加冒号（:）并提供arg1, arg2 … argN值，用逗号（,）分隔。
 
 \item
-Close the expression with >.
+以大于号（>）结束表达式。
 \end{itemize}
 
-There are expressions that do not require any arguments, such as \$<PLATFORM\_ID>.
+有些表达式不需要任何参数，例如\$<PLATFORM\_ID>。
 
-It’s important to note that unless explicitly stated otherwise, expressions are typically evaluated in the context of the target using the expression. This association is inferred from the command in which the expression is used. In the previous example, we saw how target\_compile\_definitions() provides foo as the target it operates on. The target-specific generator expressions used in that command will therefore implicitly use foo. Do note, however, that the generator expression used in the example, \$<TARGET\_FILE>, requires the target attribute as the context to operate on. There are other generator expressions that don’t accept targets as arguments (like \$<COMPILE\_LANGUAGE>), and will implicitly use the target of the enclosing command. These will be discussed in more detail later.
+需要注意的是，除非明确指出，否则表达式通常是在使用表达式的目标上下文中进行评估的。这种关联是从使用表达式的命令中推断出来的。在前面的例子中，我们看到了target\_compile\_definitions()是如何提供foo作为其操作的目标的。因此，在该命令中使用的特定于目标的生成器表达式将隐式地使用foo。但是请注意，示例中使用的生成器表达式\$<TARGET\_FILE>需要目标属性作为其操作的上下文。还有一些生成器表达式不接受目标作为参数（如\$<COMPILE\_LANGUAGE>），它们将隐式地使用封闭命令的目标。这些将在后面详细讨论。
 
-Generator expressions can quickly become very confusing and complicated when using their more advanced features, so it’s important to understand their specifics beforehand.
+当使用生成器表达式的更高级功能时，它们可能会很快变得非常混乱和复杂，因此事先了解它们的细节非常重要。
 
-\mySubsubsection{6.3.1.}{Nesting}
+\mySubsubsection{6.3.1.}{嵌套}
 
-Let’s start with the ability to pass a generator expression as an argument to another generator expression or, in other words, generator expression nesting:
+让我们从将生成器表达式作为参数传递给另一个生成器表达式的能力开始，换句话说，就是生成器表达式的嵌套：
 
 \begin{shell}
 $<UPPER_CASE:$<PLATFORM_ID>>
 \end{shell}
 
-This isn’t a very complex example, but it’s easy to imagine what happens when we increase nesting levels and work with commands using multiple arguments.
+这个例子并不复杂，但很容易想象当我们增加嵌套级别并在使用多个参数的命令中工作时会发生什么。
 
-To complicate matters even further, it’s possible to add a regular variable expansion to the mix:
+为了进一步复杂化，可以将常规变量展开混合进去：
 
 \begin{shell}
 $<UPPER_CASE:${my_variable}>
 \end{shell}
 
-The my\_variable variable will be expanded first, at the configuration stage. Subsequently, the generation expression will be expanded at the generation stage. There are some rare uses for this feature, but I strongly recommend avoiding it: generator expressions provide virtually all necessary functions. Mixing regular variables into these expressions adds a layer of indirection that is hard to debug. Additionally, information collected in the config stage will often be outdated, as users will override values used in generator expressions through command-line parameters at the build or installation stage.
+变量my\_variable将首先在配置阶段展开。随后，生成器表达式将在生成阶段展开。这个特性有一些罕见的使用场景，但我强烈建议避免使用它：生成器表达式提供了几乎所有必要的功能。将这些常规变量混合到表达式中增加了一层难以调试的间接性。此外，在配置阶段收集的信息通常会过时，因为用户会在构建或安装阶段通过命令行参数覆盖生成器表达式中使用的值。
 
-Having covered the syntax, let’s move on to discuss the fundamental mechanisms available in generator expressions.
+了解了语法之后，让我们继续讨论生成器表达式中的基本机制。
 
 
 

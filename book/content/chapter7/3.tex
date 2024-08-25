@@ -1,25 +1,24 @@
 
-The preprocessor plays a huge role in the process of building. Maybe this is a little surprising, considering its functionality appears rather straightforward and limited. In the following sections, we’ll cover providing paths to included files and using the preprocessor definitions. We’ll also explain how we can use CMake to configure included headers.
+预处理器在构建过程中扮演着重要角色。考虑到其功能看起来相当直接和有限，这可能有点令人惊讶。在以下各节中，我们将介绍提供包含文件的路径以及使用预处理器定义。我们还将解释如何使用CMake来配置包含的头文件。
 
-\mySubsubsection{7.3.1.}{Providing paths to included files}
+\mySubsubsection{7.3.1.}{提供包含文件的路径}
 
-The most basic feature of the preprocessor is the ability to include .h and .hpp header files with the \#include directive, which exists in two forms:
+预处理器最基本的特性是能够使用\#include指令包含.h和.hpp头文件，它有两种形式：
 
 \begin{itemize}
 \item
-Angle-bracket form: \#include <path-spec>
+尖括号形式： \#include <path-spec>
 
 \item
-Quoted form: \#include "path-spec"
+引号形式: \#include "path-spec"
 \end{itemize}
 
-As we know, the preprocessor will replace these directives with the contents of the file specified in path-spec. Finding these files may be a challenge. Which directories should be searched, and in what order? Unfortunately, the C++ standard doesn’t specify that exactly. We have to check the manual for the compiler in use.
+我们知道，预处理器将用路径规范中指定的文件内容替换这些指令。找到这些文件可能是一个挑战。应该搜索哪些目录，以及按照什么顺序？遗憾的是，C++标准并没有确切规定这一点。我们必须查阅正在使用的编译器的手册。
 
-Typically, the angle-bracket form will check standard include directories, which include the directories where standard C++ library and standard C library header files are stored in the system.
+通常，尖括号形式将检查标准包含目录，这些目录包括存储在系统中的标准C++库和标准C库头文件的目录。
 
-The quoted form starts by searching for the included file in the directory of the current file and then checks the directories for the angle-bracket form.
-
-CMake provides a command to manipulate paths being searched for the included files:
+引号形式首先在当前文件的目录中搜索包含的文件，然后检查尖括号形式的目录。
+CMake提供了一个命令来操作搜索包含文件的路径
 
 \begin{shell}
 target_include_directories(<target> [SYSTEM] [AFTER|BEFORE]
@@ -28,15 +27,15 @@ target_include_directories(<target> [SYSTEM] [AFTER|BEFORE]
 ...])
 \end{shell}
 
-This allows us to add custom paths that we want the compiler to scan. CMake will add them to compiler invocations in the generated buildsystem. They will be provided with a flag appropriate for the specific compiler (usually, it’s -I).
+这允许我们添加自定义路径，以便编译器扫描。CMake将它们添加到生成的构建系统中的编译器调用中。它们将使用特定编译器的适当标志提供（通常是-I）。
 
-The target\_include\_directories() command modifies the target’s INCLUDE\_DIRECTORIES property by appending or prepending directories to it, based on whether the AFTER or BEFORE keyword is used. However, it’s still up to the compiler to decide whether the directories provided here will be checked before or after the default ones (usually, it’s before).
+target\_include\_directories()命令通过追加或预置目录来修改目标的INCLUDE\_DIRECTORIES属性，具体取决于是否使用了AFTER或BEFORE关键字。然而，由编译器决定是否在默认目录之前或之后检查这里提供的目录（通常是之前）。
 
-The SYSTEM keyword signifies to the compiler that the given directories should be treated as standard system directories (to be used with the angle-bracket form). For many compilers, these directories are passed with the -isystem flag.
+SYSTEM关键字告诉编译器给定的目录应该被视为标准系统目录（与尖括号形式一起使用）。对于许多编译器来说，这些目录是通过-isystem标志传递的。
 
-\mySubsubsection{7.3.2.}{Preprocessor definitions}
+\mySubsubsection{7.3.2.}{预处理器定义}
 
-Recall the preprocessor’s \#define and \#if, \#elif, and \#endif directives mentioned earlier when discussing the stages of compilation. Let’s examine the following example:
+回想一下前面在讨论编译阶段时提到的预处理器的\#define和\#if、\#elif，以及\#endif指令。让我们检查以下示例：
 
 \filename{ch07/02-definitions/definitions.cpp}
 
@@ -52,23 +51,23 @@ int main() {
 }
 \end{cpp}
 
-As it stands, this example accomplishes nothing, as neither ABC nor DEF is defined (DEF would default to 0 in this example). We can easily change that by adding two lines at the top of this code:
+目前，这个示例什么也没完成，因为ABC和DEF都没有定义（在这个例子中，DEF将默认为0）。我们可以通过在此代码顶部添加两行来轻松更改：
 
 \begin{cpp}
 #define ABC
 #define DEF 8
 \end{cpp}
 
-After compiling and executing this code, we can see both messages in the console:
+编译并执行此代码后，我们可以在控制台看到两条消息：
 
 \begin{shell}
 ABC is defined!
 DEF is greater than 5!
 \end{shell}
 
-This might seem simple enough, but what if we want to condition these sections based on external factors, such as an OS, architecture, or something else? The good news is that you can pass values from CMake to a C++ compiler, and it’s not complicated at all.
+这可能看起来足够简单，但是如果我们想基于外部因素（如操作系统、架构或其他因素）来条件这些部分呢？好消息是，你可以将值从CMake传递给C++编译器，而且这并不复杂。
 
-The target\_compile\_definitions() command will suffice:
+target\_compile\_definitions()命令就足够了：
 
 \filename{ch07/02-definitions/CMakeLists.txt}
 
@@ -78,25 +77,25 @@ add_executable(defined definitions.cpp)
 target_compile_definitions(defined PRIVATE ABC "DEF=${VAR}")
 \end{cmake}
 
-The preceding code will behave exactly like the two \#define statements, but we have the flexibility to use CMake’s variables and generator expressions, and we can place the command in a conditional block.
+前面的代码将表现得与两个\#define语句完全一样，但我们有使用CMake的变量和生成器表达式的灵活性，并且可以将命令放在条件块中。
 
-Traditionally, these definitions are passed to the compiler with the -D flag (for example, -DFOO=1) and some programmers continue to use this flag in this command:
+传统上，这些定义是通过-D标志（例如，-DFOO=1）传递给编译器的，一些程序员继续在这个命令中使用这个标志：
 
 \begin{cmake}
 target_compile_definitions(hello PRIVATE -DFOO)
 \end{cmake}
 
-CMake recognizes this and will automatically remove any leading -D flags. It will also disregard empty strings, so the following command is perfectly valid:
+CMake识别这一点，并将自动移除任何前导的-D标志。它还会忽略空字符串，所以以下命令是完全有效的：
 
 \begin{cmake}
 target_compile_definitions(hello PRIVATE -D FOO)
 \end{cmake}
 
-In this case, -D is a separate argument that becomes an empty string after removal and is subsequently ignored, thereby ensuring correct behavior.
+在这种情况下，-D是一个单独的参数，移除后变成一个空字符串，然后被忽略，从而确保正确的行为。
 
-\mySamllsection{Avoid accessing private class fields in your unit tests}
+\mySamllsection{避免在单元测试中访问私有类字段}
 
-Some online resources recommend using a combination of specific -D definitions with \#ifdef/ ifndef directives for the purposes of unit testing. The most straightforward application of this approach is to enclose the public access specifier in conditional inclusions, effectively making all fields public when UNIT\_TEST is defined (class fields are private by default):
+一些在线资源建议使用特定的-D定义与\#ifdef/ifndef指令结合用于单元测试的目的。这种方法最直接的应用是将公共访问说明符包含在条件包含中，当定义了UNIT\_TEST时，有效地使所有字段变为公共的（默认情况下，类字段是私有的）：
 
 \begin{cpp}
 class X {
@@ -107,11 +106,11 @@ class X {
 }
 \end{cpp}
 
-While this technique offers convenience (allowing tests to directly access private members), it does not result in clean code. Ideally, unit tests should focus on verifying the functionality of methods within the public interface, treating the underlying implementation as a black box. Consequently, I suggest using this approach only as a last resort.
+虽然这种方法提供了便利（允许测试直接访问私有成员），但它并没有产生干净的代码。理想情况下，单元测试应该专注于验证公共接口内的方法的功能性，将底层实现视为一个黑盒。因此，我建议只在万不得已的情况下使用这种方法。
 
-\mySamllsection{Using git commit to track a compiled version}
+\mySamllsection{使用git提交跟踪编译版本}
 
-Let’s think about use cases that benefit from knowing details about the environment or filesystem. A prime example in professional settings might involve passing the revision or commit SHA used to build the binary. This could be achieved like so:
+让我们思考一下哪些用例需要了解关于环境或文件系统的详细信息。在专业环境中，一个典型的例子可能涉及传递用于构建二进制文件的修订版本或提交SHA。可以这样实现：
 
 \filename{ch07/03-git/CMakeLists.txt}
 
@@ -123,7 +122,7 @@ target_compile_definitions(print_commit
                            PRIVATE "SHA=${SHA}")
 \end{cmake}
 
-The SHA could then be utilized in our application as follows:
+然后我们可以在应用程序中使用SHA，如下所示：
 
 \filename{ch07/03-git/print\_commit.cpp}
 
@@ -140,15 +139,15 @@ int main()
 }
 \end{cpp}
 
-Of course, the preceding code requires the user to have Git installed and accessible in their PATH. This feature is particularly useful when the programs running on production servers are the result of a continuous integration/deployment pipeline. If there’s an issue with our software, we can quickly check which exact Git commit was used to build the faulty product.
+当然，前面的代码要求用户安装了Git并将其添加到PATH中。当运行在生产服务器上的程序是持续集成/部署管道的结果时，这个功能尤其有用。如果我们的软件出现问题，我们可以快速检查使用了哪个确切的Git提交来构建有故障的产品。
 
-Keeping track of an exact commit is extremely beneficial for debugging purposes. It’s straightforward to pass a single variable to C++ code, but how would we handle the scenario where dozens of variables need to be passed to our headers?
+跟踪确切的提交对于调试目的非常有用。将单个变量传递给C++代码很简单，但是如果我们需要将数十个变量传递给我们的头文件，我们该如何处理呢？
 
-\mySubsubsection{7.3.3.}{Configuring the headers}
+\mySubsubsection{7.3.3.}{配置头文件}
 
-Passing definitions through target\_compile\_definitions() can become tedious with numerous variables. Wouldn’t it be easier to provide a header file with placeholders referencing these variables, and allow CMake to fill them in? Absolutely!
+通过target\_compile\_definitions()传递定义在变量众多时会变得繁琐。提供带有引用这些变量的占位符的头文件，并允许CMake填充它们，这样不是更容易吗？当然可以！
 
-CMake’s configure\_file(<input> <output>) command enables you to generate new files from templates, like the following example:
+CMake的configure\_file(<input> <output>)命令使你能够从模板生成新文件，如下例所示：
 
 \filename{ch07/04-configure/configure.h.in}
 
@@ -159,7 +158,7 @@ CMake’s configure\_file(<input> <output>) command enables you to generate new 
 #cmakedefine FOO_UNDEFINED "@FOO_UNDEFINED@"
 \end{cmake}
 
-You can utilize this command as follows:
+你可以按以下方式使用这个命令：
 
 \filename{ch07/04-configure/CMakeLists.txt}
 
@@ -173,7 +172,7 @@ target_include_directories(configure PRIVATE
                            ${CMAKE_CURRENT_BINARY_DIR})
 \end{cmake}
 
-CMake then generates an output file like so:
+然后CMake生成如下输出文件：
 
 \filename{ch07/04-configure/<build\_tree>/configured/configure.h}
 
@@ -184,9 +183,9 @@ CMake then generates an output file like so:
 /* #undef FOO_UNDEFINED */
 \end{cpp}
 
-As you can see, the @VAR@ and \$\{VAR\} variable placeholders were substituted with the values from the CMake listfile. Additionally, \#cmakedefine was replaced with \#define for defined variables and /* \#undef VAR */ for undefined ones. If you require an explicit \#define 1 or \#define 0 for \#if blocks, use \#cmakedefine01 instead.
+如你所见，@VAR@和\$\{VAR\}变量占位符被CMake列表文件中的值替换了。此外，对于已定义的变量，\#cmakedefine被替换为\#define，对于未定义的变量，则替换为/* \#undef VAR */。如果你需要为\#if块显式地\#define 1或\#define 0，请使用\#cmakedefine01。
 
-You can incorporate this configured header in your application by simply including it in your implementation file:
+你可以通过简单地在实现文件中包含这个配置好的头文件，将其合并到你的应用程序中：
 
 \filename{ch07/04-configure/configure.cpp}
 
@@ -210,7 +209,7 @@ int main()
 }
 \end{cpp}
 
-By adding the binary tree to our include paths with the target\_include\_directories() command, we can compile the example and receive output populated from CMake:
+通过使用target\_include\_directories()命令将二进制树添加到我们的包含路径中，我们可以编译示例并从CMake接收填充的输出：
 
 \begin{shell}
 FOO_ENABLE: ON
@@ -219,9 +218,9 @@ FOO_STRING2: "def"
 FOO_UNDEFINED: FOO_UNDEFINED
 \end{shell}
 
-The configure\_file() command also includes a range of formatting and file-permission options, which we won’t delve into here due to length constraints. If you’re interested, you can refer to the online documentation for further details (see the Further reading section in this chapter).
+configure\_file()命令还包括一系列的格式化和文件权限选项，但由于篇幅限制，我们在这里不深入讨论。如果你感兴趣，可以参考在线文档以获取更多详细信息（请参阅本章的“进一步阅读”部分）。
 
-Having prepared a complete compilation of our headers and source files, let’s discuss how the output code is shaped during the subsequent steps. While we don’t have direct influence over the linguistic analysis or assembling (as these steps adhere to strict standards), we can manipulate the configuration of the optimizer. Let’s explore how this can impact the end result.
+在准备好我们的头文件和源文件的完整编译之后，让我们讨论在后续步骤中输出代码是如何形成的。虽然我们无法直接控制语言分析或组装（因为这些步骤遵循严格的标准），但我们可以操纵优化器的配置。让我们探讨这如何影响最终结果。
 
 
 

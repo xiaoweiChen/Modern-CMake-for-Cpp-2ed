@@ -1,45 +1,45 @@
-You can find the code files that are present in this chapter on GitHub at \url{https://github.com/PacktPublishing/Modern-CMake-for-Cpp-2E/tree/main/examples/ch10}.
+您可以在GitHub上的\url{https://github.com/PacktPublishing/Modern-CMake-for-Cpp-2E/tree/main/examples/ch10}找到本章中出现的代码文件。
 
-The following toolchain utilities are required to try out the examples in this chapter:
+尝试本章中的示例需要以下工具链实用程序：
 
 
 \begin{itemize}
 \item
-CMake 3.26 or newer (3.28 recommended)
+CMake 3.26或更新版本（推荐3.28）
 
 \item
-Any of the supported generators:
+以下支持的生成器：
 \begin{itemize}
 \item
-Ninja 1.11 and newer (Ninja and Ninja Multi-Config)
+Ninja 1.11及更新版本（Ninja和Ninja Multi-Config）
 
 \item
-Visual Studio 17 2022 and newer
+Visual Studio 17 2022及更新版本
 \end{itemize}
 
 \item
-Any of the supported compilers:
+以下支持的编译器：
 \begin{itemize}
 \item
-MSVC toolset 14.34 and newer
+MSVC工具集14.34及更新版本
 
 \item
-Clang 16 and newer
+Clang 16及更新版本
 
 \item
-GCC 14 (for the in-development branch, after 2023-09-20) and newer
+GCC 14（针对2023年9月20日之后的开发分支）及更新版本
 \end{itemize}
 \end{itemize}
 
-If you’re familiar with Docker, you can use a fully tooled image introduced in the Installing CMake on different platforms section from Chapter 1, First Steps with CMake.
+如果您熟悉Docker，可以使用第1章“First Steps with CMake”中的“在不同平台上安装CMake”部分引入的全套工具镜像。
 
-To build the examples provided in this chapter, use the following command:
+要构建本章提供的示例，请使用以下命令：
 
 \begin{shell}
 cmake -B <build tree> -S <source tree> -G "Ninja" -D CMAKE_CXX_COMPILER=clang++-18 && cmake --build <build tree>
 \end{shell}
 
-Be sure to replace the placeholders <build tree> and <source tree> with appropriate paths.
+请确保将占位符<build tree>和<source tree>替换为适当的路径。
 
 
 

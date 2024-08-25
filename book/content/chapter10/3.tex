@@ -1,19 +1,19 @@
 
-This book mainly discusses CMake 3.26, but it’s worth noting that CMake frequently updates, and version 3.28 was released just before this chapter went to press. If you’re using this version or newer, you can access the latest features by setting the cmake\_minimum\_required() command to VERSION 3.28.0.
+本书主要讨论CMake 3.26，但值得注意的是CMake经常更新，版本3.28就在本章付印前发布了。如果您使用的是这个版本或更新的版本，您可以通过将cmake\_minimum\_required()命令设置为VERSION 3.28.0来访问最新功能。
 
-On the other hand, if you need to stick with an older version or want to cater to a broader audience who might not have upgraded, you’ll need to enable experimental support to use C++20 modules in CMake.
+另一方面，如果您需要坚持使用旧版本，或者想要迎合可能尚未升级的更广泛的受众，您需要启用实验性支持才能在CMake中使用C++20模块。
 
-Let’s explore how to do that.
+让我们探讨如何做到这一点。
 
-\mySubsubsection{10.3.1.}{Enabling the experimental support in CMake 3.26 and 3.27}
+\mySubsubsection{10.3.1.}{在CMake 3.26和3.27中启用实验性支持}
 
-Experimental support represents a form of agreement: you, as the developer, acknowledge that this feature is not yet production-ready and should be used solely for testing purposes. To sign such an agreement, you’ll need to set the CMAKE\_EXPERIMENTAL\_CXX\_MODULE\_CMAKE\_API variable in the project’s listfile to a specific value for the CMake version you’re using.
+实验性支持代表一种协议：作为开发者，您承认这个功能尚未准备好投入生产，应仅用于测试目的。要签署这样的协议，您需要在项目的listfile中将CMAKE\_EXPERIMENTAL\_CXX\_MODULE\_CMAKE\_API变量设置为您使用的CMake版本的一个特定值。
 
 \begin{myNotic}{Note}
-The official Kitware repository for CMake hosts an issue tracker, where you can search for the label area:cxxmodules. Until 3.28 was released, only one issue was reported (in 3.25.0), which is a good indicator of a potentially stable feature. If you decide to enable the experiment, build your project to confirm it will work for your users.
+CMake的官方Kitware仓库托管了一个问题跟踪器，您可以在其中搜索标签area:cxxmodules。直到3.28版本发布，只报告了一个问题（在3.25.0中），这是潜在稳定功能的一个很好的指标。如果您决定启用实验，请构建您的项目，以确认它将适用于您的用户。
 \end{myNotic}
 
-Here are flags that can be found in the repository and documentation of CMake:
+以下是在CMake的仓库和文档中可以找到的标志：
 
 \begin{itemize}
 \item
@@ -26,13 +26,13 @@ Here are flags that can be found in the repository and documentation of CMake:
 aa1f7df0-828a-4fcd-9afc-2dc80491aca7 for 3.27
 \end{itemize}
 
-Unfortunately, if you don’t have access to at least CMake 3.25, you’re out of luck. Modules weren’t available before that version. Additionally, if CMake is older than 3.27, you’ll need to set one more variable to enable dynamic dependencies for modules:
+不幸的是，如果您至少不能访问CMake 3.25，您就倒霉了。模块在那个版本之前不可用。此外，如果CMake版本早于3.27，您还需要设置一个变量来为模块启用动态依赖：
 
 \begin{cmake}
 set(CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP 1)
 \end{cmake}
 
-Here’s how you might automatically pick the correct API key for the current version, and explicitly disable builds for versions you don’t support (in this example, we’ll only support CMake 3.26 and above).
+以下是如何为当前版本自动选择正确的API密钥，以及明确不支持版本构建（在这个例子中，我们将只支持CMake 3.26及以上的版本）。
 
 \filename{ch10/01-cxx-modules/CMakeLists.txt}
 
@@ -56,42 +56,42 @@ else()
 endif()
 \end{cmake}
 
-Let’s break it down statement by statement:
+让我们逐条解释：
 
 \begin{enumerate}
 \item
-First, we check if the version is 3.28 or newer. This allows us to enable the CMP0155 policy, with cmake\_policy(). This is required if we want to support versions older than 3.28.
+首先，我们检查版本是否为3.28或更新。这允许我们使用cmake\_policy()启用CMP0155策略。如果我们想支持3.28以下的版本，这是必需的。
 
 \item
-If that’s not the case, we’ll check if the version is above 3.27. If so, we’ll set the appropriate API key.
+如果不是这种情况，我们将检查版本是否高于3.27。如果是，我们将设置适当的API密钥。
 
 \item
-If it’s not above 3.27, we’ll check if it’s above 3.26. If that’s the case, set the appropriate API key and enable the experimental C++20 module dynamic dependency flag.
+如果它不低于3.27，我们将检查它是否高于3.26。如果是这样，设置适当的API密钥并启用实验性C++20模块动态依赖标志。
 
 \item
-If the version is lower than 3.26, it’s not supported by our project, and a fatal error message will be printed informing the user.
+如果版本低于3.26，我们的项目不支持，并将打印致命错误消息通知用户。
 \end{enumerate}
 
-This allows us to support the range of CMake versions, starting from 3.26. If we have the benefit of running CMake 3.28 in every environment the project is going to be built in, the above if() block is not necessary. So, what is?
+这使我们能够支持从3.26开始的CMake版本范围。如果我们有幸在每个将构建项目的环境中运行CMake 3.28，则上述if()块是不必要的。那么什么是必要的呢？
 
-\mySubsubsection{10.3.2.}{Enabling support for CMake 3.28 and up}
+\mySubsubsection{10.3.2.}{启用对CMake 3.28及以上的支持}
 
-To use C++20 modules since 3.28, you explicitly have to declare this version as minimal. Use a project header like this:
+要从3.28开始使用C++20模块，您必须明确声明这个版本为最低版本。使用如下项目头：
 
 \begin{cmake}
 cmake_minimum_required(VERSION 3.28.0)
 project(CXXModules CXX)
 \end{cmake}
 
-It will enable the CMP0155 policy by default if the minimum required version is set to 3.28 or above. Read on to learn what other aspects we need to configure before defining a module. If you require 3.27 or lower, your build will likely fail, even if the project is being built with CMake 3.28 or newer.
+如果将最低要求版本设置为3.28或以上，它将默认启用CMP0155策略。继续阅读以了解在定义模块之前我们需要配置的其他方面。如果您需要3.27或更低的版本，即使项目是使用CMake 3.28或更新的版本构建的，您的构建可能会失败。
 
-The next thing to consider is the compiler requirements.
+接下来要考虑的是编译器要求。
 
-\mySubsubsection{10.3.3.}{Setting the compiler requirements}
+\mySubsubsection{10.3.3.}{设置编译器要求}
 
-Regardless of whether we’re building with CMake 3.26, 3.27, 3.28, or newer, to create solutions using C++ modules, there are two global variables that we need to set. The first disables unsupported C++ extensions, and the second ensures that the compiler supports the required standard.
+无论我们是使用CMake 3.26、3.27、3.28还是更新的版本来构建，为了使用C++模块创建解决方案，我们需要设置两个全局变量。第一个是禁用不受支持的C++扩展，第二个是确保编译器支持所需的标准。
 
-\filename{ch10/01-cxx-modules/CMakeLists�txt (continued)}
+\filename{ch10/01-cxx-modules/CMakeLists.txt (continued)}
 
 \begin{cmake}
 # Libc++ has no support compiler extensions for modules.
@@ -99,13 +99,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 20)
 \end{cmake}
 
-Setting the standard may seem redundant, given that there’s a very limited number of compilers that support modules. Nonetheless, it’s good practice for future-proofing projects.
+由于支持模块的编译器数量非常有限，设置标准可能看起来有些多余。然而，这对于保护项目未来不受影响是一种良好的实践。
 
-The general configuration is quite straightforward and concludes here. We can now proceed to define a module within CMake.
+总体配置相当简单，到此结束。我们现在可以在CMake中定义一个模块。
 
-\mySubsubsection{10.3.4.}{Declaring a C++ module}
+\mySubsubsection{10.3.4.}{声明一个C++模块}
 
-CMake module definition leverages the target\_sources() command and the FILE\_SET keyword:
+CMake模块定义利用了target\_sources()命令和FILE\_SET关键字：
 
 \begin{cmake}
 target_sources(math
@@ -113,20 +113,20 @@ target_sources(math
 )
 \end{cmake}
 
-In the highlighted line above, we introduce a new file set type: CXX\_MODULES. This type is supported by default only since CMake 3.28. For 3.26, the experimental API has to be enabled. Without proper support, an error message like the following will occur:
+在上面的突出显示的行中，我们引入了一种新的文件集类型：CXX\_MODULES。这种类型默认情况下只在CMake 3.28及以后的版本中支持。对于3.26，需要启用实验性API。如果没有适当的支持，将会出现如下错误消息：
 
 \begin{shell}
 CMake Error at CMakeLists.txt:25 (target_sources):
 target_sources File set TYPE may only be "HEADERS"
 \end{shell}
 
-If you see this in the build output, check if your code is correct. This message will also appear if the API key value is incorrect for the version used.
+如果在构建输出中看到这个，请检查您的代码是否正确。如果使用的版本的API密钥值不正确，也会出现这个消息。
 
-Defining modules within the same binary where they are used offers benefits, as discussed earlier.
+如前所述，在同一个二进制文件中使用模块定义模块是有好处的。
 
-However, the advantages are more pronounced when creating a library. Such libraries can be utilized in other projects or within the same project by other libraries, further enhancing modularity.
+然而，在创建库时，这些优势更为明显。这样的库可以在其他项目中使用，或者在同一项目中被其他库使用，从而进一步增强模块化。
 
-To declare the module and link it with the main program, the following CMake configuration is used:
+要声明模块并将其与主程序链接，使用以下CMake配置：
 
 \filename{ch10/01-cxx-modules/CMakeLists.txt (continued)}
 
@@ -142,6 +142,6 @@ add_executable(main main.cpp)
 target_link_libraries(main PRIVATE math)
 \end{cmake}
 
-To ensure that this library can be used in other projects, we must use the target\_compile\_features() command and explicitly require cxx\_std\_20. Additionally, we have to repeat setting the CXX\_EXTENSIONS OFF on the target level. Without this, CMake will generate an error and halt the build. This seems redundant and will likely be solved in future versions of CMake.
+为了确保这个库可以在其他项目中使用，我们必须使用target\_compile\_features()命令并明确要求cxx\_std\_20。此外，我们还需要在目标级别重复设置CXX\_EXTENSIONS OFF。如果没有这个，CMake将生成错误并停止构建。这似乎有些多余，可能会在CMake的未来版本中得到解决。
 
-With the project setup complete, it’s time to finally build it.
+项目设置完成后，终于到了构建它的时候了。

@@ -1,19 +1,19 @@
-It doesn’t really matter if your solution is large or small; as it grows, you’ll likely choose to rely on other projects. Avoiding the effort of creating and maintaining boilerplate code is crucial. This frees up your time for what truly matters: the business logic. External dependencies serve multiple purposes. They offer frameworks and features, solve complex issues, and play a key role in building and ensuring code quality. These dependencies can vary, ranging from specialized compilers like Protocol Buffers (Protobuf) to testing frameworks like Google Test.
+您的解决方案的大小并不重要；随着它的增长，您可能会选择依赖其他项目。避免创建和维护样板代码的工作至关重要。这样可以为真正重要的事情腾出时间：业务逻辑。外部依赖项有多种用途。它们提供框架和功能，解决复杂问题，并在构建和确保代码质量中发挥关键作用。这些依赖项各不相同，从专业的编译器如Protocol Buffers（Protobuf）到测试框架如Google Test。
 
-When working with open-source projects or in-house code, managing external dependencies efficiently is essential. Doing this manually would require a lot of setup time and ongoing support. Luckily, CMake excels at handling various approaches to dependency management while staying current with industry standards.
+在使用开源项目或内部代码时，高效地管理外部依赖项是必不可少的。如果手动完成这项工作，将需要大量的设置时间和持续的支持。幸运的是，CMake擅长处理各种依赖管理方法，同时紧跟行业标准。
 
-We will first learn how to identify and utilize dependencies already present on the host system, thereby avoiding unnecessary downloads and extended compilation times. This task is relatively straightforward, as many packages are either CMake-compatible or supported by CMake right out of the box. We’ll also explore how to instruct CMake to locate and include dependencies that lack this native support. For legacy packages, an alternative approach can be beneficial in specific situations: we can employ the once-popular pkg-config tool to handle the more cumbersome tasks.
+我们首先将学习如何识别和利用宿主系统上已经存在的依赖项，从而避免不必要的下载和延长的编译时间。这项任务相对简单，因为许多软件包要么与CMake兼容，要么直接由CMake支持。我们还将探讨如何指导CMake定位和包含那些缺乏这种本地支持的依赖项。对于遗留软件包，在特定情况下，采用另一种方法可能更有益：我们可以使用曾经流行的pkg-config工具来处理更繁琐的任务。
 
-Additionally, we will delve into managing dependencies that are available online but not yet installed on the system. We’ll examine how to fetch these from HTTP servers, Git, and other types of repositories. We will also discuss how to choose the optimal approach: first, searching within the system and then resorting to fetching if the package is not found. Finally, we’ll review an older technique for downloading external projects that may be applicable in special cases.
+此外，我们还将深入探讨如何管理在线可用但尚未安装在系统上的依赖项。我们将研究如何从HTTP服务器、Git和其他类型的仓库中获取这些依赖项。我们还将讨论如何选择最佳方法：首先在系统中搜索，如果未找到该软件包，再转而获取。最后，我们将回顾一种在特殊情况下可能适用的下载外部项目的旧技术。
 
-In this chapter, we’re going to cover the following main topics:
+在本章中，将包含以下内容：
 
 \begin{itemize}
 \item
-Using already installed dependencies
+使用已安装的依赖项
 
 \item
-Using dependencies not present in the system
+使用系统中不存在的依赖项
 \end{itemize}
 
 

@@ -1,15 +1,15 @@
 
-The optimizer will analyze the output of previous stages and use a multitude of tactics, which programmers wouldn’t use directly, as they don’t adhere to clean-code principles. But that’s fine – the optimizer’s essential role is to enhance code performance, striving for low CPU usage, minimal register usage, and reduced memory footprint. As the optimizer traverses the source code, it heavily morphs it into an almost unrecognizable form, tailored specifically to the target CPU.
+优化器将分析前几个阶段的结果，并使用多种策略，这些策略程序员通常不会直接使用，因为它们不符合干净代码的原则。但这没关系——优化器的基本作用是提高代码性能，力求降低CPU使用率、最小化寄存器使用和减少内存占用。当优化器遍历源代码时，它会将代码大量变形为几乎无法识别的形式，专门针对目标CPU。
 
-The optimizer will not only decide which functions could be removed or compacted; it will also move code around or even significantly duplicate it! If it can definitively ascertain that certain lines of code are redundant, it will wipe them out from the middle of an important function (and you won’t even notice). It recycles memory so that numerous variables can inhabit the same slot at different times. It can even remodel your control structures into something entirely different if that translates into shaving off a few cycles here and there.
+优化器不仅会决定哪些函数可以被删除或压缩；它还会移动代码，甚至显著地复制代码！如果它能明确确定某些代码行是多余的，它甚至会从重要函数的中间删除这些代码（而你甚至不会注意到）。它通过回收内存，使得多个变量可以在不同时间占据同一个槽位。如果这样做可以减少几个周期的耗时，它甚至可以将你的控制结构重塑为完全不同的形式。
 
-If a programmer were to manually apply the aforementioned techniques to source code, it would transmogrify it into an awful, unreadable mess, difficult to write and reason about. However, when applied by compilers, these techniques are advantageous as compilers strictly follow the provided instructions. The optimizer is a relentless beast that serves one purpose: to accelerate execution speed, regardless of how distorted the output becomes. Such output may contain some debugging information if we are running it in our test environment, or it may not, in order to make it difficult for unauthorized people to tamper with it.
+如果程序员手动将这些技术应用于源代码，它将变成一个糟糕的、难以阅读的混乱，难以编写和理解。然而，当编译器应用这些技术时，它们是有利的，因为编译器严格遵循提供的指令。优化器是一个不知疲倦的怪兽，它只有一个目的：加速执行速度，不管输出变得多么扭曲。这样的输出可能包含一些调试信息，如果我们在我们的测试环境中运行它，或者可能不包含，以使未经授权的人难以篡改。
 
-Every compiler has its own unique tricks up its sleeve, consistent with the platform it supports and the philosophy it follows. We’ll take a look at the most common ones, available in GNU GCC and LLVM Clang, to gain an understanding of what is practical and achievable.
+每个编译器都有自己的独特技巧，这与它支持的平台和遵循的哲学相一致。我们将查看GNU GCC和LLVM Clang中最常见的一些，以了解什么是实用的和可实现的。
 
-Here’s the thing – many compilers won’t enable any optimization by default (GCC included). This is okay in some cases but not so much in others. Why go slow when you can go fast? To amend this, we can use the target\_compile\_options() command and explicitly state our expectations from the compiler.
+问题是——许多编译器默认情况下不会启用任何优化（包括GCC）。在某些情况下这是可以的，但在其他情况下就不那么好了。当你可以快速时，为什么要慢下来？为了纠正这一点，我们可以使用target\_compile\_options()命令，明确声明我们对编译器的期望。
 
-The syntax of this command mirrors others in this chapter:
+这个命令的语法与本章中的其他命令类似：
 
 \begin{shell}
 target_compile_options(<target> [BEFORE]
@@ -18,53 +18,53 @@ target_compile_options(<target> [BEFORE]
 ...])
 \end{shell}
 
-We provide command-line options to use while building the target and we also specify the propagation keyword. When executed, CMake appends the given options to the appropriate COMPILE\_OPTIONS variable of the target. The optional BEFORE keyword may be used if we want to prepend them instead. The order can be significant in some scenarios, so it’s beneficial to have a choice.
+我们提供在构建目标时使用的命令行选项，我们还指定传播关键字。执行时，CMake会将给定的选项附加到目标的适当COMPILE\_OPTIONS变量中。如果我们要将它们前置，可以使用可选的BEFORE关键字。在某些情况下，顺序可能很重要，因此有选择是很有益的。
 
-Note that target\_compile\_options()is a general command. It can also be used to provide other arguments to compiler-like -Ddefinitions, for which CMake offers the target\_compile\_definition() command as well. It is always advisable to use the most specialized CMake commands wherever possible, as they are guaranteed to work the same way across all the supported compilers.
+请注意，target\_compile\_options()是一个通用命令。它还可以用来提供其他类似编译器的参数，例如-D定义，CMake为此提供了target\_compile\_definition()命令。始终建议尽可能使用最专业的CMake命令，因为它们保证在所有支持的编译器上以相同的方式工作。
 
-Time to discuss the details. The subsequent sections will introduce various kinds of optimizations that you can enable in most compilers.
+是时候讨论细节了。接下来的部分将介绍您可以在大多数编译器中启用的各种优化。
 
-\mySubsubsection{7.4.1.}{General level}
+\mySubsubsection{7.4.1.}{通用级别}
 
-All the different behaviors of the optimizer can be configured in depth by specific flags that we can pass as compile options. Getting to know all of them is time consuming and requires a lot of knowledge about the internal workings of compilers, processors, and memory. What can we do if we just want the best possible scenario that works well in most cases? We can aim for a general solution – an optimization-level specifier.
+优化器的所有不同行为都可以通过特定的标志深度配置，我们可以作为编译选项传递。了解所有这些标志需要花费大量时间，并且需要对编译器、处理器和内存的内部工作有深入的了解。如果我们只想得到在大多数情况下都很好的最佳方案，我们能做什么？我们可以寻求一个通用解决方案——一个优化级别指定器。
 
-Most compilers offer four basic levels of optimization, from 0 to 3. We specify them with the -O<level> option. -O0 means no optimization and, usually, it’s the default level for compilers. On the other hand, -O2 is considered a full optimization, one that generates highly optimized code but at the cost of the slowest compilation time.
+大多数编译器提供从0到3的四个基本优化级别。我们使用-O<级别>选项指定它们。-O0表示没有优化，通常它是编译器的默认级别。另一方面，-O2被认为是完全优化，它生成高度优化的代码，但代价是编译时间最慢。
 
-There’s an in-between -O1 level, which (depending on your needs) can be a good compromise – it enables a reasonable amount of optimization mechanisms without slowing the compilation too much.
+还有一个介于两者之间的-O1级别，根据您的需要，它可以是一个很好的折衷方案——它启用了一定数量的优化机制，而不会过度减慢编译速度。
 
-Finally, we can reach for -O3, which is full optimization, like -O2, but with a more aggressive approach to subprogram inlining and loop vectorization.
+最后，我们可以使用-O3，它是与-O2相同的完全优化，但对子程序内联和循环向量化采取了更激进的方法。
 
-There are also some variants of the optimization that will optimize for the size (not necessarily the speed) of the produced file – -Os. There is a super-aggressive optimization, -Ofast, which is an -O3 optimization that doesn’t strictly comply with C++ standards. The most obvious difference is the usage of -ffast-math and -ffinite-math flags, meaning that if your program is about precise calculations (as most are), you might want to avoid it.
+还有一些优化变体，它们针对生成文件的大小（不一定是速度）进行优化——-Os。有一种超级积极的优化，-Ofast，它是一个不严格遵循C++标准的-O3优化。最明显的区别是使用-ffast-math和-ffinite-math标志，如果你的程序是关于精确计算（大多数是），你可能想要避免它。
 
-CMake knows that not all compilers are made equal, and for that reason, it standardizes the experience for developers by providing some default flags for compilers. They are stored in system-wide (not target-specific) variables for the language used (CXX for C++) and the build configuration (DEBUG or RELEASE):
-
-\begin{itemize}
-\item
-CMAKE\_CXX\_FLAGS\_DEBUG equals -g
-
-\item
-CMAKE\_CXX\_FLAGS\_RELEASE equals -O3 -DNDEBUG
-\end{itemize}
-
-As you can see, the debug configuration doesn’t enable any optimizations and the release configuration goes straight for O3. If you like, you can change them directly with the set() command or just add a target compilation option, which will override this default behavior. The other two flags (-g, -DNDEBUG) are related to debugging – we’ll discuss them in the Providing information for the debugger section of this chapter.
-
-Variables such as CMAKE\_<LANG>\_FLAGS\_<CONFIG> are global – they apply to all targets. It is recommended to configure your targets through properties and commands, such as target\_compile\_options(), rather than relying on global variables. This way, you can control your targets at higher granularity.
-
-By choosing an optimization level with -O<level>, we indirectly set a long list of flags, each controlling a specific optimization behavior. We can then fine-tune the optimization by appending more flags, like so:
+CMake知道并非所有编译器都是相同的，因此，为了给开发者提供标准化的体验，它为编译器提供了一些默认标志。它们存储在系统范围（非目标特定）变量中，用于使用的语言（C++为CXX）和构建配置（DEBUG或RELEASE）：
 
 \begin{itemize}
 \item
-Enable them with an -f option: -finline-functions.
+CMAKE\_CXX\_FLAGS\_DEBUG 等于 -g
 
 \item
-Disable them with an -fno option: -fno-inline-functions.
+CMAKE\_CXX\_FLAGS\_RELEASE 等于 -O3 -DNDEBUG
 \end{itemize}
 
-Some of these flags are worth understanding better as they will often impact how your program works and how you can debug it. Let’s have a look.
+如您所见，调试配置不启用任何优化，而发布配置直接使用O3。如果您愿意，您可以使用set()命令直接更改它们，或者只添加一个目标编译选项，这将覆盖此默认行为。其他两个标志（-g，-DNDEBUG）与调试有关——我们将在本章的“为调试器提供信息”部分讨论它们。
 
-\mySubsubsection{7.4.2.}{Function inlining}
+诸如CMAKE\_<LANG>\_FLAGS\_<CONFIG>这样的变量是全局的——它们适用于所有目标。建议通过属性和命令（如target\_compile\_options()）配置您的目标，而不是依赖全局变量。这样，您可以更细致地控制目标。
 
-As you might recall, compilers can be encouraged to inline some functions, either by defining a function inside a class declaration block or by explicitly using the inline keyword:
+通过选择带有-O<级别的>优化级别，我们间接设置了一系列标志，每个标志控制特定的优化行为。然后，我们可以通过附加更多标志来微调优化，如下所示：
+
+\begin{itemize}
+\item
+使用-f选项启用它们 -finline-functions.
+
+\item
+使用-fno选项禁用它们 -fno-inline-functions.
+\end{itemize}
+
+这些标志中的一些值得更好地理解，因为它们经常会影响到程序的工作方式以及您如何调试它。让我们来看看。
+
+\mySubsubsection{7.4.2.}{函数内联}
+
+可以通过在类声明块内定义函数或显式使用inline关键字来鼓励编译器内联某些函数：
 
 \begin{cpp}
 struct X {
@@ -74,11 +74,11 @@ struct X {
 inline void X::me_too() { cout << "bye\n"; };
 \end{cpp}
 
-The decision to inline a function ultimately rests with the compiler. If inlining is enabled and the function is used in a singular place (or a relatively small function used in a few places), inlining will most likely occur.
+是否内联一个函数最终由编译器决定。如果启用了内联，并且函数在单个地方使用（或者相对较小的函数在几个地方使用），则很可能会发生内联。
 
-Function inlining is an intriguing optimization technique. It operates by extracting the code from the targeted function and embedding it in all the locations where the function was called. This process replaces the original call and conserves precious CPU cycles.
+函数内联是一种有趣的优化技术。它通过从目标函数中提取代码并将其嵌入到函数被调用的所有位置来操作。这个过程替换了原始调用并节省了宝贵的CPU周期。
 
-Let’s consider the following example using the class we just defined:
+考虑使用我们刚刚定义的类的一个例子：
 
 \begin{cpp}
 int main() {
@@ -89,9 +89,9 @@ int main() {
 }
 \end{cpp}
 
-Without inlining, the code would execute in the main() frame until a method call. Then, it would create a new frame for im\_inlined(), execute in a separate scope, and return to the main() frame. The same would happen for the me\_too() method.
+如果没有内联，代码将在main()帧中执行，直到方法调用。然后，它将为im\_inlined()创建一个新的帧，在单独的作用域中执行，然后返回到main()帧。对于me\_too()方法也会发生同样的情况。
 
-However, when inlining takes place, the compiler will replace the calls, like so:
+然而，当发生内联时，编译器将替换调用，如下所示：
 
 \begin{cpp}
 int main() {
@@ -102,34 +102,34 @@ int main() {
 }
 \end{cpp}
 
-This isn’t an exact representation because inlining happens at the level of assembly or machine code (and not the source code), but it does provide a general idea.
+这并不是一个精确的表现，因为内联发生在汇编或机器代码级别（而不是源代码级别），但它确实提供了一个大致的想法。
 
-The compiler employs inlining to conserve time. It bypasses the creation and teardown of a new call frame and the need to look up the address of the next instruction to execute (and return to) and enhances instruction caching as they are in close proximity.
+编译器使用内联来节省时间。它绕过了创建和拆除新调用帧的需要，以及查找下一个要执行的指令的地址（并返回）的需求，并由于它们在接近的位置而增强了指令缓存。
 
-However, inlining does come with some significant side effects. If a function is used more than once, it must be copied to all locations, resulting in a larger file size and increased memory usage. While this may not be as critical today as it once was, it remains relevant, especially when developing software for low-end devices with limited RAM.
+然而，内联确实带来了一些显著的副作用。如果一个函数被多次使用，它必须被复制到所有位置，导致文件大小增大和内存使用增加。虽然这今天不如过去那么严重，但它仍然相关，特别是在为内存有限的低端设备开发软件时。
 
-Moreover, inlining critically impacts debugging. Inlined code is no longer at the original line number, making tracking more difficult, or sometimes impossible. This is why a debugger breakpoint placed in a function that was inlined, never gets hit (even though the code is still executed somehow). To circumvent this problem, you need to disable inlining for debug builds (at the cost of not testing the exact release build version).
+此外，内联对调试产生了严重影响。内联代码不再位于原始行号，使得跟踪变得更加困难，有时甚至不可能。这就是为什么在内联的函数中放置的调试器断点永远不会被命中（尽管代码仍然以某种方式执行）。为了绕过这个问题，您需要为调试构建禁用内联（以不测试确切发布构建版本为代价）。
 
-We can do that by specifying the -O0 (o-zero) level for the target or directly addressing the flags responsible for inlining:
+我们可以通过为目标指定-O0（零级别）或直接处理负责内联的标志来实现这一点：
 
 \begin{itemize}
 \item
--finline-functions-called-once: This is only for GCC.
+-finline-functions-called-once: 这只适用于GCC。
 
 \item
--finline-functions: This is for both Clang and GCC.
+-finline-functions: 这适用于Clang和GCC。
 
 \item
--finline-hint-functions: This is only for Clang.
+-finline-hint-functions: 这只适用于Clang。
 \end{itemize}
 
-Inlining can be explicitly disabled with -fno-inline-..., however, for detailed information, it’s advisable to refer to the documentation of your specific compiler version.
+可以使用-fno-inline-…明确禁用内联，不过，为了详细信息，建议参考您特定编译器的文档版本。
 
-\mySubsubsection{7.4.3.}{Loop unrolling}
+\mySubsubsection{7.4.3.}{循环展开}
 
-Loop unrolling, also known as loop unwinding, is an optimization technique. This strategy aims to transform loops into a series of statements that accomplish the same result. Consequently, this approach exchanges the small size of the program for execution speed, as it eliminates the loop control instruction, pointer arithmetic, and end-of-loop checks.
+循环展开，也称为循环展开，是一种优化技术。这种策略旨在将循环转换为一系列完成相同结果的语句。因此，这种方法以程序的小尺寸换取执行速度，因为它消除了循环控制指令、指针算术和循环结束检查。
 
-Consider the following example:
+考虑以下示例：
 
 \begin{cpp}
 void func() {
@@ -138,7 +138,7 @@ void func() {
 }
 \end{cpp}
 
-The previous code will be transformed into something like this:
+之前的代码将变成如下形式：
 
 \begin{cpp}
 void func() {
@@ -148,25 +148,25 @@ void func() {
 }
 \end{cpp}
 
-The outcome will be the same, but we no longer have to allocate the i variable, increment it, or compare it three times with a value of 3. If we call func() enough times in the lifetime of the program, unrolling even such a short and small function will make a significant difference.
+结果将保持不变，但我们不再需要分配i变量，也不需要对其进行递增或与值3进行比较三次。如果我们在程序的生命周期中足够多次调用func()，即使是这样一个短小和简单的函数，其展开也会产生显著的差异。
 
-However, it is important to understand two limiting factors. Firstly, loop unrolling is only effective if the compiler knows or can accurately estimate the number of iterations. Secondly, loop unrolling can lead to undesired consequences on modern CPUs, as an increased code size might hamper effective caching.
+然而，重要的是要理解两个限制因素。首先，循环展开只有在编译器知道或能够准确估计迭代次数时才有效。其次，循环展开可能会在现代CPU上产生不希望的结果，因为代码大小的增加可能会阻碍有效的缓存。
 
-Each compiler provides a slightly different version of this flag:
+每个编译器提供了这个标志的略有不同的版本：
 
 \begin{itemize}
 \item
--floop-unroll: This is for GCC.
+-floop-unroll: 这是GCC的版本。
 
 \item
--funroll-loops: This is for Clang.
+-funroll-loops: 这是Clang的版本。
 \end{itemize}
 
-If you’re uncertain, test extensively whether this flag is affecting your particular program and explicitly enable or disable it. Do note that on GCC, it is implicitly enabled with -O3 as part of the implicitly enabled -floop-unroll-and-jam flag.
+如果您不确定，请广泛测试这个标志是否影响您的特定程序，并明确地启用或禁用它。请注意，在GCC上，它与隐式启用的-O3一起，作为-floop-unroll-and-jam标志的一部分被启用。
 
-\mySubsubsection{7.4.4.}{Loop vectorization}
+\mySubsubsection{7.4.4.}{循环向量化}
 
-The mechanism known as single instruction, multiple data (SIMD) was developed in the early 1960s to achieve parallelism. As the name suggests, it is designed to carry out the same operation on multiple data simultaneously. Let’s look at this in practice through the following example:
+被称为单指令，多数据（SIMD）的机制是在20世纪60年代初为实现并行而开发的。正如其名称所暗示的，它旨在同时对多个数据执行相同的操作。让我们通过以下示例来实际看看这一点：
 
 \begin{cpp}
 int a[128];
@@ -176,7 +176,7 @@ for (i = 0; i<128; i++)
     a[i] = b[i] + 5;
 \end{cpp}
 
-Normally, such code would loop 128 times, but with a capable CPU, the code’s execution can be significantly accelerated by simultaneously calculating two or more array elements. This is possible due to the absence of dependency between consecutive elements and data overlap between arrays. Clever compilers can transform the preceding loop into something like this (which happens at the assembly level):
+通常，这样的代码会循环128次，但如果CPU能力强大，代码的执行可以通过同时计算两个或更多的数组元素而显著加速。这是由于连续元素之间不存在依赖关系以及数组之间的数据重叠。聪明的编译器可以将前一个循环转换为类似以下形式（这发生在汇编级别）：
 
 \begin{cpp}
 for (i = 0; i<32; i+=4) {
@@ -187,19 +187,19 @@ for (i = 0; i<32; i+=4) {
 }
 \end{cpp}
 
-GCC will enable such automatic vectorization of loops at -O3. Clang enables it by default. Both compilers offer different flags to enable/disable vectorization in particular:
+GCC将在-O3级别启用这样的循环向量化。Clang默认启用。两个编译器都提供不同的标志来启用/禁用特定情况下的向量化：
 
 \begin{itemize}
 \item
--ftree-vectorize -ftree-slp-vectorize: This is for enabling vectorization in GCC.
+-ftree-vectorize -ftree-slp-vectorize: 这是在GCC中启用向量化的版本。
 
 \item
--fno-vectorize -fno-slp-vectorize: This is for disabling vectorization in Clang.
+-fno-vectorize -fno-slp-vectorize: 这是在Clang中禁用向量化的版本。
 \end{itemize}
 
-The efficiency of vectorization stems from the utilization of special instructions offered by CPU manufacturers, rather than merely substituting the original form of the loop with an unrolled version. Hence, it’s not feasible to achieve the same performance level manually (additionally, it doesn’t result in clean code).
+向量化的效率来自于CPU制造商提供的特殊指令的利用，而不是仅仅将循环的原始形式替换为展开版本。因此，手动实现相同性能水平是不切实际的（此外，它不会产生整洁的代码）。
 
-The optimizer plays a vital role in enhancing a program’s runtime performance. By employing its strategies effectively, we’ll get more bang for our buck. Efficiency matters not only after coding completion but also during the software development process. If compilation times are lengthy, we can improve them by better managing the process.
+优化器在提高程序的运行时性能方面起着关键作用。通过有效地运用其策略，我们可以得到更多的价值。效率不仅在于编码完成之后，而且在软件开发过程中也至关重要。如果编译时间过长，我们可以通过更好地管理过程来改善它们。
 
 
 

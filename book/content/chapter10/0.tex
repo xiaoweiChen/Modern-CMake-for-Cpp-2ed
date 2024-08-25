@@ -1,27 +1,23 @@
-C++20 introduces a new feature to the language: modules. They replace the plain-text symbol declarations in header files with a module file that will be precompiled to an intermediary binary format, greatly reducing the build time.
+C++20 引入了一个新特性：模块。它们用模块文件替代了头文件中的纯文本符号声明，该模块文件将预编译为中间二进制格式，大大减少了构建时间。
 
-We will discuss the most essential topics for C++20 modules in CMake, starting with a general introduction to C++20 modules as a concept: their advantages over standard header files and how they simplify the management of units in source code. Although the promise of streamlining the build process is exciting, this chapter highlights how difficult and long the road to their adoption is.
+我们将讨论 CMake 中 C++20 模块的最重要主题，从 C++20 模块作为一个概念的一般介绍开始：它们相对于标准头文件的优点以及它们如何简化源代码中单元的管理。尽管简化构建过程的承诺令人兴奋，但本章强调了它们被采纳的道路既困难又漫长。
 
-With the theory out of the way, we’ll move on to the practical aspects of implementing the modules in our projects: we’ll discuss enabling their experimental support in earlier versions of CMake, and the full release in CMake 3.28.
+理论部分结束后，我们将继续讨论在项目中实现模块的实际方面：我们将讨论在早期版本的 CMake 中启用它们的实验性支持，以及在 CMake 3.28 中的完整发布。
 
-Our journey through C++20 modules is not just about understanding a new feature—it’s about rethinking how components interact in large C++ projects. By the end of this chapter, you’ll not only grasp the theoretical aspects of modules but also gain practical insights through examples, enhancing your ability to leverage this feature for better project outcomes.
+我们通过 C++20 模块的旅程不仅仅是为了理解一个新特性 —— 它是关于重新思考在大型 C++ 项目中组件如何交互。在本章结束时，你不仅会掌握模块的理论方面，还能通过示例获得实践经验，增强利用这一特性实现更好项目成果的能力。
 
-In this chapter, we’re going to cover the following main topics:
+在本章中，将包含以下内容：
 
 \begin{itemize}
 \item
-What are the C++20 modules?
+C++20 模块是什么？
 
 \item
-Writing projects with C++20 module support
+使用 C++20 模块支持的编写项目
 
 \item
-Configuring the toolchain
+配置工具链
 \end{itemize}
-
-\begin{myNotic}{Note}
-This chapter has different technical requirements than others. Make sure you read the next section thoroughly.
-\end{myNotic}
 
 
 

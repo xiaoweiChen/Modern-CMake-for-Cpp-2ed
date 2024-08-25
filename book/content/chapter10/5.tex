@@ -1,6 +1,5 @@
-In this chapter, we’ve delved into C++20 modules, clarifying that they are distinct from CMake modules and represent a significant advancement in C++ to streamline compilation and address challenges associated with redundant header compilation and problematic preprocessor macros.
+在本章中，我们深入探讨了 C++20 模块，澄清了它们与 CMake 模块的区别，并代表了 C++ 在简化编译和解决与冗余头文件编译及问题预处理器宏相关挑战方面的重要进步。
 
-We demonstrated how to write and import a C++20 module using a simple example. We then explored setting up CMake for C++20 modules. Since this feature is experimental, specific variables need to be set, and we provided a series of conditional statements to ensure your project is configured correctly for the CMake version in use.
-Regarding the necessary tools, we emphasized that the buildsystem must support dynamic dependencies, with Ninja 1.11 or newer being the current option. For compiler support, Clang 16 and MSVC in Visual Studio 2022 17.4 (19.34) are suitable for full C++20 module support, while GCC support is still pending. We additionally guided you through configuring CMake to use the selected toolchain, involving choosing a buildsystem generator and setting the compiler version. After configuring and building the project, you can run your program to see the C++20 module in action.
+我们通过一个简单的示例演示了如何编写和导入 C++20 模块。然后，我们探讨了如何为 C++20 模块设置 CMake。由于这个特性是实验性的，需要设置特定的变量，我们提供了一系列条件语句来确保您的项目能够正确配置正在使用的 CMake 版本。 关于必要的工具，我们强调构建系统必须支持动态依赖，目前的选择是 Ninja 1.11 或更新版本。对于编译器支持，Clang 16 和 Visual Studio 2022 17.4 (19.34) 中的 MSVC 适合完全支持 C++20 模块，而 GCC 的支持仍在等待中。此外，我们还指导您通过配置 CMake 来使用选定的工具链，包括选择构建系统生成器和设置编译器版本。配置和构建项目后，您可以运行程序来查看 C++20 模块的实际应用。
 
-In the next chapter, we’ll learn about importance and application of automated testing, and the available CMake support for testing frameworks.
+在下一章中，我们将学习自动化测试的重要性及其应用，以及 CMake 对测试框架的支持。

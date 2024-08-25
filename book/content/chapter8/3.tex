@@ -1,20 +1,20 @@
 
-After compiling the source code, it’s often desirable to sidestep recompilation for the same platform or even share the compiled output with external projects. One could distribute the individual object files as initially produced, but this comes with challenges. Distributing multiple files and integrating them one by one into a buildsystem can be a hassle, particularly when dealing with a large number. A more efficient approach is to consolidate all object files into a singular unit for sharing. CMake significantly simplifies this task. We can generate these libraries with a simple add\_library() command (paired with the target\_link\_libraries() command).
+在编译源代码后，通常希望避免针对同一平台的重新编译，甚至将编译输出与外部项目共享。可以将最初生成的单个对象文件分发出去，但这会带来挑战。分发多个文件并将它们逐个集成到构建系统中可能很麻烦，特别是在处理大量文件时。更有效的方法是将所有对象文件合并为一个单元以供共享。CMake大大简化了这个任务。我们可以使用简单的add\_library()命令（与target\_link\_libraries()命令配对）生成这些库。
 
-By convention, all the libraries have a common prefix, lib, and use system-specific extensions that denote what kind of library they are:
+按照约定，所有库都有一个公共前缀，即lib，并使用特定于系统的扩展名来表示它们是什么类型的库：
 
 \begin{itemize}
 \item
-A static library has a .a extension on Unix-like systems and .lib on Windows.
+在类Unix系统中，静态库具有.a扩展名，在Windows上为.lib。
 
 \item
-Shared libraries (and modules) have a .so extension on some Unix-like systems (like Linux) and .dylib on others (macOS). On Windows, their extension is .dll .
+在某些类Unix系统（如Linux）上，共享库（和模块）具有.so扩展名，而在其他系统（如macOS）上为.dylib。在Windows上，它们的扩展名为.dll。
 
 \item
-Shared modules usually use the same extensions as shared libraries, but not always. On macOS, they can use .so, especially when the module is ported from another Unix platform.
+共享模块通常使用与共享库相同的扩展名，但不总是如此。在macOS上，它们可以使用.so，特别是当模块是从另一个Unix平台移植过来时。
 \end{itemize}
 
-The process of building libraries (static, shared, or shared modules) is by convention called “linking,” as can be seen in the build output of the ch08/01-libraries project:
+构建库（静态、共享或共享模块）的过程通常称为“链接”，可以在ch08/01-libraries项目的构建输出中看到：
 
 \begin{shell}
 [ 33%] Linking CXX static library libmy_static.a
@@ -23,138 +23,138 @@ The process of building libraries (static, shared, or shared modules) is by conv
 [100%] Built target module_gui
 \end{shell}
 
-However, not all of the preceding libraries necessarily use a linker for their creation. The process might skip certain steps like relocation and reference resolution for some libraries.
+然而，前面提到的库并非都需要使用链接器来创建。对于某些库，该过程可能会跳过某些步骤，如重定位和引用解析。
 
-Let’s delve into each library type to understand their respective workings.
+让我们深入探讨每种库类型，了解它们各自的工作原理。
 
-\mySubsubsection{8.3.1.}{Static libraries}
+\mySubsubsection{8.3.1.}{静态库}
 
-Static libraries are essentially a collection of raw object files stored in an archive. Sometimes, they’re extended with an index to speed up linking the process. On Unix-like systems, such archives can be created by the ar tool, and indexed with ranlib.
+静态库本质上是存储在存档中的原始对象文件的集合。有时，它们会通过索引来加速链接过程。在类Unix系统中，这样的存档可以通过ar工具创建，并使用ranlib进行索引。
 
-During the build process, only necessary symbols from the static library are imported into the final executable, optimizing its size and memory usage. This selective integration ensures the executable is self-contained, eliminating the need for external files at runtime.
+在构建过程中，只有静态库中必要的符号才会被导入最终的可执行文件中，优化其大小和内存使用。这种选择性集成确保了可执行文件是自包含的，消除了在运行时对外部文件的需求。
 
-To create a static library, we can simply use the command that we have already seen in the previous chapters:
+要创建静态库，我们可以简单地使用前面章节中已经看到的命令：
 
 \begin{shell}
 add_library(<name> [<source>...])
 \end{shell}
 
-This short-hand code will produce a static library by default. This can be overridden by setting the BUILD\_SHARED\_LIBS variable to ON. If we want to build a static library regardless, we can provide an explicit keyword:
+这个简写代码默认会生成一个静态库。这可以通过将BUILD\_SHARED\_LIBS变量设置为ON来覆盖。如果我们想无论如何都要构建一个静态库，可以提供一个显式关键字：
 
 \begin{shell}
 add_library(<name> STATIC [<source>...])
 \end{shell}
 
-Utilizing static libraries might not always be an ideal option, especially when we aim to share compiled code among multiple applications running on the same machine.
+使用静态库可能并不总是理想的选择，特别是当我们希望在同一台机器上运行的多个应用程序之间共享编译后的代码时。
 
-\mySubsubsection{8.3.2.}{Shared libraries}
+\mySubsubsection{8.3.2.}{共享库}
 
-Shared libraries differ significantly from static libraries. They are constructed using a linker, which completes both stages of linking. This results in a file complete with section headers, sections, and a section header table, as illustrated in Figure 8.1.
+共享库与静态库有显著不同。它们是使用链接器构建的，链接器完成了链接的两个阶段。这产生了一个包含节头、节和节头表的完整文件，如图8.1所示。
 
-Shared libraries, often referred to as shared objects, can be utilized across multiple distinct applications simultaneously. When the first program uses a shared library, the OS loads one instance of it into the memory. Subsequent programs are then provided with the same address by the OS, courtesy of intricate virtual memory mechanisms. However, for every process that uses the library, the .data and .bss segments of the library are instantiated separately. This ensures that each process can adjust its variables without influencing other processes.
+共享库，通常称为共享对象，可以被多个不同的应用程序同时使用。当第一个程序使用共享库时，操作系统会将该库的一个实例加载到内存中。随后，操作系统为其他程序提供相同的地址，这要归功于复杂的虚拟内存机制。然而，对于每个使用该库的进程，库的.data和.bss段是分别实例化的。这确保了每个进程都可以调整其变量而不影响其他进程。
 
-Thanks to this approach, the overall memory usage in the system is optimized. If we’re using a widely recognized library, it might not be necessary to include it with our program, as it’s likely already available on the target machine. However, if it’s not pre-installed, users are expected to manually install it before running the application. This can lead to potential issues if the installed version of a library differs from what’s expected. Such problems are referred to as “dependency hell.” More details can be found in the Further reading section of this chapter.
+感谢这种方法，系统整体内存使用得到了优化。如果我们使用的是广泛认可的库，可能不需要将其包含在我们的程序中，因为它可能已经存在于目标机器上。但是，如果它没有预安装，用户需要在运行应用程序之前手动安装它。如果安装的库版本与预期版本不同，这可能导致潜在问题。这类问题被称为“依赖地狱”。更多细节可以在本章的进一步阅读部分找到。
 
-We can build shared libraries by explicitly using the SHARED keyword:
+我们可以通过显式使用SHARED关键字来构建共享库：
 
 \begin{shell}
 add_library(<name> SHARED [<source>...])
 \end{shell}
 
-Since shared libraries are loaded during the program initialization, there’s no association between the executing program and the actual library file on disk. Instead, the linking is done indirectly. In Unix-like systems, this is achieved through a shared object name (SONAME), which can be understood as the “logical name” of the library.
+由于共享库在程序初始化期间加载到操作系统的内存中，因此执行程序与磁盘上的实际库文件之间没有关联。相反，链接是间接完成的。在类Unix系统中，这是通过共享对象名（SONAME）实现的，可以将其理解为库的“逻辑名称”。
 
-This allows flexibility in library versioning and ensures that backward-compatible changes to libraries don’t immediately break dependent applications.
+这允许在库版本控制上具有灵活性，并确保对库的向后兼容性更改不会立即破坏依赖的应用程序。
 
-We can query some path properties of the produced SONAME file with generator expressions (be sure to replace target with the name of your target):
-
-\begin{itemize}
-\item
-\$<TARGET\_SONAME\_FILE:target> returns the full path (.so.3).
-
-\item
-\$<TARGET\_SONAME\_FILE\_NAME:target> returns only the filename.
-
-\item
-\$<TARGET\_SONAME\_FILE\_DIR:target> returns the directory.
-\end{itemize}
-
-These come in handy in more advanced scenarios that we’ll cover later in the book, including:
+我们可以使用生成器表达式查询产生的SONAME文件的一些路径属性（确保将target替换为你的目标名称）：
 
 \begin{itemize}
 \item
-Correct usage of the generated library during packaging and installation.
+\$<TARGET\_SONAME\_FILE:target> 返回完整路径 (.so.3)。
 
 \item
-Writing custom CMake rules for dependency management.
+\$<TARGET\_SONAME\_FILE\_NAME:target> 只返回文件名。
 
 \item
-Utilizing SONAME during testing.
-
-\item
-Copying or renaming produced libraries in post-build commands.
+\$<TARGET\_SONAME\_FILE\_DIR:target> 只返回相应文件夹路径。
 \end{itemize}
 
-You may have similar needs for other OS-specific artifacts; for that purpose, CMake offers two families of generator expressions that offer the same suffixes as SONAME. For Windows, we have:
+这些在本书后面将介绍的高级场景中非常有用，包括：
 
 \begin{itemize}
 \item
-\$<TARGET\_LINKER\_FILE:target>returns the full path to the .libimport library associated with the produced dynamic-link library (DLL). Note that the.lib extension is the same as for the static Windows library, but their application is not the same.
+在打包和安装过程中正确使用生成的库。
 
 \item
-\$<TARGET\_RUNTIME\_DLLS:target> returns a list of DLLs that the target depends on at runtime.
+编写自定义的CMake规则进行依赖管理。
 
 \item
-\$<TARGET\_PDB\_FILE:target> returns the full path to the .pdb program database file (used for debugging purposes).
+在测试过程中利用SONAME。
+
+\item
+在构建后命令中复制或重命名生成的库。
 \end{itemize}
 
-Since shared libraries are loaded into the OS’s memory during the initialization of the program, they are applicable when knowing upfront which libraries the program will use. What about the scenarios where this needs to be determined during the runtime?
-
-\mySubsubsection{8.3.3.}{Shared modules}
-
-A shared module, or module library, is a variant of a shared library designed to be used as a plugin loaded during runtime. Unlike standard shared libraries, which load automatically when a program starts, a shared module only loads when the program explicitly requests it. This can be done through the system calls:
+您可能对其他特定于操作系统的工件有类似的需求；为此，CMake提供了两个生成器表达式家族，它们提供了与SONAME相同的后缀。对于Windows，我们有：
 
 \begin{itemize}
 \item
-LoadLibrary on Windows
+\$<TARGET\_LINKER\_FILE:target>返回与生成的动态链接库（DLL）关联的.lib导入库的完整路径。请注意，.lib扩展名与静态Windows库相同，但它们的应用并不相同。
 
 \item
-dlopen() followed by dlsym() on Linux and macOS
+\$<TARGET\_RUNTIME\_DLLS:target> 返回目标在运行时依赖的DLL列表。
+
+\item
+\$<TARGET\_PDB\_FILE:target> 返回.pdb程序数据库文件的完整路径（用于调试目的）。
 \end{itemize}
 
-The primary reason for this approach is memory conservation. Many software applications have advanced features that aren’t utilized throughout the life cycle of every process. Loading such features into memory every time would be inefficient.
+由于共享库在程序初始化期间加载到操作系统的内存中，因此它们适用于提前知道程序将使用哪些库的情况。那么在运行时确定这些的情况又如何呢？
 
-Alternatively, we might want to provide an avenue for extending the main program with specialized features that can be sold, delivered, and loaded separately.
+\mySubsubsection{8.3.3.}{共享模块}
 
-To build shared modules, we need to use the MODULE keyword:
+共享模块或模块库是共享库的一种变体，设计用于在运行时作为插件加载。与在程序启动时自动加载的标准共享库不同，共享模块仅在程序明确请求时加载。这可以通过以下系统调用来完成：
+
+\begin{itemize}
+\item
+在Windows上使用LoadLibrary
+
+\item
+在Linux和macOS上使用dlopen()，然后是dlsym()
+\end{itemize}
+
+这种方法的主要原因是内存节约。许多软件应用程序具有在整个进程生命周期中未被使用的高级功能。每次都将这些功能加载到内存中将是低效的。
+
+或者，我们可能希望提供一种途径，以便通过可以单独销售、交付和加载的专业功能来扩展主程序。
+
+要构建共享模块，我们需要使用MODULE关键字：
 
 \begin{shell}
 add_library(<name> MODULE [<source>...])
 \end{shell}
 
-You shouldn’t attempt to link your executable with a module, as the module is designed to be deployed separately from the executable that will utilize it.
+你不应该尝试将模块与可执行文件链接，因为模块被设计为与将使用它的可执行文件分开部署。
 
-\mySubsubsection{8.3.4.}{Position-independent code (PIC)}
+\mySubsubsection{8.3.4.}{位置无关代码（PIC）}
 
-Programs today are inherently somewhat position-independent because of the use of virtual memory. This technology abstracts physical addresses. When calling a function, the CPU uses the memory management unit (MMU) to translate a virtual address (starting from 0 for every process) to the corresponding physical address (determined at the time of allocation). Interestingly, these mappings don’t always follow a specific order.
+由于使用了虚拟内存，今天的程序本质上是某种程度上位置无关的。这项技术抽象了物理地址。当调用一个函数时，CPU使用内存管理单元（MMU）将虚拟地址（每个进程从0开始）转换为相应的物理地址（在分配时确定）。有趣的是，这些映射并不总是遵循特定的顺序。
 
-Compiling a library introduces uncertainty: it’s unclear which processes might use the library or where it will be located in virtual memory. We also can’t predict the addresses of the symbols or their locations relative to the library’s machine code. To handle this, we need another level of indirection.
+编译库引入了不确定性：不清楚哪些进程可能会使用库，或者它在虚拟内存中的位置。我们也无法预测符号的地址或它们相对于库的机器代码的位置。为了处理这个问题，我们需要另一层间接寻址。
 
-PIC was introduced to map symbols (like references to functions and global variables) to their runtime addresses. PIC introduces a new section to the binary file: the Global Offset Table (GOT). During the linking, the relative position of the GOT section to the .text section (the program code) is calculated. All symbol references will be pointed through an offset to a placeholder in the GOT.
+PIC被引入用来将符号（如对函数和全局变量的引用）映射到它们的运行时地址。PIC在二进制文件中引入了一个新的节：全局偏移表（GOT）。在链接期间，计算了GOT节相对于.text节（程序代码）的相对位置。所有符号引用将通过一个偏移量指向GOT中的占位符。
 
-When the program is loaded, the GOT section transforms into a memory segment. Over time, this segment accumulates the runtime addresses of the symbols. This method, termed “lazy loading,” ensures that the loader populates specific GOT entries only when required.
+当程序被加载时，GOT节转换为一个内存段。随着时间的推移，这个段累积了符号的运行时地址。这种方法称为“懒加载”，确保加载器仅在需要时填充特定的GOT条目。
 
-All sources for shared libraries and modules must be compiled with a PIC flag activated. By setting the POSITION\_INDEPENDENT\_CODE target property to ON, we’ll tell CMake to appropriately add compiler-specific flags such as -fPIC for GCC or Clang.
+共享库和模块的所有源代码必须在使用PIC标志激活的情况下编译。通过将POSITION\_INDEPENDENT\_CODE目标属性设置为ON，我们将告诉CMake适当地添加编译器特定的标志，例如为GCC或Clang添加-fPIC。
 
-This property is automatically enabled for shared libraries. However, if a shared library depends on another target, such as a static or object library, you must also apply this property to the dependent target:
+这个属性对于共享库是自动启用的。然而，如果共享库依赖于另一个目标，例如静态或对象库，你也必须将这个属性应用于依赖目标：
 
 \begin{shell}
 set_target_properties(dependency
                       PROPERTIES POSITION_INDEPENDENT_CODE ON)
 \end{shell}
 
-Overlooking this step will cause conflicts in CMake, since it checks this property for inconsistencies. You can find a more thorough exploration of this in the Dealing with conflicting propagated properties section of Chapter 5, Working with Targets.
+忽略这一步将导致CMake中的冲突，因为它会检查这个属性的一致性。您可以在第5章《与目标合作》的“处理冲突的传播属性”部分找到对此的更深入探讨。
 
-Our next discussion point pivots to symbols. Specifically, the subsequent section will explore the challenges of name collisions, which can lead to ambiguity and definition inconsistencies.
+我们的下一个讨论点转向符号。特别是，下一节将探讨名称冲突的挑战，这可能导致模糊和定义不一致。
 
 
 

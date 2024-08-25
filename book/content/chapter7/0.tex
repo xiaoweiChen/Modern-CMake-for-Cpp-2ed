@@ -1,29 +1,29 @@
-Simple compilation scenarios are usually handled by a default configuration of a toolchain or just provided out of the box by an integrated development environment (IDE). However, in a professional setting, business needs often call for something more advanced. It could be a requirement for higher performance, smaller binaries, more portability, automated testing, or extensive debugging capabilities – you name it. Managing all of these in a coherent, future-proof way quickly becomes a complex, tangled mess (especially when there are multiple platforms to support).
+简单的编译场景通常由工具链的默认配置处理，或者由集成开发环境（IDE）直接提供。然而，在专业环境中，商业需求往往需要更高级的功能。可能是对更高性能、更小的二进制文件、更好的可移植性、自动化测试或广泛的调试功能的需求——不胜枚举。要以连贯且面向未来的方式管理所有这些需求，很快就会变得复杂而混乱（特别是在需要支持多个平台时）。
 
-The process of compilation is often not explained well enough in books on C++ (in-depth subjects such as virtual base classes seem to be more interesting). In this chapter, we’ll fix that by going through different aspects of compilation: we’ll discover how compilation works, what its internal stages are, and how they affect the binary output.
+编译过程在C++书籍中通常没有解释得足够清楚（深入主题，如虚基类，似乎更有趣）。在本章中，我们将通过探讨编译的不同方面来纠正这一点：我们将了解编译是如何工作的，它的内部阶段是什么，以及它们如何影响二进制输出。
 
-After that, we will focus on the prerequisites – we’ll discuss what commands we can use to finetune the compilation process, how to require specific features from a compiler, and how to correctly instruct the compiler on which input files to process.
+之后，我们将关注先决条件——我们将讨论可以使用哪些命令来微调编译过程，如何要求编译器具有特定功能，以及如何正确指导编译器处理哪些输入文件。
 
-Then, we’ll focus on the first stage of compilation – the preprocessor. We’ll be providing paths for included headers, and we’ll study how to plug in variables from CMake and the build environment with preprocessor definitions. We’ll cover the most interesting use cases and learn how to expose CMake variables so they can be accessed from C++ code.
+然后，我们将关注编译的第一阶段——预处理器。我们将提供包含头文件的路径，并且我们将学习如何通过预处理器定义将CMake和构建环境中的变量插入。我们将涵盖最有趣的使用案例，并学习如何暴露CMake变量，以便它们可以从C++代码中访问。
 
-Right after that, we’ll talk about the optimizer and how different flags can affect performance. We’ll also discuss the costs of optimization, specifically how it affects the debuggability of produced binaries, and what to do if that isn’t desired.
+紧接着，我们将讨论优化器以及不同的标志如何影响性能。我们还将讨论优化的成本，特别是它如何影响产生的二进制的可调试性，以及如果不希望这样该怎么办。
 
-Lastly, we’ll explain how to manage the compilation process in terms of reducing the compilation time by using precompiled headers and unity builds. We’ll learn how to debug the build process and find any mistakes we might’ve made.
+最后，我们将解释如何通过使用预编译头文件和统一构建来管理编译过程，以减少编译时间。我们将学习如何调试构建过程并找出我们可能犯的任何错误。
 
-In this chapter, we’re going to cover the following main topics:
+在本章中，我们将包含以下主要内容：
 
 \begin{itemize}
 \item
-The basics of compilation
+编译的基础知识
 
 \item
-Configuring the preprocessor
+配置预处理器
 
 \item
-Configuring the optimizer
+配置优化器
 
 \item
-Managing the process of compilation
+管理编译过程
 \end{itemize}
 
 

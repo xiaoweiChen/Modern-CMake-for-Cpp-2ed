@@ -1,19 +1,11 @@
-Linking in CMake might initially appear straightforward, but as we dig deeper, we see there’s much more beneath the surface. After all, linking executables isn’t as simple as piecing puzzle parts together. When we delve deep into the structure of object files and libraries, it’s clear that sections, which store various types of data, instructions, symbol names, and the like, need some reordering. Before a program is runnable, these sections undergo what’s known as relocation.
+在 CMake 中进行链接可能一开始看起来很简单，但当我们深入挖掘时，会发现其背后大有乾坤。毕竟，链接可执行文件并不像拼图那样简单。当我们深入研究对象文件和库的结构时，很明显，存储各种类型的数据、指令、符号名称等的节（section）需要重新排序。在程序可运行之前，这些节需要经过所谓的重定位过程。
 
-It’s also crucial to resolve symbols. The linker must sort through references across all translation units, ensuring nothing’s left out. Once this is settled, the linker then creates the program header and places it into the final executable. This header offers instructions to the system loader, detailing how to transform consolidated sections into segments that will make up the runtime memory image of the process. We also discussed the three kinds of libraries: static, shared, and shared modules. We examined how they differ and which scenarios some might be better suited for than others. Additionally, we touched on PIC – a powerful concept that facilitates the lazy binding of symbols.
+解析符号也非常关键。链接器必须对所有翻译单元中的引用进行排序，确保没有遗漏。一旦这些都处理好了，链接器就会创建程序头部并将其放入最终的可执行文件中。这个头部为系统加载器提供指令，详细说明如何将合并的节转换为段，这些段将构成进程的运行时内存镜像。我们还讨论了三种类型的库：静态库、共享库和共享模块。我们探讨了它们的区别以及在哪些场景下某种库可能比其他库更适合使用。此外，我们还提到了 PIC —— 一个强大的概念，它促进了符号的延迟绑定。
 
-The ODR is a C++ concept, but as we’ve seen, it’s strongly enforced by linkers. We looked at how to tackle the most basic symbol duplication in both static and dynamic libraries. We also highlighted the value of using namespaces whenever possible and advised against depending too much on a linker to prevent symbol collisions.
+ODR 是 C++ 的一个概念，但正如我们所见，它是由链接器强制执行的。我们查看了如何在静态库和动态库中处理最基本的符号重复问题。我们还强调了尽可能使用命名空间的价值，并建议不要过分依赖链接器来防止符号冲突。
 
-For a step that might seem straightforward (given CMake’s limited commands dedicated to linking), it certainly has its complexities. One of the trickier aspects is the order of linking, especially when dealing with libraries that have nested and cyclical dependencies. We now understand how the linker selects symbols that end up in the final binary file, and how we can override this behavior if needed.
+对于一个看似简单的步骤（考虑到 CMake 专门用于链接的有限命令），它确实有其复杂性。其中一个比较棘手的问题是链接的顺序，特别是在处理具有嵌套和循环依赖关系的库时。现在我们了解了链接器如何选择最终进入二进制文件的符号，以及如何在需要时覆盖这种行为。
 
-Lastly, we investigated how to take advantage of a linker to prepare our program for testing – by separating the main() function into another translation unit. This enabled us to introduce another executable, which ran tests against the exact same machine code that will be executed in production.
+最后，我们研究了如何利用链接器为测试准备我们的程序 —— 通过将 main() 函数分离到另一个翻译单元。这使我们能够引入另一个可执行文件，该文件针对与生产中将要执行的确切机器代码运行测试。
 
-With our newfound knowledge of linking, we’re ready to bring external libraries into our CMake projects. In the next chapter, we’ll look at how to manage dependencies in CMake.
-
-
-
-
-
-
-
-
+凭借我们对链接的新知识，我们已准备好将外部库引入我们的 CMake 项目。在下一章中，我们将探讨如何在 CMake 中管理依赖项。

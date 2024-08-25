@@ -1,31 +1,33 @@
 
-Everything is easier to grasp when there’s a good practical example to support the theory. Obviously, we’d like to write some CMake code and try it out. However, since generator expressions aren’t evaluated until after the configuration is complete, we cannot use any configuration-time commands like message() to experiment. We need to use some special tricks instead. To debug generator expressions, you can use either of these methods:
+一切在有了好的实际例子的支持下，理论都更容易掌握。显然，我们想要编写一些 CMake 代码并尝试一下。然而，由于生成器表达式直到配置完成之后才被评估，我们不能使用任何配置时的命令，如 message() 来实验。我们需要使用一些特殊的技巧 instead. 为了调试生成器表达式，你可以使用以下任一方法：
 
 \begin{itemize}
 \item
-Write it to a file (this particular version of the file() command supports generator expressions): file(GENERATE OUTPUT filename CONTENT "\$<...>")
+将其写入文件（这个 file() 命令的特定版本支持生成器表达式）： file(GENERATE OUTPUT filename CONTENT "\$<...>")
 
 \item
-Add a custom target and build it explicitly from the command line: add\_custom\_target(gendbg COMMAND \$\{CMAKE\_COMMAND\} -E echo "\$<...>")
+添加一个自定义目标，并从命令行显式构建它： add\_custom\_target(gendbg COMMAND \$\{CMAKE\_COMMAND\} -E echo "\$<...>")
 \end{itemize}
 
-I recommend the first option for simpler practice. Remember, though, that we won’t be able to use all the expressions in these commands, as some are target specific. Having covered this, let’s look at some of the uses for generator expressions.
+我推荐第一个选项进行简单的练习。请记住，我们无法在这些命令中使用所有的表达式，因为有些是特定于目标的。
 
-\mySubsubsection{6.6.1.}{Build configurations}
+了解了这一点，让我们看一下生成器表达式的某些用途。
 
-In Chapter 1, First Steps with CMake, we discussed the build type, specifying which configuration we are building – Debug, Release, and so on. There may be cases where you’d like to act differently based on what kind of build you’re making. A simple and easy way to do so is by utilizing the \$<CONFIG> generator expression:
+\mySubsubsection{6.6.1.}{构建配置}
+
+在第一章《CMake的初步步骤》中，我们讨论了构建类型，指定我们正在构建的配置——Debug、Release 等。可能有些情况下，你希望根据你正在进行的构建类型进行不同的操作。一个简单且直接的方法是使用\$<CONFIG>生成器表达式：
 
 \begin{shell}
 target_compile_options(tgt $<$<CONFIG:DEBUG>:-ginline-points>)
 \end{shell}
 
-The preceding example checks whether the config equals DEBUG; if that’s the case, the nested expression is evaluated to 1. The outer shorthand if expression then becomes true, and our -ginline-points debug flag gets added to the options. It’s important to know this form, so you’ll be able to understand such expressions in other projects, but I’d recommend using the more verbose \$<IF:...> for better readability.
+前面的例子检查配置是否等于 DEBUG；如果是这样，嵌套表达式被评估为 1。然后外部的简写 if 表达式变为真，我们的 -ginline-points 调试标志被添加到选项中。了解这种形式很重要，这样你将能够理解其他项目中的此类表达式，但我建议为了更好的可读性，使用更详细的\$<IF:...>.
 
-\mySubsubsection{6.6.2.}{System-specific one liners}
+\mySubsubsection{6.6.2.}{系统特定的单行命令}
 
-Generator expressions can also be used to compact verbose if commands into neat one liners.
+生成器表达式还可以用来将冗长的 if 命令压缩成整洁的单行命令。
 
-Let’s suppose we have the following code:
+假设我们有以下代码：
 
 \begin{cmake}
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
@@ -33,18 +35,18 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 endif()
 \end{cmake}
 
-It tells the compiler to add -DLINUX=1 to the arguments if this is the target system. While this isn’t terribly long, it could be replaced with a fairly simple expression:
+它告诉编译器，如果这是目标系统，则向参数中添加 -DLINUX=1。虽然这并不算太长，但它可以被一个相当简单的表达式替换：
 
 \begin{cmake}
 target_compile_definitions(myProject PRIVATE
                            $<$<CMAKE_SYSTEM_NAME:LINUX>:LINUX=1>)
 \end{cmake}
 
-Such code works well, but there’s a limit to how much you can pack into a generator expression until it becomes too hard to read. On top of that, many CMake users postpone learning about generator expressions and have trouble following what happens. Luckily, we won’t have such problems after completing this chapter.
+这样的代码运行良好，但是你可以在生成器表达式中打包的内容有限，直到它变得难以阅读。此外，许多 CMake 用户推迟学习生成器表达式，并难以跟踪发生的事情。幸运的是，在完成本章后，我们不会遇到这样的问题。
 
-\mySubsubsection{6.6.3.}{Interface libraries with compiler-specific flags}
+\mySubsubsection{6.6.3.}{带有编译器特定标志的接口库}
 
-Interface libraries, as we discussed in Chapter 5, Working with Targets, can be used to provide flags to match the compiler:
+如我们在第五章《与目标打交道》中讨论的，接口库可以用来提供与编译器匹配的标志：
 
 \begin{cmake}
 add_library(enable_rtti INTERFACE)
@@ -53,26 +55,26 @@ target_compile_options(enable_rtti INTERFACE
 )
 \end{cmake}
 
-Even in such a simple example, we can already see how difficult an expression is to understand when we nest too many generator expressions. Unfortunately, sometimes this is the only way to achieve the desired effect. Here’s the explanation of the example:
+即使在如此简单的例子中，当我们嵌套太多生成器表达式时，理解表达式也是困难的。不幸的是，有时这是实现期望效果的唯一方式。以下是例子的解释：
 
 \begin{itemize}
 \item
-We check whether COMPILER\_ID is GNU; if that’s the case, we evaluate OR to 1.
+我们检查 COMPILER\_ID 是否为 GNU；如果是，我们将 OR 评估为 1。
 
 \item
-If it’s not, we check whether COMPILER\_ID is Clang, and evaluate OR to 1. Otherwise, evaluate OR to 0.
+如果不是，我们检查 COMPILER\_ID 是否为 Clang，并将 OR 评估为 1。否则，将 OR 评估为 0。
 
 \item
-If OR is evaluated to 1, add -rtti to the enable\_rtti compile options. Otherwise, do nothing.
+如果 OR 被评估为 1，将 -rtti 添加到 enable\_rtti 编译选项中。否则，不做任何事情。
 \end{itemize}
 
-Next, we can link our libraries and executables with the enable\_rtti interface library. CMake will add the -rtti flag if a compiler supports it. Side note: RTTI stands for run-time type information and is used in C++ with keywords like typeid to determine the class of an object at run time; unless your code is using this feature, the flag doesn’t need to be enabled.
+接下来，我们可以将我们的库和可执行文件与 enable\_rtti 接口库链接起来。如果编译器支持，CMake 将添加 -rtti 标志。旁注：RTTI 代表运行时类型信息，在 C++ 中与 typeid 等关键字一起使用，以在运行时确定对象的类；除非你的代码使用这个功能，否则不需要启用该标志。
 
-\mySubsubsection{6.6.4.}{Nested generator expressions}
+\mySubsubsection{6.6.4.}{嵌套生成器表达式}
 
-Sometimes, it’s not obvious what happens when we try to nest elements in a generator expression. We can debug the expressions by generating a test output to a debug file.
+有时，当我们尝试在生成器表达式中嵌套元素时，会发生什么并不明显。我们可以通过生成一个测试输出到调试文件来调试表达式。
 
-Let’s try out a few things and see what happens:
+让我们尝试一些事情，看看会发生什么：
 
 \filename{ch06/01-nesting/CMakeLists.txt}
 
@@ -89,7 +91,7 @@ file(GENERATE OUTPUT nesting CONTENT "
 ")
 \end{cmake}
 
-After building this project as described in the Technical requirements section of this chapter, we can read the produced nesting file using the Unix cat command:
+在按照本章技术要求部分描述的方法构建此项目后，我们可以使用 Unix 的 cat 命令读取生成的 nesting 文件：
 
 \begin{shell}
 # cat nesting
@@ -101,30 +103,30 @@ After building this project as described in the Technical requirements section o
     5 SMALL text>
 \end{shell}
 
-This is how each line works:
+这就是每行的工作方式：
 
 \begin{enumerate}
 \item
-The PLATFORM\_ID output value is LINUX.
+PLATFORM\_ID 的输出值是 LINUX。
 
 \item
-The output from the nested value will get transformed correctly to uppercase LINUX.
+嵌套值的输出将被正确地转换为大写的 LINUX。
 
 \item
-We can transform plain strings.
+我们可以转换普通字符串。
 
 \item
-We can transform the content of configuration-stage variables.
+我们可以转换配置阶段的变量内容。
 
 \item
-Variables will be interpolated first, and closing angle brackets (>) will be interpreted as part of the genex, in that only part of the string will get capitalized.
+变量将首先插值，然后闭合的尖括号（>）将被解释为生成器表达式的一部分，因此只有字符串的一部分将被大写。
 \end{enumerate}
 
-In other words, be aware that the content of variables may affect the behavior of your genex expansions. If you need an angle bracket in a variable, use \$<ANGLE-R>.
+换句话说，请注意，变量的内容可能会影响你的 genex 扩展的行为。如果你需要在变量中使用尖括号，请使用\$<ANGLE-R>。
 
-\mySubsubsection{6.6.5.}{The difference between a conditional expression and the evaluation of a BOOL operator}
+\mySubsubsection{6.6.5.}{布尔表达式与 BOOL 运算符的评估差异}
 
-Generator expressions can be a little confusing when it comes to evaluating Boolean types to strings. It is important to understand how they differ from regular conditional expressions, starting with an explicit IF keyword:
+当涉及到将布尔类型评估为字符串时，生成器表达式可能会有些令人困惑。了解它们与常规条件表达式的区别至关重要，尤其是从显式的 IF 关键字开始：
 
 \filename{ch06/02-boolean/CMakeLists.txt}
 
@@ -141,28 +143,28 @@ file(GENERATE OUTPUT boolean CONTENT "
 ")
 \end{cmake}
 
-Let’s read the produced file using the Linux cat command:
+让我们使用 Linux 的 cat 命令读取生成的文件：
 
 \begin{enumerate}
 \item
-This is a Boolean expansion, where BOOL is 0; therefore, the TRUE string isn’t written.
+这是一个布尔展开，其中 BOOL 是 0；因此，TRUE 字符串不会被写入。
 
 \item
-This is a typical mistake – the author intended to print TRUE or FALSE depending on the BOOL value, but since it is a Boolean false expansion as well, two arguments are treated as one and not printed.
+这是一个典型的错误——作者原本打算根据 BOOL 值打印 TRUE 或 FALSE，但由于它也是一个布尔假展开，两个参数被当作一个参数处理，因此不会被打印。
 
 \item
-This is the same mistake for a reversed value – it is a Boolean true expansion that has both arguments written in a single line.
+这是相同错误的一个反转值——它是一个布尔真展开，两者都在同一行写入。
 
 \item
-This is a proper conditional expression starting with IF – it prints FALSE because the first argument is 0.
+这是一个以 IF 开头的正确条件表达式——它打印 FALSE，因为第一个参数是 0。
 
 \item
-This is the correct usage of a conditional expression, however, when we don’t need to provide values for Boolean false, we should use the form used in the first line.
+这是条件表达式的正确用法，但是当我们不需要为布尔假提供值时，我们应该使用第一行中使用的形式。
 \end{enumerate}
 
-Generator expressions are notorious for their convoluted syntax. The differences mentioned in this example can confuse even experienced builders. If in doubt, copy such an expression to another file and analyze it by adding indentation and whitespace to understand it better.
+生成器表达式因其复杂的语法而臭名昭著。本例中提到的差异甚至可能会让经验丰富的构建者感到困惑。如果有所疑虑，将这样的表达式复制到另一个文件中，并通过添加缩进和空格来分析它，以更好地理解。
 
-Seeing examples of how generator expressions work has prepared us to use them in practice. Upcoming chapters will discuss many topics, where generator expressions will be relevant. In time, we’ll cover even more of their applications.
+看到生成器表达式的工作示例已经为我们使用它们做好了准备。接下来的章节将讨论许多主题，其中生成器表达式将是相关的。随着时间的推移，我们将涵盖它们更多的应用。
 
 
 

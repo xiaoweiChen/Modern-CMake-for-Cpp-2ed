@@ -1,18 +1,18 @@
 
 
-CMake is building the solution in three stages: configuration, generation, and running the build tool. Generally, all the required data is available during the configuration stage. However, occasionally, we encounter a situation similar to the “chicken and the egg” paradox. Take an example from the Using a custom command as a target hook section in Chapter 5, Working with Targets – where a target needs to know the path of a binary artifact of another target. Unfortunately, this information becomes available only after all the listfiles are parsed and the configuration stage is complete.
+CMake在三个阶段构建解决方案：配置、生成和运行构建工具。通常，在配置阶段所有所需数据都是可用的。然而，有时我们会遇到类似于“先有鸡还是先有蛋”的悖论。以第五章《与目标打交道》中的“将自定义命令作为目标钩子”一节的例子来说，一个目标需要知道另一个目标的二进制工件的路径。不幸的是，这个信息只有在所有列表文件被解析且配置阶段完成后才能获得。
 
-So, how do we tackle such a problem? One solution could be to create a placeholder for the information and delay its evaluation until the next stage – the generation stage.
+那么，我们如何解决这类问题呢？一个解决方案可能是为这个信息创建一个占位符，并将其评估推迟到下一个阶段——生成阶段。
 
-This is precisely what generator expressions (also referred to as “genexes”) do. They are built around target properties such as LINK\_LIBRARIES, INCLUDE\_DIRECTORIES, COMPILE\_DEFINITIONS, and propagated properties, although not all. They follow rules similar to the conditional statements and variable evaluation.
+这正是生成器表达式（也称为“genexes”）所做的。它们围绕目标属性构建，如LINK\_LIBRARIES、INCLUDE\_DIRECTORIES、COMPILE\_DEFINITIONS以及传播属性，尽管不是全部。它们遵循类似于条件语句和变量评估的规则。
 
 \begin{myNotic}{Note}
-Generator expressions will be evaluated at the generation stage (when the configuration is complete and the buildsystem is created), which means that capturing their output into a variable and printing it to the console is not straightforward.
+生成器表达式将在生成阶段进行评估（在配置完成且构建系统创建后），这意味着将它们的输出捕获到变量并打印到控制台并不是直接的操作。
 \end{myNotic}
 
-There’s a significant number of generator expressions, and in a way, they constitute their own, domain-specific language – language that supports conditional expressions, logical operations, comparisons, transformations, queries, and ordering. Utilizing generator expressions enables manipulation and queries of strings, lists, version numbers, shell paths, configurations, and build targets. In this chapter, we will provide brief overviews of these concepts, focusing on the essentials since they are less necessary in most cases. Our primary focus will be on the main application of generator expressions, which involves gathering information from the generated configuration of targets and the state of the build environment. For full reference, it’s best to read the official CMake manual online (see the Further reading section for the URL).
+生成器表达式的数量众多，它们在某种程度上构成了自己的、特定领域的语言——这种语言支持条件表达式、逻辑操作、比较、转换、查询和排序。利用生成器表达式可以操作和查询字符串、列表、版本号、shell路径、配置和构建目标。在本章中，我们将简要概述这些概念，由于在大多数情况下它们不是必需的，我们将专注于基础知识。我们的主要关注点将是生成器表达式的主要应用，即从目标的生成配置和构建环境状态中收集信息。为了完整参考，最好在线阅读官方的CMake手册（请参见“进一步阅读”部分获取URL）。
 
-Everything is better explained with an example, so let’s jump right into it, and describe the syntax of generator expressions.
+一切通过例子解释都会更清楚，所以让我们直接进入正题，描述生成器表达式的语法。
 
 
 

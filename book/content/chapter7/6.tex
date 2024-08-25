@@ -1,42 +1,11 @@
-We have completed yet another chapter! Undoubtedly, compilation is a complex process. With all its edge cases and specific requirements, it can be difficult to manage without a robust tool. Thankfully, CMake does an excellent job supporting us here.
+我们已经完成了又一章的学习！毫无疑问，编译是一个复杂的过程。考虑到所有的边缘情况和特定要求，如果没有一个强大的工具，管理起来可能会很困难。幸运的是，CMake在这里为我们提供了极好的支持。
 
-So, what have we learned so far? We began by discussing what compilation is and where it fits into the broader narrative of building and running applications in the OS. We then examined the stages of compilation and the internal tools that manage them. This understanding is invaluable for resolving complex issues that we might encounter in the future.
+那么，到目前为止我们学到了什么？我们从讨论编译是什么以及它如何适应在操作系统中构建和运行应用程序的更广泛叙述开始。然后，我们检查了编译的各个阶段以及管理它们的内部工具。这种理解对于解决我们未来可能遇到的复杂问题是无价的。
 
-Next, we explored how to use CMake to verify whether the compiler available on the host meets all the necessary requirements for our code to build. As we have already established, it’s a significantly better experience for users of our solution to see a friendly message asking them to upgrade rather than an arcane error printed by an outdated compiler that can’t handle the new features of the language.
+接下来，我们探讨了如何使用CMake来验证宿主上可用的编译器是否满足我们代码构建的所有必要要求。正如我们已经建立的，对于我们的解决方案的用户来说，看到一个友好的消息提示他们升级，而不是一个过时的编译器打印出的神秘错误，后者无法处理语言的新特性，这无疑是显著更好的体验。
 
-We briefly discussed how to add sources to already defined targets, then moved on to the configuration of the preprocessor. This was quite a substantial subject, as this stage brings all the bits of code together and determines which parts will be ignored. We talked about providing paths to files and adding custom definitions both individually and in bulk (along with some use cases).
-Then, we discussed the optimizer; we explored all the general levels of optimization and what flags they implicitly add. We also went into detail about a few of them – finline, floop-unroll, and ftree-vectorize.
+我们简要讨论了如何向已定义的目标添加源文件，然后继续讨论预处理的配置。这是一个相当重要的主题，因为这一阶段将所有代码片段汇集在一起，并确定哪些部分将被忽略。我们讨论了提供文件路径和添加自定义定义的方法，既可以单独添加，也可以批量添加（以及一些使用案例）。 然后，我们讨论了优化器；我们探索了所有一般优化级别以及它们隐式添加的标志。我们还详细讨论了其中的一些——finline、floop-unroll 和 ftree-vectorize。
 
-Finally, it was time to revisit the bigger picture and study how to manage the viability of compilation. We tackled two main aspects here – reducing the compilation time (which, by extension, helps maintain the programmer’s focus) and finding mistakes. The latter is extremely important for identifying what is broken and why. Setting the tools correctly and understanding why things happen greatly contributes to ensuring the quality of the code (and preserving our mental health).
+最后，是时候重新审视大局，并研究如何管理编译的可行性。我们在这里解决了两个主要方面——减少编译时间（这进而有助于保持程序员的专注）和查找错误。后者对于识别什么是错误的以及为什么出错极为重要。正确设置工具并理解为什么会发生这些事情，对于确保代码质量（以及保持我们的心理健康）做出了巨大贡献。
 
-In the next chapter, we’ll learn about linking and everything we need to consider in order to build libraries and use them in our projects.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+在下一章中，我们将学习链接以及为了构建库并在我们的项目中使用它们，我们需要考虑的一切。

@@ -1,6 +1,6 @@
-Writing unit tests is technically possible without any kind of framework. All we have to do is create an instance of the class we want to test, execute one of its methods, and check if the new state or value returned meets our expectations. Then, we report the result and delete the object under test. Let’s try it out.
+编写单元测试从技术上讲，不使用任何类型的框架是可能的。我们所要做的就是创建我们想要测试的类的实例，执行其一个方法，并检查新的状态或返回的值是否符合我们的预期。然后，我们报告结果并删除被测试的对象。让我们试一试。
 
-We’ll use the following structure:
+我们将使用以下结构：
 
 \begin{shell}
 - CMakeLists.txt
@@ -14,7 +14,7 @@ We’ll use the following structure:
   |- calc_test.cpp
 \end{shell}
 
-Starting from main.cpp, we see that it uses a Calc class:
+从main.cpp开始，我们看到它使用了Calc类：
 
 \filename{ch11/01-no-framework/src/main.cpp}
 
@@ -29,7 +29,7 @@ int main() {
 }
 \end{cpp}
 
-Nothing too fancy —— main.cpp simply includes the calc.h header and calls two methods of the Calc object. Let’s quickly glance at the interface of Calc, our SUT:
+没什么太花哨的——main.cpp只是包含了calc.h头文件并调用了Calc对象的两个方法。让我们快速地看一下SUT（被测试系统）Calc的接口：
 
 \filename{ch11/01-no-framework/src/calc.h}
 
@@ -42,13 +42,13 @@ class Calc {
 };
 \end{cpp}
 
-The interface is as simple as possible. We’re using \#pragma once here—it works exactly like common preprocessor include guards and is understood by almost all modern compilers, despite not being part of the official standard.
+这个接口尽可能简单。我们在这里使用\#pragma once——它的工作原理与常见的预处理器包含保护完全一样，并且几乎被所有现代编译器理解，尽管它不是官方标准的一部分。
 
 \begin{myNotic}{Note}
-Include guards are short lines in header files that prevent multiple inclusions in the same parent file.
+包含保护是头文件中的一行简短的代码，用于防止在同一个父文件中多次包含。
 \end{myNotic}
 
-Let’s see the class implementation:
+让我们看看类的实现：
 
 \filename{ch11/01-no-framework/src/calc.cpp}
 
@@ -62,7 +62,7 @@ int Calc::Multiply(int a, int b) {
 }
 \end{cpp}
 
-Uh-oh! We introduced a mistake! Multiply is ignoring the b argument and returning a square of a instead. That should be detected by correctly written unit tests. So, let’s write some! Here we go:
+哎呀！我们引入了一个错误！Multiply忽略了b参数，并返回了a的平方。这应该被正确编写的单元测试检测到。所以，让我们来写一些！以下是代码：
 
 \filename{ch11/01-no-framework/test/calc\_test.cpp}
 
@@ -81,9 +81,9 @@ void MultiplyMultipliesTwoIntegers() {
 }
 \end{cpp}
 
-We start our calc\_test.cpp file by writing two test methods, one for each tested method of SUT. If the value returned from the called method doesn’t match expectations, each function will call std::exit(1). We could use assert(), abort(), or terminate() here, but that would result in a less explicit Subprocess aborted message in the output of ctest, instead of the more readable Failed message.
+我们从calc\_test.cpp文件开始编写两个测试方法，每个被测试的SUT方法一个。如果从调用方法返回的值不符合预期，每个函数将调用std::exit(1)。我们在这里可以使用assert()、abort()或terminate()，但这样会在ctest的输出中得到一个不太明确的子进程终止消息，而不是更易读的失败消息。
 
-Time to create a test runner. Ours will be as simple as possible to avoid introducing ridiculous amounts of work. Just look at the main() function we had to write in order to run just two tests:
+是时候创建一个测试运行器了。我们的将尽可能简单，以避免引入大量工作。看看我们为了运行两个测试而不得不编写的main()函数：
 
 \filename{ch11/01-no-framework/test/unit\_tests.cpp}
 
@@ -99,38 +99,38 @@ int main(int argc, char *argv[]) {
 }
 \end{cpp}
 
-Here’s a breakdown of what happens:
+以下是发生的情况的分解：
 
 \begin{enumerate}
 \item
-We declare two external functions that will be linked from another translation unit.
+我们声明两个外部函数，这些函数将从一个翻译单元中链接。
 
 \item
-If no arguments were provided, execute both tests (the zeroth element in argv[] is always the program name).
+如果没有提供参数，执行两个测试（argv[]中的第一个元素始终是程序名称）。
 
 \item
-If the first argument is an identifier of the test, execute it.
+如果第一个参数是测试的标识符，执行它。
 
 \item
-If any of the tests fail, it internally calls exit() and returns with a 1 exit code.
+如果任何测试失败，它将内部调用exit()并返回1退出代码。
 
 \item
-If no tests were executed or all passed, it implicitly returns with a 0 exit code.
+如果没有执行测试或所有测试都通过，它将隐式返回0退出代码。
 \end{enumerate}
 
-To run the first test, execute:
+运行第一个测试，执行：
 
 \begin{shell}
 ./unit_tests 1
 \end{shell}
 
-To run the second, execute:
+运行第二个测试，执行：
 
 \begin{shell}
 ./unit_tests 2
 \end{shell}
 
-We simplified the code as much as possible, but it’s still hard to read. Anyone who might need to maintain this section isn’t going to have an easy time after adding a few more tests. The functionality is pretty raw —— debugging such a test suite will be difficult. Nevertheless, let’s see how we can use it with CTest:
+我们尽可能简化了代码，但它仍然难以阅读。任何可能需要维护这一部分的人，在添加了更多测试后，都不会感到轻松。这个功能相当原始——调试这样的测试套件将很困难。尽管如此，让我们看看如何使用CTest来使用它：
 
 \filename{ch11/01-no-framework/CMakeLists.txt}
 
@@ -142,9 +142,9 @@ add_subdirectory(src bin)
 add_subdirectory(test)
 \end{cmake}
 
-We start with the usual header and include(CTest). This enables CTest and should be always done in the top-level CMakeLists.txt. Next, we include two nested listfiles in each of the subdirectories: src and test. The specified bin value indicates that we want the binary output from the src subdirectory to be placed in <build\_tree>/bin. Otherwise, binary files would end up in <build\_tree>/src, which could be confusing for the user, since build artifacts are not source files.
+我们从常规的头文件开始，并包含(CTest)。这启用了CTest，并且应该在顶级CMakeLists.txt中始终这样做。接下来，我们在src和test每个子目录中包含两个嵌套的列表文件。指定的bin值表示我们希望将src子目录的二进制输出放置在<build\_tree>/bin中。否则，二进制文件最终会出现在<build\_tree>/src中，这可能会使用户感到困惑，因为构建工件不是源文件。
 
-For the src directory, the listfile is straightforward and contains a simple main target definition:
+对于src目录，列表文件是直接的，并包含一个简单的主目标定义：
 
 \filename{ch11/01-no-framework/src/CMakeLists.txt}
 
@@ -152,7 +152,7 @@ For the src directory, the listfile is straightforward and contains a simple mai
 add_executable(main main.cpp calc.cpp)
 \end{cmake}
 
-We also need a listfile for the test directory:
+我们还需要为test目录创建一个列表文件：
 
 \filename{ch11/01-no-framework/test/CMakeLists.txt}
 
@@ -166,7 +166,7 @@ add_test(NAME SumAddsTwoInts COMMAND unit_tests 1)
 add_test(NAME MultiplyMultipliesTwoInts COMMAND unit_tests 2)
 \end{cmake}
 
-We have now defined a second unit\_tests target that also uses the src/calc.cpp implementation file and its respective header. Finally, we explicitly add two tests:
+现在我们定义了第二个unit\_tests目标，它也使用了src/calc.cpp实现文件及其相应的头文件。最后，我们明确添加了两个测试：
 
 \begin{itemize}
 \item
@@ -176,9 +176,9 @@ SumAddsTwoInts
 MultiplyMultipliesTwoInts
 \end{itemize}
 
-Each provides its ID as an argument to the add\_test() command. CTest will simply take anything provided after the COMMAND keyword and execute it in a subshell, collecting the output and exit code. Don’t get too attached to the add\_test() method; in the Unit-testing frameworks section later, we’ll discover a much better way of dealing with test cases.
+每个测试都将其ID作为参数传递给add\_test()命令。CTest将简单地接受COMMAND关键字之后提供的任何内容，并在子shell中执行它，收集输出和退出代码。不要过于依赖add\_test()方法；在后面的单元测试框架部分，我们将发现处理测试用例的更好方法。
 
-To run the tests, execute ctest in the build tree:
+要运行测试，请在构建树中执行ctest：
 
 \begin{shell}
 # ctest
@@ -197,13 +197,13 @@ Use "--rerun-failed --output-on-failure" to re-run the failed cases
 verbosely
 \end{shell}
 
-CTest executed both tests and reported that one of them is failing —— the returned value from Calc::Multiply didn’t meet expectations. Very good. We now know that our code has a bug, and someone should fix it.
+CTest执行了两个测试，并报告其中一个失败了——Calc::Multiply返回的值不符合预期。非常好。我们现在知道我们的代码有一个错误，需要有人修复它。
 
 \begin{myNotic}{Note}
-You may have noticed that in most examples so far, we didn’t necessarily employ the project structure described in Chapter 4, Setting Up Your First CMake Project. This was done to keep things brief. This chapter discusses more advanced concepts; therefore, using a full structure is warranted. In your projects (no matter how small), it’s best to follow this structure from the start. As a wise man once said: “You step onto the road, and if you don’t keep your feet, there’s no knowing where you might be swept off to.”
+您可能已经注意到，在迄今为止的大多数示例中，我们并不一定采用了第4章“设置您的第一个CMake项目”中描述的项目结构。这样做是为了保持简洁。这一章讨论了更高级的概念；因此，使用完整结构是合理的。在您的项目（无论多小）中，最好从一开始就遵循这种结构。正如一位智者所说：“你踏上这条路，如果你不保持警惕，就不知道会被带到哪里。”
 \end{myNotic}
 
-I hope it’s now clear that building a testing framework from scratch for your own project is not advisable. Even the most basic example is hard on the eyes, has a lot of overhead, and doesn’t add any value. However, before we can adopt a unit-testing framework, we’ll need to rethink the structure of the project.
+我希望现在已经很清楚，为您自己的项目从头开始构建测试框架是不可取的。即使是最基本的示例也难以阅读，有很多开销，并且没有增加任何价值。然而，在我们采用单元测试框架之前，我们需要重新考虑项目的结构。
 
 
 

@@ -1,30 +1,30 @@
-You might assume that once we’ve successfully compiled the source code into a binary file, our role as build engineers is complete. However, that’s not entirely true. While binary files do contain all the necessary code for a CPU to execute, this code can be distributed across multiple files in a complex manner. We wouldn’t want the CPU to scour different files searching for individual code snippets. Instead, our goal is to consolidate these separate units into a single file. To achieve this, we use a process known as linking.
+你可能认为一旦我们成功地将源代码编译成二进制文件，作为构建工程师的角色就完成了。然而，事实并非完全如此。虽然二进制文件确实包含了一个CPU执行所需的所有代码，但这些代码可以以复杂的方式分布在多个文件中。我们不希望CPU在不同的文件中搜索单个代码片段。相反，我们的目标是将这些单独的单元合并成一个文件。为了实现这一点，我们使用一个称为链接的过程。
 
-A quick look shows that CMake has few linking commands, with target\_link\_libraries() being the main one. Why dedicate a whole chapter to a single command then? Unfortunately, almost nothing is ever easy in computer science, and linking is no exception: to get the right results, we need to understand the whole story – we need to know how exactly a linker works and get the basics right. We’ll talk about the internal structure of object files, how the relocation and reference resolution mechanisms work, and what are they for. We’ll discuss how the final executable differs from its components and how the process image is constructed by the system when loading the program into memory.
+快速浏览显示，CMake的链接命令并不多，其中target\_link\_libraries()是主要的。那么，为什么还要为单个命令写一整个章节呢？不幸的是，在计算机科学中，几乎没有什么是简单的，链接也不例外：为了得到正确的结果，我们需要了解整个故事——我们需要知道链接器是如何工作的，并且要掌握基础知识。我们将讨论目标文件的内部结构，如何工作的重定位和引用解析机制，以及它们的用途。我们将讨论最终可执行文件与其组件的不同之处，以及系统在将程序加载到内存时如何构建进程映像。
 
-Then, we’ll introduce all kinds of libraries to you: static, shared, and shared modules. Even though they’re all called “libraries,” they’re quite different. Creating a well-linked executable relies on having the right configuration and addressing specific details like position-independent code (PIC).
+然后，我们将向您介绍各种类型的库：静态库、共享库和共享模块。尽管它们都被称为“库”，但它们非常不同。创建一个链接良好的可执行文件依赖于正确的配置和处理特定细节，例如位置无关代码（PIC）。
 
-We’ll learn about another nuisance of linking – the One Definition Rule (ODR). It’s crucial to have the exact number of definitions. Managing duplicate symbols can be particularly challenging, especially with shared libraries. Additionally, we’ll explore why linkers occasionally fail to locate external symbols, even if the executable is correctly linked to the relevant library.
+我们将学习链接的另一个难题——唯一定义规则（ODR）。准确地定义符号的数量是至关重要的。管理重复的符号可能特别具有挑战性，尤其是对于共享库。此外，我们将探讨为什么链接器有时无法定位外部符号，即使可执行文件已正确链接到相关库。
 
-Finally, we’ll discover how to use a linker efficiently, preparing our solution for testing within specific frameworks.
+最后，我们将发现如何高效地使用链接器，为我们的解决方案在特定框架内进行测试做好准备。
 
-In this chapter, we’re going to cover the following main topics:
+在本章中，将包含以下内容：
 
 \begin{itemize}
 \item
-Getting the basics of linking right
+掌握链接的基本知识
 
 \item
-Building different library types
+构建不同类型的库
 
 \item
-Solving problems with the ODR
+解决ODR问题
 
 \item
-The order of linking and unresolved symbols
+链接和未解析符号的顺序
 
 \item
-Separating main() for testing
+为测试分离main()
 \end{itemize}
 
 

@@ -1,10 +1,10 @@
-As we’ve established, the linker enforces the ODR and ensures that all external symbols provide their definitions during the linking process. Another linker-related challenge we might face is the elegant and efficient testing of the project.
+正如我们所建立的，链接器强制执行ODR并确保在链接过程中所有外部符号都提供它们的定义。另一个我们可能面临的与链接器相关的挑战是项目的优雅且高效测试。
 
-In an ideal scenario, we should be testing the exact same source code that runs in production. A comprehensive testing pipeline would build the source code, run tests on the resulting binary, and then package and distribute the executable (optionally excluding the tests themselves).
+在理想情况下，我们应该测试与生产环境中运行完全相同的源代码。一个全面的测试管道会构建源代码，对生成的二进制文件运行测试，然后打包和分发可执行文件（可选地排除测试本身）。
 
-But how can we implement this? Executables typically have a precise execution flow, often involving the reading of command-line arguments. The compiled nature of C++ doesn’t readily support pluggable units that can be temporarily injected into the binary just for testing. This suggests that we may need a nuanced approach to tackle this challenge.
+但是，我们如何实现这一点呢？可执行文件通常具有精确的执行流程，通常涉及读取命令行参数。C++的编译特性并不容易支持可临时插入二进制文件中进行测试的可插拔单元。这表明我们可能需要一个微妙的策略来应对这个挑战。
 
-Luckily, we can use a linker to help us deal with this in an elegant manner. Consider extracting all logic from your program’s main() to an external function, start\_program(), like so:
+幸运的是，我们可以使用链接器以优雅的方式帮助我们处理这个问题。考虑将程序的所有逻辑从main()函数中提取出来，放到一个外部函数start\_program()中，如下所示：
 
 \filename{ch08/07-testing/main.cpp}
 
@@ -15,7 +15,7 @@ int main(int argc, const char** argv) {
 }
 \end{cpp}
 
-It’s reasonable to skip testing this new main() function when it’s written in such form; it is only forwarding arguments to a function defined elsewhere (in another file). We can then create a library containing the original source from main() wrapped in a new function – start\_program(). In this example, the code checks whether the command-line argument count is higher than 1:
+当main()函数以这种形式编写时，跳过对其的测试是合理的；它只是将参数转发到一个在别处定义的函数（在另一个文件中）。然后，我们可以创建一个包含原始main()源代码的新函数start\_program()的库。在这个例子中，代码检查命令行参数计数是否大于1：
 
 \filename{ch08/07-testing/program.cpp}
 
@@ -30,7 +30,7 @@ int start_program(int argc, const char** argv) {
 }
 \end{cpp}
 
-We can now prepare a project that builds this application and links together those two translation units:
+现在，我们可以准备一个项目来构建这个应用程序，并将这两个翻译单元链接在一起：
 
 \filename{ch08/07-testing/CMakeLists.txt}
 
@@ -42,9 +42,9 @@ add_executable(main main.cpp)
 target_link_libraries(main program)
 \end{cmake}
 
-The main target is just providing the required main() function. The command-line argument verification logic is contained in the program target. We can now test it by creating another executable with its own main() function, which will host the test cases.
+main目标只是提供了所需的main()函数。命令行参数验证逻辑包含在program目标中。我们现在可以通过创建另一个带有自己的main()函数的可执行文件来测试它，该文件将承载测试用例。
 
-In a real-world scenario, frameworks such as GoogleTest or Catch2 will provide their own main() method that can be used to replace your program’s entry point and run all the defined tests. We’ll dive deep into the subject of actual testing in Chapter 11, Testing Frameworks. For now, let’s focus on the general principle and write our own test cases directly in the main() function:
+在现实世界的场景中，像GoogleTest或Catch2这样的框架将提供自己的main()方法，可以用来替换程序的入口点并运行所有定义的测试。我们将在第11章“测试框架”中深入讨论实际的测试主题。现在，让我们关注一般原则，并在main()函数中直接编写我们自己的测试用例：
 
 \filename{ch08/07-testing/test.cpp}
 
@@ -72,7 +72,7 @@ int main()
 }
 \end{cpp}
 
-The preceding code will call start\_program twice, with and without arguments, and check whether the returned exit codes are correct. Here’s the output you’ll see if tests execute correctly:
+前面的代码将两次调用start\_program，一次不带参数，一次带参数，并检查返回的退出代码是否正确。如果测试正确执行，您将看到以下输出：
 
 \begin{shell}
 ./test
@@ -84,28 +84,29 @@ Test 2: Passing 2 arguments to start_program:
 Test PASSED
 \end{shell}
 
-The Not enough arguments line is coming from start\_program(), and is an expected error message (we’re checking whether the program is failing correctly).
+“参数不足”这一行来自start\_program()，并且是预期的错误消息（我们正在检查程序是否正确地失败）。
 
-This unit test leaves much to be desired in terms of clean code and elegant testing practices, but it’s a start.
+这个单元测试在干净代码和优雅测试实践方面还有很多不足，但这是一个开始。
 
-We have now defined main() twice:
+现在我们已经两次定义了main()：
 
 \begin{itemize}
 \item
-In main.cpp for production use
+main.cpp 用于生产环境
 
 \item
-In test.cpp for test purposes
+test.cpp 用于测试目的
 \end{itemize}
 
-Let’s define the testing executable at the bottom of our CMakeLists.txt now:
+现在，让我们在CMakeLists.txt的底部定义测试可执行文件：
 
 \begin{cmake}
 add_executable(test test.cpp)
 target_link_libraries(test program)
 \end{cmake}
 
-This addition creates a new target that links against the same binary code as our production code. Yet, it gives us the flexibility to call all exported functions as needed. Thanks to this, we can run all code paths automatically and check whether they work as expected. Great!
+这个添加创建了一个新的目标，它与我们的生产代码链接相同的二进制代码。然而，它给了我们灵活性，可以按需调用所有导出的函数。多亏了这个，我们可以自动运行所有代码路径，并检查它们是否按预期工作。太棒了！
+
 
 
 

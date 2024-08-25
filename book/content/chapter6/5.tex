@@ -1,32 +1,32 @@
 
-Many generator expressions are available, but to avoid getting lost in the weeds, let’s focus on the most common ones. We’ll start with some basic transformations of the available data.
+有许多生成器表达式可用，但为了避免迷失在细节中，我们将重点关注最常见的表达式。我们从可用的数据的基本转换开始。
 
-\mySubsubsection{6.5.1.}{Dealing with strings, lists, and paths}
+\mySubsubsection{6.5.1.}{处理字符串、列表和路径}
 
-Generator expressions provide only the bare minimum of operations to transform and query data structures. Working with strings in the generator stage is possible with the following expressions:
-
-\begin{itemize}
-\item
-\$<LOWER\_CASE:string>, \$<UPPER\_CASE:string>: This converts to string to the required case.
-\end{itemize}
-
-List operations were fairly limited until recently. Since CMake 3.15, the following operations have been available:
+生成器表达式只提供了最基本的操作来转换和查询数据结构。在生成器阶段处理字符串是可能的，使用以下表达式：
 
 \begin{itemize}
 \item
-\$<IN\_LIST:string,list>: This returns true if list contains a string value.
-
-\item
-\$<JOIN:list,d>: This joins a semicolon-separated list using a d delimiter.
-
-\item
-\$<REMOVE\_DUPLICATES:list>: This deduplicates list (without sorting).
-
-\item
-\$<FILTER:list,INCLUDE|EXCLUDE,regex>: This includes/excludes items from list using a regex.
+\$<LOWER\_CASE:string>, \$<UPPER\_CASE:string>: 这会将字符串转换为所需的大小写。
 \end{itemize}
 
-Since 3.27, the \$<LIST:OPERATION> generator expressions were added, where OPERATION is one of:
+直到最近，列表操作相当有限。从 CMake 3.15 开始，以下操作可用：
+
+\begin{itemize}
+\item
+\$<IN\_LIST:string,list>: 如果列表包含字符串值，则返回 true。
+
+\item
+\$<JOIN:list,d>: 使用 d 分隔符将分号分隔的列表连接起来。
+
+\item
+\$<REMOVE\_DUPLICATES:list>: 去重列表（不排序）。
+
+\item
+\$<FILTER:list,INCLUDE|EXCLUDE,regex>:使用正则表达式从列表中包含/排除项目
+\end{itemize}
+
+从 3.27 开始，增加了\$<LIST:OPERATION>生成器表达式，其中 OPERATION 是以下之一：
 
 \begin{itemize}
 \item
@@ -81,9 +81,9 @@ REVERSE
 SORT
 \end{itemize}
 
-It’s rather rare to work with lists in generator expressions, so we’re only indicating what’s possible. If you find yourself in one of these cases, see the online manual for instructions on how to use these operations.
+在生成器表达式中处理列表的情况相当罕见，所以我们只是指出这是可能的。如果你发现自己处于这些情况之一，请在线手册中查找如何使用这些操作的说明。
 
-Finally, we can query and transform the system paths. It’s a useful addition because of its portability across different operating systems. The following simple queries have been available since CMake 3.24:
+最后，我们可以查询和转换系统路径。这对于跨不同操作系统的可移植性非常有用。自 CMake 3.24 以来，以下简单查询可用：
 
 \begin{itemize}
 \item
@@ -117,10 +117,10 @@ Finally, we can query and transform the system paths. It’s a useful addition b
 \$<PATH:IS\_RELATIVE,path>
 
 \item
-\$<PATH:IS\_PREFIX[,NORMALIZE],prefix,path>: This returns true if prefix is the prefix of path
+\$<PATH:IS\_PREFIX[,NORMALIZE],prefix,path>: 如果前缀是路径的前缀，则返回 true。
 \end{itemize}
 
-Analogically, we can retrieve all the path components we were able to check for (since CMake 3.27, it’s been possible to provide a list of paths rather than just one path):
+相应地，我们可以检索我们能够检查的所有路径组件（自 CMake 3.27 以来，我们不仅可以提供单个路径，还可以提供路径列表）：
 
 \begin{itemize}
 \item
@@ -151,7 +151,7 @@ Analogically, we can retrieve all the path components we were able to check for 
 \$<PATH:ABSOLUTE\_PATH[,NORMALIZE],path...,base\_directory>
 \end{itemize}
 
-Additionally, some transform operations were introduced in 3.24; we’ll just list them for completeness:
+此外，在 3.24 版本中引入了一些转换操作；我们只是为了完整性而列出它们：
 
 \begin{itemize}
 \item
@@ -182,40 +182,40 @@ Additionally, some transform operations were introduced in 3.24; we’ll just li
 \$<PATH:ABSOLUTE\_PATH[,NORMALIZE],path...,base\_directory>
 \end{itemize}
 
-There’s one more path operation, which formats the provided path to the style supported by the shell of the host: \$<SHELL\_PATH:path...>.
+还有一个路径操作，它将提供的路径格式化为主机shell支持的样式：\$<SHELL\_PATH:path…>。
 
-Again, previous expressions are introduced for later reference, not as information that you need to memorize right now. The bulk of the recommended practical knowledge is detailed in the subsequent sections.
+再次，之前的表达式是为后续参考而引入的，而不是你需要现在就记住的信息。推荐的实用知识的大部分将在后续章节中详细介绍。
 
 
-\mySubsubsection{6.5.2.}{Parametrizing the build configuration and platform}
+\mySubsubsection{6.5.2.}{配置和平台的参数化}
 
-One of the key pieces of information that CMake users will provide when building a project is the desired build configuration. In most cases, it will be Debug or Release. We can use the generator expressions to access these values through the following statements:
-
-\begin{itemize}
-\item
-\$<CONFIG>: This returns the current build configuration as a string: Debug, Release, or another.
-
-\item
-\$<CONFIG:configs>: This returns true if configs contains the current build configuration (case-insensitive comparison).
-\end{itemize}
-
-We discussed the platform in the Chapter 4, Setting Up Your First CMake Project in the Understanding the build environment section. We can read related information the same way as with configuration:
+CMake 用户在构建项目时通常会提供所需构建配置的关键信息。在大多数情况下，它将是 Debug 或 Release。我们可以使用生成器表达式通过以下语句访问这些值：
 
 \begin{itemize}
 \item
-\$<PLATFORM\_ID>: This returns the current platform ID as a string: Linux, Windows, or Darwin for macOS.
+\$<CONFIG>: 这将以字符串形式返回当前构建配置：Debug、Release 或另一个。
 
 \item
-\$<PLATFORM\_ID:platform> is true if platform contains the current platform ID.
+\$<CONFIG:configs>: 如果 configs 包含当前构建配置（不区分大小写的比较），则返回 true。
 \end{itemize}
 
-Such configuration or platform-specific parametrization is a powerful addition to our toolbelt. We can use it in conjunction with the conditional expansion we discussed earlier:
+我们在第四章《在第一个 CMake 项目中设置环境》的“理解构建环境”部分讨论了平台。我们可以以与配置相同的方式读取相关信息：
+
+\begin{itemize}
+\item
+\$<PLATFORM\_ID>: 这将以字符串形式返回当前平台 ID：Linux、Windows 或 Darwin（macOS）。
+
+\item
+\$<PLATFORM\_ID:platform>为真，如果 platform 包含当前平台 ID。
+\end{itemize}
+
+这样的配置或平台特定的参数化是我们工具箱中的强大补充。我们可以将其与之前讨论的条件展开一起使用：
 
 \begin{shell}
 $<IF:condition,true_string,false_string>
 \end{shell}
 
-For example, we may apply one compilation flag when building test binaries, and another for production:
+例如，我们可以为测试二进制文件和生产二进制文件应用不同的编译标志：
 
 \begin{cmake}
 target_compile_definitions(my_target PRIVATE
@@ -223,54 +223,54 @@ target_compile_definitions(my_target PRIVATE
 )
 \end{cmake}
 
-But this is just the beginning. There are plenty of other circumstances we can address with generator expressions. Of course, the next important aspect is the tooling present in the system.
+但这只是开始。生成器表达式可以应对许多其他情况。当然，系统的工具集也是下一个重要方面。
 
-\mySubsubsection{6.5.3.}{Tuning for toolchain}
+\mySubsubsection{6.5.3.}{调整工具链}
 
-Toolchains, toolkits, or, simply, compilers and linkers luckily (sadly?) aren’t consistent across vendors. This has all sorts of consequences. Some of them are great (better performance in special cases), others not so much (varied configuration flavors, discrepancies in flag naming, and more).
+幸运的是（不幸的是？），工具链、工具包或简单地说，编译器和链接器在供应商之间并不一致。这带来了一系列后果。其中一些是积极的（在特殊情况下性能更好），其他则不那么积极（配置风味多样，标志命名不一致，等等）。
 
-Generator expressions help here by providing sets of queries that can be utilized to alleviate problems and opportunistically improve user experience where possible.
+生成器表达式通过提供可以用来缓解问题并尽可能改进用户体验的查询集来帮助解决这个问题。
 
-As with the build configurations and platform, there are multiple expressions that return information about the toolchain, both as string and Boolean. However, we’re required to specify which language we’re interested in (replace \#LNG with one of C, CXX, CUDA, OBJC, OBJCXX, Fortran, HIP, or ISPC). Support for HIP was added in 3.21.
+与构建配置和平台类似，有一些表达式返回有关工具链的信息，既有字符串也有布尔值。但是，我们必须指定我们感兴趣的语言（将 \#LNG 替换为 C、CXX、CUDA、OBJC、OBJCXX、Fortran、HIP 或 ISPC）。HIP 的支持是在 3.21 版本中添加的。
 
 \begin{itemize}
 \item
-\$<\#LNG\_COMPILER\_ID>: This returns CMake’s compiler ID of the \#LNG compiler used.
+\$<\#LNG\_COMPILER\_ID>: 这返回用于 \#LNG 编译器的 CMake 编译器 ID。
 
 \item
-\$<\#LNG\_COMPILER\_VERSION>: This returns CMake’s compiler version of the \#LNG compiler used.
+\$<\#LNG\_COMPILER\_VERSION>: 这返回用于 \#LNG 编译器的 CMake 编译器版本。
 \end{itemize}
 
-To check which compiler will execute for C++, we should use the \$<CXX\_COMPILER\_ID> generator expression. The returned value, the CMake’s compiler ID, is a constant defined for every supported compiler. You may encounter values like AppleClang, ARMCC, Clang, GNU, Intel, and MSVC. For the full list, check the official documentation (URL in the Further reading section).
+为了检查 C++ 编译时将使用哪个编译器，我们应该使用 \$<CXX\_COMPILER\_ID> 生成器表达式。返回的值，即 CMake 的编译器 ID，是为每个支持的编译器定义的常量。你可能会遇到如 AppleClang、ARMCC、Clang、GNU、Intel 和 MSVC 等值。完整的列表，请查看官方文档（"进一步阅读"部分中的 URL）。
 
-Similarly to the previous section, we can also utilize the toolchain information in conditional expressions. There are multiple queries that return true if any of the provided arguments matches a specific value:
+与前一个部分类似，我们也可以在条件表达式中利用工具链信息。有一些查询会返回 true，如果提供的任何参数与特定值匹配：
 
 \begin{itemize}
 \item
-\$<\#LNG\_COMPILER\_ID:ids>: This returns true if ids contains CMake’s \#LNG compiler ID.
+\$<\#LNG\_COMPILER\_ID:ids>: 如果 ids 包含 CMake 的 \#LNG 编译器 ID，则返回 true。
 
 \item
-\$<\#LNG\_COMPILER\_VERSION:vers>: This returns true if vers contains the CMake’s \#LNG compiler version.
+\$<\#LNG\_COMPILER\_VERSION:vers>: 如果 vers 包含 CMake 的 \#LNG 编译器版本，则返回 true。
 
 \item
-\$<COMPILE\_FEATURES:features>: This returns true if all features provided in features are supported by the compiler for this target.
+\$<COMPILE\_FEATURES:features>: 如果提供的所有 features 特征都由该目标的编译器支持，则返回 true。
 \end{itemize}
 
-Inside commands requiring a target argument, like target\_compile\_definitions(), we can use one of the target-specific expressions to get a string value:
+在需要目标参数的命令中，例如 target\_compile\_definitions()，我们可以使用一个目标特定的表达式来获取字符串值：
 
 \begin{itemize}
 \item
-\$<COMPILE\_LANGUAGE>: This returns the language of source files at the compilation step.
+\$<COMPILE\_LANGUAGE>: 这返回编译步骤中源文件的编程语言。
 
 \item
-\$<LINK\_LANGUAGE>: This returns the language of source files at the link step.
+\$<LINK\_LANGUAGE>: 这返回链接步骤中源文件的编程语言。
 \end{itemize}
 
-To evaluate a simple Boolean query:
+为了评估一个简单的布尔查询：
 
 \begin{itemize}
 \item
-\$<COMPILE\_LANGUAGE:langs>: This returns true if langs contains a language used for the compilation of this target. This can be used to provide language-specific flags to the compiler. For example, to compile C++ sources of the target with the -fno-exceptions flag:
+\$<COMPILE\_LANGUAGE:langs>: 如果 langs 包含用于该目标编译的语言，则返回 true。这可以用来为编译器提供特定于语言的标志。例如，为了使用 -fno-exceptions 标志编译目标 C++ 源：
 
 \begin{cmake}
 target_compile_options(myapp
@@ -279,14 +279,14 @@ target_compile_options(myapp
 \end{cmake}
 
 \item
-\$<LINK\_LANGUAGE:langs> – It follows the same rules as COMPILE\_LANGUAGE and returns true if langs contains a language used for linking of this target.
+\$<LINK\_LANGUAGE:langs> – 它遵循与 COMPILE\_LANGUAGE 相同的规则，如果 langs 包含用于该目标链接的语言，则返回 true。
 \end{itemize}
 
-Or, to query more complex scenarios:
+或者，为了查询更复杂的情况：
 
 \begin{itemize}
 \item
-\$<COMPILE\_LANG\_AND\_ID:lang,compiler\_ids...>: This returns true if the lang language is used for this target, and one of the compilers in the compiler\_ids list will be used for this compilation. This expression is useful to specify compile definitions for specific compilers:
+\$<COMPILE\_LANG\_AND\_ID:lang,compiler\_ids...>: 如果 lang 语言用于此目标，且编译器 ID 列表中的某个编译器将用于此编译，则返回 true。这个表达式可以用来为特定编译器指定编译定义：
 
 \begin{cmake}
 target_compile_definitions(myapp PRIVATE
@@ -297,21 +297,21 @@ target_compile_definitions(myapp PRIVATE
 \end{cmake}
 
 \item
-In this example, for C++ sources (CXX) compiled with AppleClang or Clang, the -DCXX\_CLANG definition will be set. For the C++ sources compiled with the Intel compiler, the -DCXX\_INTEL definition flag will be set. Lastly, for the C sources (C) compiled with the Clang compiler, we’ll set a -DC\_CLANG definition.
+在这个例子中，对于使用 AppleClang 或 Clang 编译的 C++ 源（CXX），将设置 -DCXX\_CLANG 定义。对于使用 Intel 编译器编译的 C++ 源，将设置 -DCXX\_INTEL 定义标志。最后，对于使用 Clang 编译的 C 源（C），我们将设置一个 -DC\_CLANG 定义。
 
 \item
-\$<LINK\_LANG\_AND\_ID:lang,compiler\_ids...>: This works like COMPILE\_LANG\_AND\_ID, but checks the language used for the link step instead. Use this expression to specify link libraries, link options, link directories, and link dependencies of a particular language and a linker combination in a target.
+\$<LINK\_LANG\_AND\_ID:lang,compiler\_ids...>: 这像 COMPILE\_LANG\_AND\_ID 一样工作，但检查链接步骤中使用的语言。使用这个表达式来指定特定语言和链接器组合的目标的链接库、链接选项、链接目录和链接依赖项。
 \end{itemize}
 
-An important note to make here is that a single target can be combined from sources of multiple languages. For example, it’s possible to link C artifacts with C++ (but we should declare both languages in the project() command). Therefore, generator expressions referencing a specific language will be used for some source files, but not for others.
+在这里需要强调的是，单个目标可以由多种语言的源文件组合而成。例如，可以链接 C 工件与 C++（但我们应该在 project() 命令中声明这两种语言）。因此，引用特定语言的生成器表达式将用于一些源文件，但不会用于其他源文件。
 
-Let’s move on to the next important category: target-related generator expressions.
+让我们继续讨论下一个重要类别：与目标相关的生成器表达式。
 
-\mySubsubsection{6.5.4.}{Querying target-related information}
+\mySubsubsection{6.5.4.}{查询与目标相关的信息}
 
-There are plenty of generator expressions that query target properties and check target-related information. Note that until CMake 3.19, many target expressions referencing another target were used to automatically create a dependency between them. This no longer happens in the latest versions of CMake.
+有许多生成器表达式用于查询目标属性和检查与目标相关的信息。需要注意的是，直到 CMake 3.19 版本，许多引用另一个目标的生成器表达式被用来自动创建它们之间的依赖关系。在最新版本的 CMake 中，这种行为已经不再发生。
 
-Some generator expressions will infer the target from the command being called; the most commonly used is the basic query that returns the target’s property value:
+一些生成器表达式会从调用的命令中推断目标；最常用的是基本查询，它返回目标属性的值：
 
 \begin{shell}
 $<TARGET_PROPERTY:prop>
@@ -319,108 +319,109 @@ $<TARGET_PROPERTY:prop>
 
 \begin{itemize}
 \item
-Less known, but useful in the target\_link\_libraries() command, is the \$<LINK\_ONLY:deps> generator expression. It allows us to store the PRIVATE link dependencies, which won’t be propagated through transitive usage requirements; these are used in interface libraries, which we discussed in Chapter 5, Working with Targets, in the Understanding the transitive usage requirements section.
+在 target\_link\_libraries() 命令中不太为人所知，但很有用的是 \$<LINK\_ONLY:deps> 生成器表达式。它允许我们存储 PRIVATE 链接依赖，这些依赖不会通过传递的使用要求传播；这些在接口库中使用，我们在第五章《与目标打交道》的“理解传递的使用要求”部分讨论过。
 \end{itemize}
 
-There also is a set of install and export-related expressions, which infer their targets from the context they’re being used. We’ll discuss them in depth in Chapter 14, Installing and Packaging, so we can just have a quick introduction for now:
+此外，还有一组与安装和导出相关的表达式，它们从它们被使用的上下文中推断目标。我们将深入讨论它们，所以现在我们只需要一个快速的介绍：
 
 \begin{itemize}
 \item
-\$<INSTALL\_PREFIX>: This returns the install prefix when the target is exported with install(EXPORT) or when evaluated in INSTALL\_NAME\_DIR; otherwise, it is empty.
+\$<INSTALL\_PREFIX>: 当目标使用 install(EXPORT) 导出或在内 INSTALL\_NAME\_DIR 评估时，返回安装前缀；否则，返回空。
 
 \item
-\$<INSTALL\_INTERFACE:string>: This returns string when the expression is exported with install(EXPORT).
+\$<INSTALL\_INTERFACE:string>: 当表达式使用 install(EXPORT) 导出时，返回 string。
 
 \item
-\$<BUILD\_INTERFACE:string>: This returns string when the expression is exported with the export() command or by another target in the same buildsystem.
+\$<BUILD\_INTERFACE:string>: 当表达式使用 export() 命令或同一构建系统中的另一个目标导出时，返回 string。
 
 \item
-\$<BUILD\_LOCAL\_INTERFACE:string>: This returns string when the expression is exported by another target in the same buildsystem.
+\$<BUILD\_LOCAL\_INTERFACE:string>: 当表达式被同一构建系统中的另一个目标导出时，返回 string。
 \end{itemize}
 
-However, most queries require the target name to be explicitly provided as the first argument:
+然而，大多数查询都需要明确提供目标名称作为第一个参数：
 
 \begin{itemize}
 \item
-\$<TARGET\_EXISTS:target>: This returns true if the target exists.
+\$<TARGET\_EXISTS:target>: 如果目标存在，则返回 true。
 
 \item
-\$<TARGET\_NAME\_IF\_EXISTS:target>: This returns the target name if the target exists and an empty string otherwise.
+\$<TARGET\_NAME\_IF\_EXISTS:target>: 如果目标存在，则返回目标名称，否则返回空字符串。
 
 \item
-\$<TARGET\_PROPERTY:target,prop>: This returns the prop property value for the target.
+\$<TARGET\_PROPERTY:target,prop>: 返回目标 prop 属性的值。
 
 \item
-\$<TARGET\_OBJECTS:target>: This returns a list of object files for an object library target.
+\$<TARGET\_OBJECTS:target>: 返回对象库目标的对象文件列表。
 \end{itemize}
 
-You can query the path of the target artifact:
+你可以查询目标工件的路径：
 
 \begin{itemize}
 \item
-\$<TARGET\_FILE:target>: This returns the full path.
+\$<TARGET\_FILE:target>: 返回完整的路径。
 
 \item
-\$<TARGET\_FILE\_NAME:target>: This returns just the filename.
+\$<TARGET\_FILE\_NAME:target>: 只返回文件名。
 
 \item
-\$<TARGET\_FILE\_BASE\_NAME:target>: This returns the base name.
+\$<TARGET\_FILE\_BASE\_NAME:target>: 只返回基本名称。
 
 \item
-\$<TARGET\_FILE\_NAME:target>: This returns the base name without the prefix or suffix (for libmylib.so the base name would be mylib).
+\$<TARGET\_FILE\_NAME:target>: 返回不带前缀或后缀的基本名称（对于 libmylib.so，基本名称将是 mylib）。
 
 \item
-\$<TARGET\_FILE\_PREFIX:target>: This returns just the prefix (for example, lib).
+\$<TARGET\_FILE\_PREFIX:target>: 只返回前缀（例如，lib）。
 
 \item
-\$<TARGET\_FILE\_SUFFIX:target>: This returns just the suffix (for example, .so or .exe).
+\$<TARGET\_FILE\_SUFFIX:target>: 只返回后缀（例如，.so 或 .exe）。
 
 \item
-\$<TARGET\_FILE\_DIR:target>: This returns the directory.
+\$<TARGET\_FILE\_DIR:target>: 只返回目录。
 \end{itemize}
 
-There are families of expressions that offer similar functionality as the regular TARGET\_FILE expression (each expression also accepts the \_NAME, \_BASE\_NAME or \_DIR suffix):
+有一些表达式提供与常规 TARGET\_FILE 表达式相似的功能（每个表达式也接受 \_NAME、\_BASE\_NAME 或 \_DIR 后缀）：
 
 \begin{itemize}
 \item
-TARGET\_LINKER\_FILE: This queries the path of the file used when linking to the target. Usually, it is the library produced by the target (.a, .lib, .so). However, on platforms with Dynamic-Link Libraries (DLLs), it will be a .lib import library associated with the target’s DLL.
+TARGET\_LINKER\_FILE: 查询在链接到目标时使用的文件的路径。通常，这是目标产生的库（.a、.lib、.so）。然而，在具有动态链接库（DLL）的平台，它将是与目标 DLL 相关联的 .lib 导入库。
 
 \item
-TARGET\_PDB\_FILE: This queries the path of the linker-generated program database file (.pdb).
+TARGET\_PDB\_FILE: 查询链接器生成的程序数据库文件（.pdb）的路径。
 \end{itemize}
 
-Managing libraries is a complex topic, and CMake offers a lot of generator expressions to help. However, we’ll postpone introducing them until they become relevant in Chapter 8, Linking Executables and Libraries.
 
-Finally, there are some Apple package-specific expressions as well:
+管理库是一个复杂的话题，CMake 提供了很多生成器表达式来帮助。然而，我们将推迟介绍它们，直到它们在第八章《链接可执行文件和库》中变得相关。
+
+最后，还有一些针对 Apple 包的特定表达式：
 
 \begin{itemize}
 \item
-\$<TARGET\_BUNDLE\_DIR:target>: This is the full path to the bundle directory (my.app, my.framework, or my.bundle) for the target.
+\$<TARGET\_BUNDLE\_DIR:target>: 这是目标（my.app、my.framework 或 my.bundle）的捆绑目录的完整路径。
 
 \item
-\$<TARGET\_BUNDLE\_CONTENT\_DIR:target>: This is the full path to the bundle content directory for the target. On macOS, it’s my.app/Contents, my.framework, or my.bundle/Contents. Other Software Development Kits (SDKs) (such as iOS) have a flat bundle structure – my.app, my.framework, or my.bundle.
+\$<TARGET\_BUNDLE\_CONTENT\_DIR:target>: 这是目标捆绑内容目录的完整路径。在 macOS 上，它是 my.app/Contents、my.framework 或 my.bundle/Contents。其他软件开发工具包（SDKs）（如 iOS）具有扁平的捆绑结构——my.app、my.framework 或 my.bundle。
 \end{itemize}
 
-These are the main generator expressions for dealing with targets. It’s worth knowing, there’s plenty more. I recommend referring to the official documentation for a complete list.
+这些是与目标打交道的生成器表达式的主要内容。值得知道的是，还有更多的内容。我建议您参考官方文档以获取完整的列表。
 
-\mySubsubsection{6.5.5.}{Escaping}
+\mySubsubsection{6.5.5.}{转义}
 
-On a rare occasion, you may need to pass a character to a generator expression that has a special meaning. To escape this behavior, use the following expressions:
+在极少数情况下，您可能需要向生成器表达式传递一个具有特殊含义的字符。为了转义这种行为，请使用以下表达式：
 
 \begin{itemize}
 \item
-\$<ANGLE-R>: This a literal > symbol
+\$<ANGLE-R>: 这是一个 > 符号。
 
 \item
-\$<COMMA>: This a literal , symbol
+\$<COMMA>: 这是一个逗号符号。
 
 \item
-\$<SEMICOLON>: This a literal ; symbol
+\$<SEMICOLON>: 这是一个分号符号。
 \end{itemize}
 
-The last expression can be useful to prevent list expansion when an argument containing ; is used.
+最后一个表达式在包含分号的参数被使用时，可以用来防止列表展开。
 
-Now that we have introduced all the queries and transformations, we can see how they work in practice. Let’s go through some examples of applications.
+现在我们已经介绍了所有的查询和转换，我们可以看到它们在实践中的工作方式。让我们通过一些应用示例来学习。
 
 
 

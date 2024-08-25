@@ -1,20 +1,20 @@
-Producing high-quality code is not an easy task, even for highly experienced developers. By including tests in our solution, we lower the chance of making basic mistakes in the main code. But that won’t be enough to avoid more intricate problems. Every piece of software consists of so many details that keeping track of them all becomes a full-time job. Various conventions and specific design practices are established by teams responsible for maintaining the product.
+编写高质量的代码并非易事，即使对于经验丰富的开发者来说也是如此。通过在解决方案中包含测试，我们降低了在主代码中犯基本错误的可能性。但这还不足以避免更复杂的问题。每一款软件都包含如此多的细节，跟踪它们全部变成了一份全职工作。各种约定和特定的设计实践由负责维护产品的团队建立。
 
-Some questions relate to consistent coding style: should we use 80 or 120 columns in our code? Should we allow std::bind or stick to lambda functions? Is it acceptable to use C-style arrays? Should small functions be written in a single line? Should we always use auto, or only when it improves readability? Ideally, we should steer clear of statements known to be generally incorrect: infinite loops, the use of identifiers reserved by a standard library, unintended data loss, unnecessary if statements, and anything else that is not a “best practice” (see the Further reading section for more information).
+有些问题与一致的编码风格相关：我们的代码应该使用80列还是120列？我们应该允许使用std::bind还是坚持使用lambda函数？使用C风格数组是否可以接受？应该将小函数写在一行中吗？我们应该总是使用auto，还是只在它提高可读性时使用？理想情况下，我们应该避免使用公认的通常不正确的语句：无限循环、使用标准库保留的标识符、无意中的数据丢失、不必要的if语句，以及任何不是“最佳实践”的东西（更多信息请参见“进一步阅读”部分）。
 
-Another aspect to consider is code modernization. As C++ evolves, it introduces new features. Keeping track of all the spots where we can update to the latest standard can be challenging. Moreover, doing this manually takes time and increases the risk of introducing errors, especially in a large code base. Finally, we should check how things operate when set into motion: running the program and checking its memory. Is the memory properly released after use? Are we accessing data that was correctly initialized? Or does the code attempt to access non-existent pointers?
+另一个需要考虑的方面是代码现代化。随着C++的发展，它引入了新特性。跟踪我们可以更新到最新标准的所有位置可能具有挑战性。此外，手动执行此操作既耗时又增加了引入错误的风险，特别是在大型代码库中。最后，我们应该检查事物在运行时的操作情况：运行程序并检查其内存。内存使用后是否正确释放？我们是否正在访问正确初始化的数据？还是代码试图访问不存在的指针？
 
-Managing all these challenges and questions manually is both time-consuming and prone to errors. Fortunately, we can use automated tools to inspect and enforce rules, correct mistakes, and bring our code up to date. It’s time to explore tools for program analysis. Our code will be scrutinized during every build to make sure it meets industry standards.
+手动管理所有这些挑战和问题既耗时又容易出错。幸运的是，我们可以使用自动化工具来检查和执行规则，纠正错误，并使我们的代码保持最新。是时候探索程序分析工具了。我们的代码将在每次构建时受到严格审查，以确保其符合行业标准。
 
-In this chapter, we’re going to cover the following main topics:
+在本章中，将包含以下主要内容：
 
 \begin{itemize}
 \item
-Enforcing formatting
+执行格式化
 
 \item
-Using static checkers
+使用静态检查器
 
 \item
-Dynamic analysis with Valgrind
+使用Valgrind进行动态分析
 \end{itemize}
