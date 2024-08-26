@@ -1,6 +1,6 @@
-How can we make the targets of project A available to the consuming project, B? Usually, we’d use the find\_package() command, but that requires creating a package and installing it on the system. While useful, this approach involves some work. Sometimes, we just need a quick way to build a project and make its targets available for other projects.
+我们如何使项目A的目标对消费项目B可用？通常，我们会使用find\_package()命令，但这需要创建一个包并在系统上安装它。虽然这种方法很有用，但它涉及到一些工作。有时候，我们只是需要一个快速构建项目并使其目标对其他项目可用的方法。
 
-One time-saving method is to include in project B the main listfile of A, which already contains all the target definitions. However, this file might also include global configuration, CMake commands with side effects, additional dependencies, and perhaps unwanted targets for B (like unit tests). So, this is not the best approach. Instead, we can provide a target export file for the consuming project, B, to include with the include() command:
+一种节省时间的方法是在项目B中包含项目A的主列表文件，该文件已经包含了所有目标定义。然而，这个文件可能还包括全局配置、具有副作用的CMake命令、额外的依赖项，以及B项目可能不需要的目标（比如单元测试）。所以，这不是最好的方法。相反，我们可以为消费项目B提供一个目标导出文件，通过include()命令包含：
 
 \begin{cmake}
 cmake_minimum_required(VERSION 3.26.0)
@@ -8,9 +8,9 @@ project(B)
 include(/path/to/A/TargetsOfA.cmake)
 \end{cmake}
 
-This will define all targets of A with the correct properties set, using commands such as add\_library() and add\_executable().
+这将使用add\_library()和add\_executable()等命令定义A的所有目标，并设置正确的属性。
 
-You must specify all targets to export after the TARGETS keyword and provide the destination filename after FILE. The other arguments are optional:
+您必须在TARGETS关键字后指定要导出的所有目标，并在FILE后提供目标文件名。其他参数是可选的：
 
 \begin{shell}
 export(TARGETS [target1 [target2 [...]]]
@@ -19,20 +19,20 @@ export(TARGETS [target1 [target2 [...]]]
 )
 \end{shell}
 
-Here’s the explanation of the individual arguments:
+以下是各个参数的解释：
 
 \begin{itemize}
 \item
-NAMESPACE is recommended to indicate that the target has been imported from other projects.
+NAMESPACE推荐用来指示目标是从其他项目导入的。
 
 \item
-APPEND prevents CMake from erasing the file’s contents before writing.
+APPEND防止CMake在写入前清除文件内容。
 
 \item
-EXPORT\_LINK\_INTERFACE\_LIBRARIES exports target link dependencies (including imported and config-specific variants).
+EXPORT\_LINK\_INTERFACE\_LIBRARIES导出目标的链接依赖项（包括导入的和特定配置的变体）。
 \end{itemize}
 
-Let’s apply this exporting method to the Calc library example, which provides two simple methods:
+让我们将这种导出方法应用到Calc库示例中，该库提供了两个简单的方法：
 
 \filename{ch14/01-export/src/include/calc/basic.h}
 
@@ -42,7 +42,7 @@ int Sum(int a, int b);
 int Multiply(int a, int b);
 \end{cpp}
 
-We need to declare the Calc target so we have something to export:
+我们需要声明Calc目标以便我们有东西可以导出：
 
 \filename{ch14/01-export/src/CMakeLists.txt}
 
@@ -51,7 +51,7 @@ add_library(calc STATIC basic.cpp)
 target_include_directories(calc INTERFACE include)
 \end{cmake}
 
-Then, to generate the export file, we are using the export(TARGETS) command:
+然后，为了生成导出文件，我们使用export(TARGETS)命令：
 
 \filename{ch14/01-export/CMakeLists.txt (fragment)}
 
@@ -66,19 +66,19 @@ export(TARGETS calc
 )
 \end{cmake}
 
-Our exported target declaration file will be located in the cmake subdirectory of the build tree (following the convention for .cmake files). To avoid repeating this path later, we’re setting it in the EXPORT\_DIR variable. Then, we call export() to generate the target declaration file, CalcTargets. cmake, with the calc target. For projects including this file, it will be visible as Calc::calc.
+我们的导出目标声明文件将位于构建树的cmake子目录中（遵循.cmake文件的约定）。为了避免稍后重复这个路径，我们将其设置在EXPORT\_DIR变量中。然后，我们调用export()来生成目标声明文件CalcTargets.cmake，其中包含calc目标。对于包含这个文件的项目，它将作为Calc::calc可见。
 
-Note that this export file isn’t a package yet. More importantly, all paths in this file are absolute and hardcoded to the build tree, making them non-relocatable (discussed in the Understanding the issues with relocatable targets section).
+请注意，这个导出文件还不是一个包。更重要的是，这个文件中的所有路径都是绝对路径，并且硬编码到构建树中，这使得它们不可重定位（在“理解与重定位目标相关的问题”部分讨论）。
 
-The export() command also has a shorter version using the EXPORT keyword:
+export()命令还有一个使用EXPORT关键字的简写版本：
 
 \begin{shell}
 export(EXPORT <export> [NAMESPACE <namespace>] [FILE <path>])
 \end{shell}
 
-However, it requires the name of a predefined export rather than a list of exported targets. Such <export> instances are named lists of targets that are created by install(TARGETS) (we’ll cover this command in the Installing logical targets section).
+然而，它需要一个预定义的导出名称，而不是要导出的目标列表。 <export>这样的实例是由install(TARGETS)创建的目标命名列表（我们将在“安装逻辑目标”部分介绍这个命令）。
 
-Here’s a tiny example demonstrating how this shorthand is used in practice:
+以下是一个演示如何在实践中使用这种简写的微小示例：
 
 \filename{ch14/01-export/CMakeLists.txt (continued)}
 
@@ -90,9 +90,9 @@ export(EXPORT CalcTargets
 )
 \end{cmake}
 
-This code works similarly to the previous example, but now it shares a single target list between the export() and install() commands.
+这段代码的工作方式与前面的示例类似，但现在它在export()和install()命令之间共享了同一个目标列表。
 
-Both methods of generating export files yield similar results. They include some boilerplate code and a few lines defining the target. With <build-tree> set to the build tree path, they’ll create a target export file similar to this:
+两种生成导出文件的方法产生类似的结果。它们包括一些样板代码和定义目标的几行。将<build-tree>设置为构建树路径后，它们将创建一个类似以下的目标导出文件：
 
 \filename{<build-tree>/cmake/CalcTargets.cmake (fragment)}
 
@@ -113,7 +113,8 @@ set_target_properties(Calc::calc PROPERTIES
 )
 \end{cmake}
 
-Normally, we wouldn’t edit or even open this file, but it’s important to note that the paths will be hardcoded in it (see the highlighted lines). In its current form, the built project isn’t relocatable. To change that, some additional steps are required. In the next section, we’ll explain what relocation is and why it is important.
+通常，我们不会编辑甚至打开这个文件，但重要的是要注意文件中的路径将是硬编码的（参见突出显示的行）。在当前的形式下，构建的项目是不可重定位的。要改变这一点，需要采取一些额外的步骤。在下一节中，我们将解释什么是重定位以及为什么它很重要。
+
 
 
 

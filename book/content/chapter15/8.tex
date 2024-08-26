@@ -1,9 +1,9 @@
-In this chapter, we put together a professional project based on everything we’ve learned so far. Let’s do a quick recap.
+在本章中，我们基于目前为止所学的内容构建了一个专业项目。让我们快速回顾一下。
 
-We started by laying out the project and discussing what files will live in which directory. Based on previous experience and the desire to practice more advanced scenarios, we delineated a main application for the users and a library that another developer might use. This shaped the structure of directories and relations between the CMake targets we want to build. We then followed with the configuration of individual targets for the build: we provided the source code for the library, defined its targets, and set it up for consumption with position-independent code parameters. The user-facing application also had its executable target defined, provided with source code, and configured its dependency: the FTXUI library.
+我们首先规划了项目的布局，并讨论了哪些文件将位于哪个目录中。基于以往的经验以及想要实践更高级场景的愿望，我们界定了一个面向用户的主应用程序和一个其他开发者可能使用的库。这塑造了目录的结构以及我们希望构建的 CMake 目标之间的关系。随后，我们配置了各个构建目标：提供了库的源代码，定义了它的目标，并设置了使用位置独立代码参数供消费。面向用户的应用程序也有其可执行目标被定义，提供了源代码，并配置了其依赖项：FTXUI 库。
 
-Armed with artifacts to build, we continued to enhance our project with tests and quality assurance. We added the coverage module to produce coverage reports, Memcheck to verify the solution with Valgrind during the runtime, and CppCheck to execute static analysis as well.
+有了待构建的制品之后，我们继续增强了项目的测试和质量保证功能。我们添加了覆盖率模块来生成覆盖率报告，使用 Memcheck 在运行时通过 Valgrind 验证解决方案，并执行了静态分析 CppCheck。
 
-Such a project was now ready to be installed, so we created appropriate installation entries for the library and the executable using the techniques learned so far, and we prepared a package configuration for CPack. The final task was to ensure that the project was correctly documented, so we set up automatic documentation generation with Doxygen and wrote a few basic documents that take care of less technical aspects of the software distribution.
+这样一个项目现在已经准备好安装，所以我们使用学到的技术为库和可执行文件创建了适当的安装条目，并为 CPack 准备了包配置。最后的任务是确保项目文档正确无误，因此我们设置了使用 Doxygen 自动生成文档，并编写了几份基本文档来处理软件分发中不太技术性的方面。
 
-This led us to the completion of the project configuration and we can now easily build it and install it with just a few precisely used CMake commands. But what if we could just use one simple command to complete the entire process? Let’s discover how in the final chapter: Chapter 16, Writing CMake Presets.
+这使我们完成了项目配置，并且我们现在可以轻松地使用几个精确的 CMake 命令来构建和安装项目。但如果我们可以只用一个简单的命令来完成整个过程呢？让我们在最后一章：第 16 章《编写 CMake 预设》中探索这一点。

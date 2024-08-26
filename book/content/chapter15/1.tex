@@ -1,30 +1,30 @@
-You can find the code files that are present in this chapter on GitHub at \url{https://github.com/ PacktPublishing/Modern-CMake-for-Cpp-2E/tree/main/examples/ch15}.
+你可以在 GitHub 上找到本章中存在的代码文件，地址为 \url{https://github.com/PacktPublishing/Modern-CMake-for-Cpp-2E/tree/main/examples/ch15}。
 
-To build the examples provided in this book, always use the recommended commands:
+为了构建本书提供的示例，请始终使用推荐的命令：
 
 \begin{shell}
 cmake -B <build tree> -S <source tree>
 cmake --build <build tree>
 \end{shell}
 
-Be sure to replace the placeholders <build tree> and <source tree> with appropriate paths.
-As a reminder: the build tree is the path to the target/output directory, and the source tree is the path at which your source code is located.
+请确保将占位符 <build tree> 和 <source tree> 替换为适当的路径。
+作为提醒：build tree 是指向目标/输出目录的路径，而 source tree 是源代码所在的位置的路径。
 
-This chapter is compiled with GCC to provide compatibility between code coverage instrumentation with the lcov tool used to collect the results. If you want to compile with llvm or another toolchain, be sure to adapt the coverage processing as needed.
+本章使用 GCC 编译，以提供与使用 lcov 工具收集结果的代码覆盖率仪器兼容性。如果你想使用 llvm 或其他工具链进行编译，请确保根据需要调整覆盖率处理过程。
 
-To run tests, execute the following command:
+要运行测试，请执行以下命令：
 
 \begin{shell}
 ctest --test-dir <build tree>
 \end{shell}
 
-Or simply execute it from the build tree directory:
+或者，只需从 build tree 目录执行：
 
 \begin{shell}
 ctest
 \end{shell}
 
-Note that, in this chapter, the tests will be outputted to the test subdirectory.
+请注意，在本章中，测试结果将输出到 test 子目录中。
 
 
 

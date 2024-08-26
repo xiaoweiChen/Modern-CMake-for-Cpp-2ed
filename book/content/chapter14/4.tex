@@ -1,26 +1,25 @@
 
-We’ve extensively used find\_package() in previous chapters and observed its convenience and simplicity. To make our project accessible through this command, we need to complete a few steps so CMake can treat our project as a coherent package:
+我们已经在前面的章节中广泛使用了find\_package()，并观察到了它的便利性和简洁性。为了让我们的项目可以通过这个命令访问，我们需要完成几个步骤，以便CMake可以将我们的项目视为一个连贯的包：
 
 \begin{enumerate}
 \item
-Make our targets relocatable.
+使我们的目标可重定位。
 
 \item
-Install the target export file to a standard location.
+将目标导出文件安装到标准位置。
 
 \item
-Create a config file for the package.
+为该包创建一个配置文件。
 
 \item
-Generate a version file for the package.
+为该包生成一个版本文件。
 \end{enumerate}
 
-Let’s start from the beginning: why do targets need to be relocatable and how can we do this?
+让我们从头开始：为什么目标需要是可重定位的，我们如何做到这一点？
 
-\mySubsubsection{14.4.1.}{Understanding the issues with relocatable targets}
+\mySubsubsection{14.4.1.}{了解可重定位目标的问题}
 
-Installation solves many problems but also introduces some complexity. The CMAKE\_INSTALL\_PREFIX is platform specific and can be set by the user at the installation stage with the -{}-installprefix command-line argument. The challenge is that target export files are generated before installation, during the build stage, when the final destination of the installed artifacts is unknown.
-Consider this code:
+安装解决了许多问题，但也引入了一些复杂性。CMAKE\_INSTALL\_PREFIX是平台特定的，可以在安装阶段由用户通过-{}-installprefix命令行参数设置。挑战在于，目标导出文件在安装之前生成，即在构建阶段，此时安装的艺术品的最终目的地是未知的。
 
 \filename{ch14/03-install-targets-legacy/src/CMakeLists.txt}
 
@@ -32,26 +31,26 @@ set_target_properties(calc PROPERTIES
 )
 \end{cmake}
 
-In this example, we specifically add the include directory to the include directories of calc. Since this is a relative path, CMake’s exported target generation implicitly prepends this path with the contents of the CMAKE\_CURRENT\_SOURCE\_DIR variable, pointing to the directory where this listfile is located.
+在这个例子中，我们特别将include目录添加到calc的包含目录中。由于这是一个相对路径，CMake的导出目标生成隐式地将这个路径与CMAKE\_CURRENT\_SOURCE\_DIR变量的内容前置。指向这个listfile所在的目录。
 
-Here’s the problem: after installation, the project mustn’t rely on files from the source or build tree. Everything, including library headers, is copied to a shared location, like /usr/lib/calc/ on Linux. The target that has been defined in this snippet isn’t suitable for use in another project since its include directory path still points to its source tree.
+问题来了：安装后，项目不能依赖源或构建树中的文件。包括库头文件在内的所有内容都被复制到一个共享位置，例如Linux上的/usr/lib/calc/。在这个代码段中定义的目标不适合在另一个项目中使用，因为它的包含目录路径仍然指向其源树。
 
-CMake addresses this carriage-before-the-horse problem with generator expressions that are replaced with their argument or an empty string, depending on the context:
+CMake通过生成器表达式解决这个问题，这些表达式根据上下文被替换为它们的参数或一个空字符串：
 
 \begin{itemize}
 \item
-\$<BUILD\_INTERFACE:...>: This evaluates to the ‘...' argument for regular builds but excludes it for installation.
+\$<BUILD\_INTERFACE:...>: 在常规构建中评估为'…'参数，但在安装时排除它。
 
 \item
-\$<INSTALL\_INTERFACE:...>: This evaluates to the ‘...' argument for installation but excludes it for regular builds.
+\$<INSTALL\_INTERFACE:...>:在安装时评估为'…'参数，但在常规构建时排除它。
 
 \item
-\$<BUILD\_LOCAL\_INTERFACE:...>: This evaluates to the ‘...' argument when used by another target in the same buildsystem (added in CMake 3.26).
+\$<BUILD\_LOCAL\_INTERFACE:...>: 当在同一构建系统中的另一个目标使用时评估为'…'参数（在CMake 3.26中添加）。
 \end{itemize}
 
-These expressions allow the deferment of the decision of which path to use to the later stages of the process: building and installation. Here’s how to use them in practice:
+这些表达式允许将使用哪个路径的决定推迟到构建和安装的过程的后期阶段。以下是如何在实践中使用它们：
 
-\filename{ch14/07-install-export-legacy/src/CMakeLists.txt (fragment)}
+\filename{ch14/07-install-export-legacy/src/CMakeLists.txt (片段)}
 
 \begin{cmake}
 add_library(calc STATIC basic.cpp)
@@ -64,25 +63,25 @@ set_target_properties(calc PROPERTIES
 )
 \end{cmake}
 
-In target\_include\_directories(), we focus on the last two arguments. The used generator expressions are mutually exclusive, meaning only one of the arguments will be used in the final step, and the other will be erased.
+在target\_include\_directories()中，我们关注最后两个参数。使用的生成器表达式是相互排斥的，意味着在最后一步中只使用其中一个参数，另一个将被擦除。
 
-For regular builds, the INTERFACE\_INCLUDE\_DIRECTORIES property of the calc target will be expanded, using the first argument:
+对于常规构建，calc目标的INTERFACE\_INCLUDE\_DIRECTORIES属性将使用第一个参数展开：
 
 \begin{cmake}
 "/root/examples/ch14/07-install-export/src/include" ""
 \end{cmake}
 
-On the other hand, when installing, the value will expand with the second argument:
+另一方面，在安装时，值将使用第二个参数展开：
 
 \begin{cmake}
 "" "/usr/lib/calc/include"
 \end{cmake}
 
 \begin{myNotic}{Note}
-Quotes are not present in the final value; they’re added here to express empty text values for clarity.
+最终值中不存在引号;在这里添加它们是为了清晰地表示空文本值。
 \end{myNotic}
 
-Regarding CMAKE\_INSTALL\_PREFIX: it should not be used as a component in paths specified in targets. It would be evaluated during the build stage, making the path absolute and potentially different from the one provided during installation (if the -{}-install-prefix option is used). Instead, use the \$<INSTALL\_PREFIX> generator expression:
+关于CMAKE\_INSTALL\_PREFIX：不应将其用作目标中指定的路径的组成部分。它将在构建阶段进行评估，使路径变为绝对路径，可能与安装阶段提供的路径不同（如果使用了-{}-install-prefix选项）。相反，使用\$<INSTALL\_PREFIX>生成器表达式：
 
 \begin{cmake}
 target_include_directories(my_target PUBLIC
@@ -90,7 +89,7 @@ target_include_directories(my_target PUBLIC
 )
 \end{cmake}
 
-Or, even better, you can use relative paths, which will be prepended with the correct installation prefix:
+或者，更好的是，你可以使用相对路径，它们将与正确的安装前缀前置：
 
 \begin{cmake}
 target_include_directories(my_target PUBLIC
@@ -98,13 +97,13 @@ target_include_directories(my_target PUBLIC
 )
 \end{cmake}
 
-For more examples and information, please consult the official documentation (a link to this can be found in the Further reading section).
+有关更多示例和信息，请查阅官方文档（可以在“进一步阅读”部分找到链接）。
 
-Now that our targets are installation compatible, we can safely generate and install their target export files.
+现在我们的目标是安装兼容的，我们可以安全地生成并安装它们的目标导出文件。
 
-\mySubsubsection{14.4.2.}{Installing target export files}
+\mySubsubsection{14.4.2.}{安装目标导出文件}
 
-We previously touched on target export files in the Exporting without installation section. The process for installing target export files is quite similar, and so is the command syntax for creating them:
+我们之前在“无需安装的导出”一节中提到了目标导出文件。安装目标导出文件的过程非常相似，创建它们的命令语法也是如此：
 
 \begin{cmake}
 install(EXPORT <export-name> DESTINATION <dir>
@@ -116,9 +115,9 @@ install(EXPORT <export-name> DESTINATION <dir>
         [EXCLUDE_FROM_ALL])
 \end{cmake}
 
-It’s a blend of the plain export(EXPORT) and other install() commands (its options function similarly). Remember, it will create and install a target export file for a named export that must be defined with the install(TARGETS) command. The key difference here is that the generated export file will contain target paths evaluated in the INSTALL\_INTERFACE generator expression, unlike export(EXPORT), which uses BUILD\_INTERFACE. This means we need to be careful about our include files and other relatively referenced files.
+该命令将创建并安装一个命名导出，该导出必须使用install(TARGETS)命令定义。这里的关键区别是，生成的导出文件将包含使用INSTALL\_INTERFACE生成器表达式评估的目标路径，这与export(EXPORT)不同，后者使用BUILD\_INTERFACE。这意味着我们需要小心我们的包含文件和其他相对引用的文件。
 
-Again, with CMake 3.23 or newer this won’t be a problem if FILE\_SET HEADERS is used correctly. Let’s see how we can generate and install the export file for the targets from the ch14/02-installexport example. To do this, we must call install(EXPORT) after the install(TARGETS)command:
+再次，如果CMake 3.23或更高版本正确使用FILE\_SET HEADERS，这不会成为问题。让我们看看如何为ch14/02-installexport示例中的目标生成和安装导出文件。为此，我们必须在调用install(TARGETS)命令后调用install(EXPORT)命令：
 
 \filename{ch14/07-install-export/src/CMakeLists.txt}
 
@@ -137,7 +136,7 @@ install(EXPORT CalcTargets
 )
 \end{cmake}
 
-Note the reference to the CalcTargets export name in install(EXPORT). Running cmake -{}-install in the build tree will result in the export file being generated in the specified destination:
+注意install(EXPORT)命令中对CalcTargets导出名称的引用。在构建树中运行cmake -{}-install将导致导出文件在指定的目的地生成：
 
 \begin{shell}
 ...
@@ -145,45 +144,45 @@ Note the reference to the CalcTargets export name in install(EXPORT). Running cm
 -- Installing: /usr/local/lib/calc/cmake/CalcTargets-noconfig.cmake
 \end{shell}
 
-If you need to override the default target export filename (<export name>.cmake), add the FILE new-name.cmake argument to change it (the filename must end with .cmake).
+如果您需要覆盖默认的目标导出文件名（<export name>.cmake），可以通过添加FILE new-name.cmake参数来更改它（文件名必须以.cmake结尾）。
 
-Don’t confuse this – the target export file isn’t a config file, so you can’t use find\_package() to consume installed targets just yet. However, it’s possible to include() export files directly if necessary. So, how do we define a package that can be consumed by other projects? Let’s find out!
+不要混淆这一点——目标导出文件不是配置文件，所以你暂时还不能使用find\_package()来消费已安装的目标。然而，如果必要，你可以直接include()导出文件。所以，我们如何定义一个可以被其他项目消费的包呢？让我们找出答案！
 
-\mySubsubsection{14.4.3.}{Writing basic config files}
+\mySubsubsection{14.4.3.}{编写基本的配置文件}
 
-A complete package definition consists of the target export files, the package’s config file, and the package’s version file. However, technically, all that’s needed for find\_package() to work is a config file. It acts as a package definition, responsible for providing any package functions and macros, checking requirements, finding dependencies, and including target export files.
+完整的包定义包括目标导出文件、包的配置文件和包的版本文件。然而，从技术上讲，为了使find\_package()工作，唯一需要的是一个配置文件。它作为包定义，负责提供任何包函数和宏、检查要求、查找依赖关系，并包括目标导出文件。
 
-As we mentioned earlier, users can install your package anywhere on their system by using:
+如我们之前提到的，用户可以使用以下命令在他们的系统上的任何位置安装你的包：
 
 \begin{shell}
 # cmake --install <build tree> --install-prefix=<path>
 \end{shell}
 
-This prefix determines where the installed files will be copied. To support this, you must ensure the following:
+这个前缀决定了安装的文件将被复制到的位置。为了支持这一点，你必须确保以下几点：
 
 \begin{itemize}
 \item
-The paths on the target properties are relocatable (as described in the Understanding the issues with relocatable targets section).
+目标属性上的路径是可重定位的（如“了解可重定位目标的问题”部分所述）。
 
 \item
-The paths that are used in your config file are relative to it.
+配置文件中使用的路径相对于它。
 \end{itemize}
 
-To use such packages that have been installed in non-default locations, the consuming projects need to provide <installation path> through the CMAKE\_PREFIX\_PATH variable during the configuration stage:
+要使用那些安装在非默认位置的包，消耗项目的需要通过在配置阶段提供<installation path>来通过CMAKE\_PREFIX\_PATH变量：
 
 \begin{shell}
 # cmake -B <build tree> -DCMAKE_PREFIX_PATH=<installation path>
 \end{shell}
 
-The find\_package() command will scan the list of paths that are outlined in the documentation (see the Further reading section) in a platform-specific manner. One pattern checked on Windows and Unix-like systems is:
+find\_package()命令将按照平台特定的方式检查文档中概述的路径列表（请参阅“进一步阅读”部分）。在Windows和类Unix系统上检查的一个模式是：
 
 \begin{shell}
 <prefix>/<name>*/(lib/<arch>|lib*|share)/<name>*/(cmake|CMake)
 \end{shell}
 
-This indicates that installing the config file in a path such as lib/calc/cmake should work. Additionally, CMake requires that config files be named <PackageName>-config.cmake or <PackageName>Config.cmake to be found.
+这表明将配置文件安装在类似于lib/calc/cmake的路径上应该可以工作。此外，CMake要求配置文件的名称以-config.cmake或Config.cmake结尾才能找到。
 
-Let’s add the installation of the config file to the 06-install-export example:
+让我们将配置文件的安装添加到06-install-export示例中：
 
 \filename{ch14/09-config-file/CMakeLists.txt (fragment)}
 
@@ -198,9 +197,9 @@ install(FILES "CalcConfig.cmake"
 )
 \end{cmake}
 
-This command installs CalcConfig.cmake from the same source directory (CMAKE\_INSTALL\_LIBDIR will be evaluated to the correct lib path for the platform).
+该命令从相同的源目录安装CalcConfig.cmake（CMAKE\_INSTALL\_LIBDIR将计算为平台上的正确lib路径）。
 
-The simplest config file consists of a single line including the target export file:
+最简单的配置文件包含一行，包括目标导出文件：
 
 \filename{ch14/09-config-file/CalcConfig.cmake}
 
@@ -208,9 +207,9 @@ The simplest config file consists of a single line including the target export f
 include("${CMAKE_CURRENT_LIST_DIR}/CalcTargets.cmake")
 \end{cmake}
 
-CMAKE\_CURRENT\_LIST\_DIR refers to the directory where the config file resides. Since CalcConfig. cmake and CalcTargets.cmake are installed in the same directory in our example (as set by install(EXPORT)), the target export file will be included correctly.
+CMAKE\_CURRENT\_LIST\_DIR指的是配置文件所在的目录。由于在我们的示例中，CalcConfig.cmake和CalcTargets.cmake安装在同一目录中（如install(EXPORT)设置），因此目标导出文件将被正确包含。
 
-To verify our package’s usability, we’ll create a simple project with one listfile:
+为了验证我们包的可用性，我们将创建一个简单的项目，其中包含一个列表文件：
 
 \filename{ch14/10-find-package/CMakeLists.txt}
 
@@ -227,7 +226,7 @@ cmake_print_properties(TARGETS "Calc::calc" PROPERTIES
 )
 \end{cmake}
 
-To test this, build and install the 09-config-file example to one directory, and then build 10-find-package while referencing it with the DCMAKE\_PREFIX\_PATH argument:
+为了测试这一点，首先构建并安装09-config-file示例到某个目录，然后构建10-find-package，同时使用DCMAKE\_PREFIX\_PATH参数引用它：
 
 \begin{shell}
 # cmake -S <source-tree-of-08> -B <build-tree-of-08>
@@ -237,7 +236,7 @@ To test this, build and install the 09-config-file example to one directory, and
         -DCMAKE_PREFIX_PATH=<build-tree-of-08>
 \end{shell}
 
-This will produce the following output (all the <*\_tree-of\_> placeholders will be replaced with real paths):
+这将产生以下输出（所有<*\_tree-of\_>占位符将被替换为实际路径）：
 
 \begin{shell}
 CMAKE_PREFIX_PATH: <build-tree-of-08>
@@ -251,21 +250,21 @@ Properties for TARGET Calc::calc:
 -- Build files have been written to: <build-tree-of-09>
 \end{shell}
 
-This output indicates that the CalcTargets.cmake file was found and included correctly, and the path to the include directory follows the chosen prefix. This solution is suitable for basic packaging cases. Now, let’s learn how to handle more advanced scenarios.
+此输出表明CalcTargets.cmake文件被找到并正确包含，包括目录的路径遵循所选择的预设。这个解决方案适用于基本的打包情况。现在，让我们学习如何处理更高级的场景。
 
-\mySubsubsection{14.4.4.}{Creating advanced config files}
+\mySubsubsection{14.4.4.}{创建高级配置文件}
 
-If you need to manage more than a single target export file, including a few macros in your config file can be useful. The CMakePackageConfigHelpers utility module provides access to the configure\_package\_config\_file() command. To use it, supply a template file that will be interpolated with CMake variables to generate a config file with two embedded macro definitions:
+如果你需要管理多个目标导出文件，包括在你的配置文件中添加几个宏可能会很有用。CMakePackageConfigHelpers实用模块提供了对configure\_package\_config\_file()命令的访问。要使用它，请提供一个模板文件，该文件将用CMake变量进行插值，以生成包含两个嵌入式宏定义的配置文件：
 
 \begin{itemize}
 \item
-set\_and\_check(<variable> <path>): This works like set(), but it checks that <path> actually exists and fails with FATAL\_ERROR otherwise. This is recommended for use in your config files to detect incorrect paths early.
+set\_and\_check(<variable> <path>): 这类似于set()，但它会检查<path>确实存在，否则会以FATAL\_ERROR失败。这建议用于你的配置文件，以尽早检测错误的路径。
 
 \item
-check\_required\_components(<PackageName>): This is added to the end of the config file. It verifies whether all components required by the user in find\_package(<package> REQUIRED <component>) have been found.
+check\_required\_components(<PackageName>): 此命令添加到配置文件的末尾。它验证是否找到了find\_package(<package> REQUIRED <component>)中用户所需的所有组件。
 \end{itemize}
 
-Paths for complex directory trees can be prepared for installation during config file generation. Here’s the command signature:
+在配置文件生成期间，可以准备复杂目录树路径以进行安装。这是命令的签名：
 
 \begin{shell}
 configure_package_config_file(<template> <output>
@@ -277,11 +276,11 @@ configure_package_config_file(<template> <output>
 )
 \end{shell}
 
-The <template> file will be interpolated with variables and stored in the <output> path. The INSTALL\_DESTINATION path is used to transform the paths stored in the PATH\_VARS to be relative to the install destination. The INSTALL\_PREFIX can be provided as a base path to indicate that INSTALL\_DESTINATION is relative to it.
+该<template>文件将被插值变量后存储在<output>路径中。INSTALL\_DESTINATION路径用于将PATH\_VARS中存储的路径转换为相对于安装目的地的相对路径。INSTALL\_PREFIX可以作为基本路径提供，以指示INSTALL\_DESTINATION相对于它。
 
-The NO\_SET\_AND\_CHECK\_MACRO and NO\_CHECK\_REQUIRED\_COMPONENTS\_MACRO options tell CMake not to add these macro definitions to the generated config file. Let’s see this generation in practice, extending the 07-install-export example:
+The NO\_SET\_AND\_CHECK\_MACRO和NO\_CHECK\_REQUIRED\_COMPONENTS\_MACRO选项告诉CMake不要将这些宏定义添加到生成的配置文件中。让我们在实践中看看这种生成方式，扩展07-install-export示例：
 
-\filename{ch14/11-advanced-config/CMakeLists.txt (fragment)}
+\filename{ch14/11-advanced-config/CMakeLists.txt (片段)}
 
 \begin{cmake}
 ...
@@ -302,26 +301,25 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/CalcConfig.cmake"
 )
 \end{cmake}
 
-In the preceding code, we:
+在前面的代码中，我们：
 
 \begin{enumerate}
 \item
-Use include() to include the utility module with helpers.
+使用include()包含带有帮助器的实用模块。
 
 \item
-Use set() to set a variable that will be used to make a relocatable path.
+使用set()设置一个变量，该变量将用于创建可重定位路径。
 
 \item
-Generate the CalcConfig.cmake config file for the build tree using the CalcConfig.cmake.
-in template, and provide LIB\_INSTALL\_DIR as a variable name to be computed as relative to INSTALL\_DESTINATION or \$\{CMAKE\_INSTALL\_LIBDIR\}/calc/cmake.
+使用CalcConfig.cmake.in模板为构建树生成CalcConfig.cmake配置文件，并提供LIB\_INSTALL\_DIR作为变量名，计算为相对于INSTALL\_DESTINATION或\$\{CMAKE\_INSTALL\_LIBDIR\}/calc/cmake的相对路径。
 
 \item
-Pass the config file that was generated for the build tree to install(FILE).
+将为构建树生成的配置文件传递给install(FILE)。
 \end{enumerate}
 
-Note that the path in DESTINATION in install(FILES) and the path in INSTALL\_DESTINATION in configure\_package\_config\_file() are equal, which ensures correct relative path computation inside of the configuration file.
+请注意，install(FILES)命令中的DESTINATION路径和configure\_package\_config\_file()命令中的INSTALL\_DESTINATION路径是相同的，这确保了配置文件内部的正确相对路径计算。
 
-Finally, we’ll need a config file template (their names are usually suffixed with .in):
+最后，我们将需要一个配置文件模板（它们的名称通常以.in结尾）：
 
 \filename{ch14/11-advanced-config/CalcConfig.cmake.in}
 
@@ -332,11 +330,11 @@ include("${CALC_LIB_DIR}/cmake/CalcTargets.cmake")
 check_required_components(Calc)
 \end{shell}
 
-This template begins with a @PACKAGE\_INIT@ placeholder. The generator will fill it with the definitions of the set\_and\_check and check\_required\_components macros.
+这个模板以@PACKAGE\_INIT@占位符开始。生成器将用set\_and\_check和check\_required\_components宏的定义填充它。
 
-The next line sets CALC\_LIB\_DIR to the path passed in the @PACKAGE\_LIB\_INSTALL\_DIR@ placeholder. CMake will fill it with \$LIB\_INSTALL\_DIR, provided in the listfile, but calculated relative to the installation path. Subsequently, that path is used in the include() command to include the target export file. Finally, check\_required\_components() verifies whether all of the components required by the project using this package have been found. This command is recommended, even if the package doesn’t have any components to ensure the users are using only supported requirements. Otherwise, they may incorrectly think they’ve successfully added components (perhaps only present in newer versions of the package).
+下一行将CALC\_LIB\_DIR设置为通过@PACKAGE\_LIB\_INSTALL\_DIR@占位符传递的路径。CMake将填充它，提供在列表文件中提供的\$LIB\_INSTALL\_DIR，但计算为相对于安装路径的相对路径。随后，该路径用于include()命令以包含目标导出文件。最后，check\_required\_components()验证是否找到了使用此包的项目所需的所有组件。这个命令是推荐的，即使包没有组件，也要确保用户只使用受支持的依赖项。否则，他们可能会错误地认为他们已经成功添加了组件（可能仅存在于包的新版本中）。
 
-The CalcConfig.cmake config file, when generated this way, looks like this:
+当以这种方式生成时，CalcConfig.cmake配置文件看起来像这样：
 
 \begin{cmake}
 #### Expanded from @PACKAGE_INIT@ by
@@ -361,25 +359,25 @@ include("${CALC_LIB_DIR}/cmake/CalcTargets.cmake")
 check_required_components(Calc)
 \end{cmake}
 
-The following diagram, which shows how the various package files are related to each other, puts this into perspective:
+以下图表展示了各种包文件之间的关系，有助于我们更好地理解这一主题：
 
-\myGraphic{0.8}{content/chapter14/images/1.png}{Figure 14.1: The file structure for advanced packages}
+\myGraphic{0.9}{content/chapter14/images/1.png}{图 14.1: 高级包的文件结构}
 
-All the required sub-dependencies of a package must also be found in the package config file. This can be done by calling the find\_dependency() macro from the CMakeFindDependencyMacro helper. We learned how to use it in Chapter 9, Managing Dependencies in CMake.
+一个包的所有必需的子依赖项也必须在包的配置文件中找到。这可以通过调用CMakeFindDependencyMacro助手中的find\_dependency()宏来实现。我们在第9章《CMake中的依赖管理》中学到了如何使用它。
 
-Definitions for any macros or functions exposed to the consuming project should be in a separate file included from the package’s config file. Interestingly, CMakePackageConfigHelpers also helps generate package version files. Let’s explore this next.
+向消耗项目的任何宏或函数的定义都应该放在一个单独的文件中，并从包的配置文件中包含。有趣的是，CMakePackageConfigHelpers也帮助生成包版本文件。接下来，我们将探讨这一点。
 
-\mySubsubsection{14.4.5.}{Generating package version files}
+\mySubsubsection{14.4.5.}{生成包版本文件}
 
-As your package evolves, gaining new features and phasing out older ones, it’s vital to track these changes in a changelog accessible to developers using your package. When a specific feature is required, a developer that is using your package can specify the minimum version that supports it in find\_package(), like so:
+随着你的包不断发展，获得新功能并淘汰旧功能，对于跟踪这些变化并在开发者使用的包中可访问的变更日志中记录这些变化至关重要。当需要特定功能时，使用你的包的开发者可以在find\_package()中指定支持该功能的最低版本，如下所示：
 
 \begin{cmake}
 find_package(Calc 1.2.3 REQUIRED)
 \end{cmake}
 
-CMake will then search for Calc's config file and check whether a version file named <configfile>-version.cmake or <config-file>Version.cmake is present in the same directory (e.g., CalcConfigVersion.cmake). This file contains version information and specifies compatibility with other versions. For instance, even if you don’t have the exact version 1.2.3 installed, you might have 1.3.5, which is marked as compatible with older versions. CMake will accept this package, knowing it’s backward compatible.
+CMake将搜索Calc的配置文件，并检查是否在同一目录中存在名为<configfile>-version.cmake或<config-file>Version.cmake的版本文件（例如，CalcConfigVersion.cmake）。该文件包含版本信息，并指定了与其他版本的兼容性。例如，即使你没有安装确切的版本1.2.3，你可能会安装版本1.3.5，它被标记为与旧版本兼容。CMake将接受这个包，知道它是向后兼容的。
 
-You can use the CMakePackageConfigHelpers utility module to generate package version files by calling write\_basic\_package\_version\_file():
+你可以使用CMakePackageConfigHelpers实用模块通过调用write\_basic\_package\_version\_file()来生成包版本文件：
 
 \begin{shell}
 write_basic_package_version_file(
@@ -390,29 +388,29 @@ write_basic_package_version_file(
 )
 \end{shell}
 
-First, provide the <filename> for the artifact; ensure it follows the naming rules previously discussed. Optionally, you can pass an explicit VERSION (in major.minor.patch format). If not provided, the version specified in the project() command is used (an error will occur if the project doesn’t specify one).
+首先，提供作为文件名；确保它遵循之前讨论的命名规则。可选地，你可以传递一个明确的版本号（主版本.次版本.补丁版本格式）。如果不提供，将使用项目()命令中指定的版本（如果项目没有指定版本，将发生错误）。
 
-The COMPATIBILITY keyword indicates:
+COMPATIBILITY关键字表示：
 
 \begin{itemize}
 \item
-ExactVersion must match all three components of the version and doesn’t support ranged versions: (e.g., find\_package(<package> 1.2.8...1.3.4)).
+ExactVersion必须匹配所有三个版本组件，不支持范围版本：例如，find\_package( 1.2.8…1.3.4)。
 
 \item
-SameMinorVersion matches if the first two components are the same (ignores patch).
+SameMinorVersion如果前两个组件相同（忽略补丁版本）。
 
 \item
-SameMajorVersion matches if the first component is the same (ignores minor and patch).
+SameMajorVersion如果第一个组件相同（忽略次版本和补丁版本）。
 
 \item
-AnyNewerVersion, contrary to its name, matches any older version (e.g., version 1.4.2 is compatible with find\_package(<package> 1.2.8)).
+AnyNewerVersion，与它的名称相反，匹配任何较旧的版本：例如，版本1.4.2与find\_package(<package> 1.2.8)兼容。
 \end{itemize}
 
-For architecture-dependent packages, an exact architecture match is required. However, for architecture-agnostic packages (like header-only libraries or macro packages), you can specify the ARCH\_INDEPENDENT keyword to skip this check.
+对于依赖于架构的包，需要精确的架构匹配。然而，对于不依赖于架构的包（如仅包含头文件的库或宏包），你可以指定ARCH\_INDEPENDENT关键字以跳过此检查。
 
-The following code shows a practical example of how to provide the version file for the project that we started in the 07-install-export:
+以下代码示例展示了如何在07-install-export示例中提供的项目中提供版本文件：
 
-\filename{ch14/12-version-file/CMakeLists.txt (fragment)}
+\filename{ch14/12-version-file/CMakeLists.txt (片段)}
 
 \begin{cmake}
 cmake_minimum_required(VERSION 3.26)
@@ -429,13 +427,15 @@ install(FILES "CalcConfig.cmake"
 )
 \end{cmake}
 
-For convenience, we configure the version of the package at the top of the file, in the project() command, switching from the short project(<name> <languages>) syntax to an explicit, full syntax by adding the LANGUAGE keyword.
+为了方便起见，我们在文件顶部配置包的版本，在项目()命令中，从简短的project(<name> <languages>)语法切换到明确的、完整的语法，通过添加LANGUAGE关键字。
 
-After including the helper module, we generate the version file and install it alongside CalcConfig.cmake. By skipping the VERSION keyword, we use the PROJECT\_VERSION variable. The package is marked as fully backward compatible with COMPATIBILITY AnyNewerVersion. This installs the package version file to the same destination as CalcConfig.cmake. That’s it – our package is fully configured.
+在包含助手模块后，我们生成版本文件并将其与CalcConfig.cmake一起安装。通过省略VERSION关键字，我们使用PROJECT\_VERSION变量。该包被标记为完全向后兼容，与COMPATIBILITY AnyNewerVersion兼容。这将在与CalcConfig.cmake相同的安装位置安装包版本文件。就这样——我们的包已经完全配置好了。
 
-With this, we concluded the subject of package creation. We now know how to deal with relocation and why it is important, how to install target export files, and how to write config and version files.
+有了这些，我们就结束了关于包创建的主题。我们现在知道如何处理重定位以及为什么它很重要，如何安装目标导出文件，以及如何编写配置和版本文件。
 
-In the next section, we’ll explore components and their use with packages.
+在下一节中，我们将探讨组件及其在包中的使用。
+
+
 
 
 

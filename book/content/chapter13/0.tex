@@ -1,20 +1,20 @@
-High-quality code is not only well written, working, and tested—it is also thoroughly documented. Documentation allows us to share information that might otherwise get lost, draw a bigger picture, give context, reveal intent, and—finally—educate both external users and maintainers.
+高质量的代码不仅仅是编写良好、可运行且经过测试的——它还应该有详尽的文档。文档使我们能够分享可能丢失的信息，描绘更大的蓝图，提供上下文，揭示意图，并且最终——对外部用户和维护者进行教育。
 
-Do you remember the last time you joined a new project and got lost for hours in a maze of directories and files? This can be avoided. Truly excellent documentation leads a complete newcomer to the exact line of code they’re looking for in seconds. Sadly, the issue of missing documentation is often overlooked. No wonder—it takes considerable skill, and many of us aren’t very good at it. Furthermore, documentation and code can quickly become outdated. Unless a strict update and review process is implemented, it’s easy to forget that documentation needs attention too.
+你还记得上次加入一个新项目，在目录和文件的迷宫中迷失数小时的经历吗？这种情况是可以避免的。真正优秀的文档可以让一个完全的新手在几秒钟内找到他们所需的代码行。遗憾的是，缺少文档的问题常常被忽视。这并不奇怪——它需要相当多的技巧，而我们中的许多人并不擅长于此。此外，文档和代码很快就会过时。除非实施严格的更新和审查过程，否则很容易忘记文档也需要关注。
 
-Some teams (in the interest of time or because they are encouraged to do so by managers) follow a practice of writing self-documenting code. By choosing meaningful, readable identifiers for filenames, functions, variables, and so on, they hope to avoid the chore of documenting. Even the best function signatures don’t ensure that all necessary information is conveyed—for example, int removeDuplicates(); is descriptive, but it doesn’t reveal what is returned. It could be the number of duplicates found, the number of items remaining, or something else—it’s unclear. While the habit of good naming is absolutely correct, it cannot replace the act of conscientious documentation. Remember: there’s no such thing as a free lunch.
+一些团队（为了节省时间或因为经理鼓励他们这样做）遵循编写自文档化代码的实践。他们通过为文件名、函数、变量等选择有意义、可读的标识符，希望避免编写文档的麻烦。即使是最优秀的函数签名也不能确保传达所有必要的信息——例如，int removeDuplicates(); 是描述性的，但它没有揭示返回了什么。它可能是找到的重复项的数量，剩余项目的数量，或其他东西——这是不清楚的。虽然良好的命名习惯绝对正确，但它不能取代认真编写文档的行为。记住：世上没有免费的午餐。
 
-To make things easier, professionals use automatic documentation generators that analyze code and comments in source files to produce comprehensive documentation in various formats. Adding such generators to a CMake project is very simple—let’s see how!
+为了使事情变得更容易，专业人士使用自动文档生成器来分析源文件中的代码和注释，以生成各种格式的全面文档。将这样的生成器添加到 CMake 项目中非常简单——让我们看看如何操作！
 
-In this chapter, we’re going to cover the following main topics:
+在本章中，将包含以下内容：
 
 \begin{itemize}
 \item
-Adding Doxygen to your project
+将 Doxygen 添加到您的项目
 
 \item
-Generating documentation with a modern look
+生成具有现代外观的文档
 
 \item
-Enhancing output with custom HTML
+使用自定义 HTML 增强输出
 \end{itemize}

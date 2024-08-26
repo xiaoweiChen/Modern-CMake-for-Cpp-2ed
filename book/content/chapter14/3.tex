@@ -1,91 +1,90 @@
 
-In Chapter 1, First Steps with CMake, we indicated that CMake offers a command-line mode for installing built projects on the system:
+在第1章“CMake的初步步骤”中，我们指出CMake提供了一个命令行模式，用于在系统上安装构建的项目：
 
 \begin{shell}
 cmake --install <dir> [<options>]
 \end{shell}
 
-Here, <dir> is the path to the generated build tree (required). The <options> include:
+这里，<dir>是指向生成的构建树的路径（必需的）。 包括：
 
 \begin{itemize}
 \item
--{}-config <cfg>: This selects the build configuration for multi-configuration generators.
+-{}-config <cfg>: 这用于为多配置生成器选择构建配置。
 
 \item
--{}-component <comp>: This limits the installation to the given component.
+-{}-component <comp>: 这将安装限制在给定的组件内。
 
 \item
--{}-default-directory-permissions <permissions>: This sets the default permissions for the installed directories (in <u=rwx,g=rx,o=rx> format).
+-{}-default-directory-permissions <permissions>: 这为安装的目录设置默认权限（格式为<u=rwx,g=rx,o=rx>）。
 
 \item
--{}-install-prefix <prefix>: This specifies the non-default installation path (stored in the CMAKE\_INSTALL\_PREFIX variable). It defaults to /usr/local on Unix-like systems and to c:/Program Files/\$\{PROJECT\_NAME\} on Windows.
-Before CMake 3.21, you’ll have to use a less-explicit option: -{}-prefix <prefix>.
+-{}-install-prefix <prefix>: 这指定非默认的安装路径（存储在CMAKE\_INSTALL\_PREFIX变量中）。在类Unix系统中默认为/usr/local，在Windows中默认为c:/Program Files/\$\{PROJECT\_NAME\}。在CMake 3.21之前，你需要使用一个不太明确的选项： -{}-prefix <prefix>.
 
 \item
--v, -{}-verbose: This increases the verbosity of the output (achievable also by setting the VERBOSE environment variable).
+-v, -{}-verbose: 这增加了输出信息的详细程度（也可以通过设置VERBOSE环境变量实现）。
 \end{itemize}
 
-Installations typically involve copying generated artifacts and necessary dependencies to a system directory. Using CMake introduces a convenient installation standard to all CMake projects and offers several additional benefits:
+安装通常涉及将生成的工件和必要的依赖项复制到系统目录。使用CMake为所有CMake项目引入了一个方便的安装标准，并提供了一些额外的好处：
 
 \begin{itemize}
 \item
-It provides platform-specific installation paths for artifacts, depending on their types (by following GNU coding standards).
+它为不同类型的工件提供特定于平台的安装路径（遵循GNU编码标准）。
 
 \item
-It enhances the installation process by generating target export files, allowing direct reuse of project targets by other projects.
+它通过生成目标导出文件来增强安装过程，允许其他项目直接重用项目目标。
 
 \item
-It creates discoverable packages through config files, wrapping the target export files and package-specific CMake macros and functions defined by the author.
+它通过配置文件创建可发现的包，包装目标导出文件和作者定义的特定于包的CMake宏和函数。
 \end{itemize}
 
-These features are quite powerful as they save a lot of time and simplify the usage of projects that are prepared this way. The first step in performing a basic installation is copying the built artifacts to their destination directory. This brings us to the install() command and its various modes:
+这些功能非常强大，因为它们节省了大量时间并简化了以这种方式准备的项目使用。执行基本安装的第一步是将构建的工件复制到它们的目标目录。这就引出了install()命令及其各种模式：
 
 \begin{itemize}
 \item
-install(TARGETS): This installs output artifacts such as libraries and executables.
+install(TARGETS): 这安装输出工件，如库和可执行文件。
 
 \item
-install(FILES|PROGRAMS): This installs individual files and sets their permissions. These files don’t need to be part of any logical targets.
+install(FILES|PROGRAMS): 这安装单个文件并设置它们的权限。这些文件不需要是任何逻辑目标的一部分。
 
 \item
-install(DIRECTORY): This installs entire directories.
+install(DIRECTORY): 这安装整个目录。
 
 \item
-install(SCRIPT|CODE): This runs a CMake script or a snippet during installation.
+install(SCRIPT|CODE): 这在安装过程中运行CMake脚本或代码片段。
 
 \item
-install(EXPORT): This generates and installs a target export file.
+install(EXPORT): 这生成并安装目标导出文件。
 
 \item
-install(RUNTIME\_DEPENDENCY\_SET <set-name> [...]): This installs runtime dependency sets defined in the project.
+install(RUNTIME\_DEPENDENCY\_SET <set-name> [...]): 这安装项目中定义的运行时依赖项集。
 
 \item
-install(IMPORTED\_RUNTIME\_ARTIFACTS <target>... [...]): This queries imported targets for runtime artifacts and installs them.
+install(IMPORTED\_RUNTIME\_ARTIFACTS <target>... [...]): 这查询导入的目标以获取运行时工件并安装它们。
 \end{itemize}
 
-Adding these commands to your listfile generates a cmake\_install.cmake file in your build tree. While it’s possible to manually invoke this script with cmake -P, this is not recommended. The file is intended for internal use by CMake when cmake -{}-install is executed.
+将这些命令添加到你的listfile中，会在你的构建树中生成一个cmake\_install.cmake文件。虽然可以手动用cmake -P调用这个脚本，但这并不推荐。该文件旨在由CMake在执行cmake -{}-install时内部使用。
 
-Every install() mode has a comprehensive set of options, with a few shared across modes:
+每个install()模式都有完整的一套选项，其中一些在模式之间共享：
 
 \begin{itemize}
 \item
-DESTINATION: This specifies the installation path. Relative paths are prepended with CMAKE\_INSTALL\_PREFIX, while absolute paths are used verbatim (and not supported by cpack).
+DESTINATION: 这指定安装路径。相对路径会以CMAKE\_INSTALL\_PREFIX为前缀，而绝对路径会按原样使用（并且不受cpack支持）。
 
 \item
-PERMISSIONS: This sets file permissions on supported platforms. The available values include OWNER\_READ, OWNER\_WRITE, OWNER\_EXECUTE, GROUP\_READ, GROUP\_WRITE, GROUP\_ EXECUTE, WORLD\_READ, WORLD\_WRITE, WORLD\_EXECUTE, SETUID, and SETGID. Default directory permissions created during installation time can be set with the CMAKE\_INSTALL\_DEFAULT\_DIRECTORY\_PERMISSIONS variable.
+PERMISSIONS: 这在支持的平台设置文件权限。可用的值包括OWNER\_READ, OWNER\_WRITE, OWNER\_EXECUTE, GROUP\_READ, GROUP\_WRITE, GROUP\_ EXECUTE, WORLD\_READ, WORLD\_WRITE, WORLD\_EXECUTE, SETUID 和 SETGID。安装时创建的默认目录权限可以通过 CMAKE\_INSTALL\_DEFAULT\_DIRECTORY\_PERMISSIONS 变量来设置。
 
 \item
-CONFIGURATIONS: This specifies configurations (Debug, Release). Options following this keyword apply only if the current build configuration is in the list.
+CONFIGURATIONS: 这指定配置（Debug，Release）。跟随此关键字的选项仅当当前构建配置在列表中时才适用。
 
 \item
-OPTIONAL: This prevents errors when the installed files don’t exist.
+OPTIONAL: 这防止在安装的文件不存在时出现错误。
 \end{itemize}
 
-Two shared options, COMPONENT and EXCLUDE\_FROM\_ALL, are used in component-specific installations. These will be discussed in the Defining components section later in the chapter. For now, let’s take a look at the first installation mode: install(TARGETS).
+两个共享选项，COMPONENT和EXCLUDE\_FROM\_ALL，用于特定于组件的安装。这些将在本章后面的“定义组件”部分讨论。现在，让我们看看第一个安装模式：install(TARGETS)。
 
-\mySubsubsection{14.3.1.}{Installing logical targets}
+\mySubsubsection{14.3.1.}{安装逻辑目标}
 
-Targets defined by add\_library() and add\_executable() can easily be installed with the install(TARGETS) command. This means copying the artifacts that have been produced by the buildsystem to the appropriate destination directories and setting suitable file permissions for them. The general signature for this mode is as follows:
+由add\_library()和add\_executable()定义的目标可以通过install(TARGETS)命令轻松安装。这意味着将构建系统生成的工件复制到适当的目标目录，并为它们设置合适的文件权限。此模式的通用签名如下：
 
 \begin{shell}
 install(TARGETS <target>... [EXPORT <export-name>]
@@ -94,9 +93,9 @@ install(TARGETS <target>... [EXPORT <export-name>]
 )
 \end{shell}
 
-After the initial mode specifier, that is, TARGETS, we must provide a list of targets we’d like to install. Here, we may optionally assign them to a named export with the EXPORT option, which can be used in export(EXPORT) and install(EXPORT) to produce a target export file. Then, we must configure the installation of output artifacts (grouped by type). Optionally, we can provide a list of directories that will be added to the target export file for each target in its INTERFACE\_INCLUDE\_DIRECTORIES property.
+在指定了初始模式标识符，即TARGETS之后，我们必须提供我们想要安装的目标列表。在这里，我们可以选择性地使用EXPORT选项将它们分配给一个命名的导出，这可以在export(EXPORT)和install(EXPORT)中使用，以生成目标导出文件。然后，我们必须配置输出工件的安装（按类型分组）。可选地，我们可以提供一个目录列表，这些目录将被添加到每个目标在其INTERFACE\_INCLUDE\_DIRECTORIES属性中的目标导出文件中。
 
-[<output-artifact-configuration>...] provides a list of configuration blocks. The full syntax of a single block is as follows:
+[<output-artifact-configuration>...] 提供了一个配置块列表。单个块的完整语法如下：
 
 \begin{shell}
 <TYPE> [DESTINATION <dir>]
@@ -108,41 +107,41 @@ After the initial mode specifier, that is, TARGETS, we must provide a list of ta
        [NAMELINK_ONLY|NAMELINK_SKIP]
 \end{shell}
 
-The command mandates that every output artifact block starts with <TYPE> (this is the only required element). CMake recognizes several of them:
+命令要求每个输出工件块以<TYPE>开头（这是唯一必需的元素）。CMake识别以下几种类型：
 
 \begin{itemize}
 \item
-ARCHIVE: Static libraries (.a) and DLL import libraries for Windows-based systems (.lib).
+ARCHIVE: 静态库（.a）和Windows系统上的DLL导入库（.lib）。
 
 \item
-LIBRARY: Shared libraries (.so), but not DLLs.
+LIBRARY: 共享库（.so），但不包括DLL。
 
 \item
-RUNTIME: Executables and DLLs.
+RUNTIME: 可执行文件和DLL。
 
 \item
-OBJECTS: Object files from OBJECT libraries.
+OBJECTS: 来自OBJECT库的对象文件。
 
 \item
-FRAMEWORK: Static and shared libraries that have the FRAMEWORK property set (this excludes them from ARCHIVE and LIBRARY). This is macOS-specific.
+FRAMEWORK: 设置了FRAMEWORK属性的静态和共享库（这会使它们从ARCHIVE和LIBRARY中排除）。这是macOS特定的。
 
 \item
-BUNDLE: Executables marked with MACOSX\_BUNDLE (also not part of RUNTIME).
+BUNDLE: 标记有MACOSX\_BUNDLE的可执行文件（也不属于RUNTIME）。
 
 \item
-FILE\_SET <set>: Files in the <set> file set specified for the target. Either C++ header files or C++ module headers (since CMake 3.23).
+FILE\_SET <set>: 指定给目标的文件集<set>中的文件。可以是C++头文件或C++模块头文件（自CMake 3.23起）。
 
 \item
-PUBLIC\_HEADER, PRIVATE\_HEADER, RESOURCE: Files specified in the target properties with the same name (on Apple platforms, they should be set on the FRAMEWORK or BUNDLE targets).
+PUBLIC\_HEADER, PRIVATE\_HEADER, RESOURCE: 在目标属性中指定相同名称的文件（在Apple平台上，它们应该设置在FRAMEWORK或BUNDLE目标上）。
 \end{itemize}
 
-The CMake documentation claims that if you only configure one artifact type (for example, LIBRARY), only this type will be installed. For CMake version 3.26.0, this is not true: all the artifacts will be installed as if they were configured with the default options. This can be solved by specifying <TYPE> EXCLUDE\_FROM\_ALL for all unwanted artifact types.
+CMake文档声称，如果你只配置一个工件类型（例如，LIBRARY），那么只有这个类型会被安装。对于CMake版本3.26.0，这不是真的：所有工件都会被安装，就像它们是用默认选项配置的一样。这可以通过为所有不需要的工件类型指定 EXCLUDE\_FROM\_ALL来解决。
 
 \begin{myNotic}{Note}
-A single install(TARGETS) command can have multiple artifact configuration blocks. However, be aware that you may only specify one of each type per call. That is, if you’d like to configure different destinations of ARCHIVE artifacts for the Debug and Release configurations, then you must make two separate install(TARGETS ... ARCHIVE) calls.
+单个install(TARGETS)命令可以有多个工件配置块。但是请注意，每个调用中你只能指定每种类型的一个。也就是说，如果你想要为Debug和Release配置配置不同的ARCHIVE工件的目标，那么你必须进行两次单独的install(TARGETS … ARCHIVE)调用。
 \end{myNotic}
 
-You may also omit the type name and specify options for all the artifacts. Installation would then be then performed for every file that’s produced by these targets, regardless of their type:
+你也可以省略类型名称，并为所有工件指定选项。安装将针对这些目标产生的每个文件执行，而不管它们的类型：
 
 \begin{cmake}
 install(TARGETS executable, static_lib1
@@ -150,60 +149,60 @@ install(TARGETS executable, static_lib1
 )
 \end{cmake}
 
-In many cases, you don’t need to provide the DESTINATION explicitly, thanks to the built-in defaults, but there are a few caveats to keep in mind when dealing with different platforms.
+在许多情况下，由于内置的默认值，你不需要显式提供DESTINATION，但在处理不同平台时需要记住一些注意事项。
 
-\mySamllsection{Utilizing the default destination for different platforms}
+\mySamllsection{利用不同平台上的默认目标目录}
 
-When CMake installs your project’s files, it copies them into a specific directory in the system. Different file types belong in different directories. This directory is determined by the following formula:
+当CMake安装你的项目的文件时，它会将它们复制到系统中的特定目录。不同类型的文件属于不同的目录。这个目录由以下公式确定：
 
 \begin{cmake}
 ${CMAKE_INSTALL_PREFIX} + ${DESTINATION}
 \end{cmake}
 
-As mentioned in the previous section, you can explicitly provide the DESTINATION component for installation, or let CMake use a built-in default based on the type of the artifact:
+如前一部分所述，你可以为安装显式提供DESTINATION组件，或者让CMake根据工件的类型使用内置的默认值：
 
 % Please add the following required packages to your document preamble:
 % \usepackage{longtable}
 % Note: It may be necessary to compile the document several times to get a multi-page table to line up properly
 \begin{longtable}{|l|l|l|}
 \hline
-\textbf{Artifact type}                                    & \textbf{Built-in default} & \textbf{Install directory variable} \\ \hline
+\textbf{工件类型}                                    & \textbf{内置默认值} & \textbf{安装目录变量} \\ \hline
 \endfirsthead
 %
 \endhead
 %
 RUNTIME                                                   & bin                       & CMAKE\_INSTALL\_BINDIR              \\ \hline
 \begin{tabular}[c]{@{}l@{}}LIBRARY\\ ARCHIVE\end{tabular} & lib                       & CMAKE\_INSTALL\_LIBDIR              \\ \hline
-\begin{tabular}[c]{@{}l@{}}PUBLIC\_HEADER\\ PRIVATE\_HEADER\\ FILE\_SET (type HEADERS)\end{tabular} & include & CMAKE\_INSTALL\_INCLUDEDIR \\ \hline
+\begin{tabular}[c]{@{}l@{}}PUBLIC\_HEADER\\ PRIVATE\_HEADER\\ FILE\_SET (类型 HEADERS)\end{tabular} & include & CMAKE\_INSTALL\_INCLUDEDIR \\ \hline
 \end{longtable}
 
 \begin{center}
-Table 14.1: Default destinations per artifact type
+表14.1：每种工件类型的默认目标位置
 \end{center}
 
-While default paths are useful, they aren’t always appropriate. For example, CMake defaults the DESTINATION for libraries to lib. The full path for libraries is then computed as /usr/local/lib for Unix-like systems and something like C:\verb|\|Program Files (x86)\verb|\|<project-name>\verb|\|lib on Windows. However, this is not ideal for Debian with multi-arch support, which requires an architecture-specific path (e.g., i386-linux-gnu) when INSTALL\_PREFIX is /usr. Determining the correct path for each platform is a common challenge for Unix-like systems. To address this, follow the GNU Coding Standards, the link to which is added in the Further reading section at the end of this chapter.
+虽然默认路径很有用，但它们并不总是合适的。例如，CMake 将库的默认 DESTINATION 设置为 lib。对于类 Unix 系统，库的完整路径然后被计算为 /usr/local/lib，而在 Windows 上则类似于 C:\verb|\|Program Files (x86)\verb|\|<project-name>\verb|\|lib。然而，这对于支持多架构的 Debian 来说并不是理想的，当 INSTALL\_PREFIX 是 /usr 时，它需要一个特定于架构的路径（例如，i386-linux-gnu）。为每个平台确定正确的路径对于类 Unix 系统来说是一个常见的挑战。为了解决这个问题，请遵循 GNU 编码标准，该链接添加在本章末尾的进一步阅读部分。
 
-We can override the default destinations for each value by setting a CMAKE\_INSTALL\_<DIRTYPE>\_DIR variable. Instead of developing an algorithm to detect the platform and assign appropriate paths to the install directory variables, use the CMake GNUInstallDirs utility module. This module handles most platforms by setting the install directory variables accordingly. Just include it using include() before any install() commands, and you’ll be set.
+我们可以通过设置 CMAKE\_INSTALL\_<DIRTYPE>\_DIR 变量来覆盖每个值的默认目标。不是开发一个算法来检测平台并将适当的路径分配给安装目录变量，而是使用 CMake 的 GNUInstallDirs 实用模块。该模块通过相应地设置安装目录变量来处理大多数平台。只需在任何 install() 命令之前使用 include() 包含它，然后您就设置好了。
 
-Users needing custom configurations can override the install directory variables via the command-line argument like so:
+需要自定义配置的用户可以通过命令行参数覆盖安装目录变量，如下所示：
 
 \begin{shell}
 -DCMAKE_INSTALL_BINDIR=/path/in/the/system
 \end{shell}
 
-However, installing the public headers of libraries still presents challenges. Let’s explore why.
+然而，安装库的公共头文件仍然存在挑战。让我们探讨一下为什么。
 
-\mySamllsection{Dealing with public headers}
+\mySamllsection{处理公共头文件}
 
-When managing public headers in CMake, it’s best practice to store them in a directory that indicates their origin and introduces namespacing, such as /usr/local/include/calc. This enables their use in C++ projects with the inclusion directive:
+在 CMake 中管理公共头文件时，最佳实践是将它们存储在一个指示其来源并引入命名空间的目录中，例如 /usr/local/include/calc。这允许它们在 C++ 项目中使用包含指令来使用：
 
 \begin{cpp}
 #include <calc/basic.h>
 \end{cpp}
 
-Most preprocessors interpret angle-bracketed directives as requests to scan standard system directories. We can use the GNUInstallDirs module to automatically populate the DESTINATION part of the installation path, ensuring headers end up in the include directory.
+大多数预处理器将尖括号指令解释为请求扫描标准系统目录。我们可以使用 GNUInstallDirs 模块来自动填充安装路径的 DESTINATION 部分，确保头文件最终位于 include 目录中。
 
-Since CMake 3.23.0, we can explicitly add headers to be installed to the appropriate target with the target\_sources() command and the FILE\_SET keyword. This method is preferred, as it takes care of the relocation of headers. Here’s the syntax:
+自从 CMake 3.23.0 起，我们可以使用 target\_sources() 命令和 FILE\_SET 关键字明确地将头文件添加到适当的目标以进行安装。这种方法更为可取，因为它负责头文件的重新定位。以下是语法：
 
 \begin{shell}
 target_sources(<target>
@@ -214,7 +213,7 @@ target_sources(<target>
 )
 \end{shell}
 
-Assuming our headers are in the src/include/calc directory, here’s a practical example:
+假设我们的头文件位于 src/include/calc 目录中，这是一个实际示例：
 
 \filename{ch14/02-install-targets/src/CMakeLists.txt (fragment)}
 
@@ -227,11 +226,11 @@ target_sources(calc PUBLIC FILE_SET HEADERS
 )
 \end{cmake}
 
-The preceding snippet defines a new target file set called HEADERS. We’re using a special case here: if the name of the file set matches one of the available types, CMake will assume we want the file set to be of such type, eliminating the need to define the type explicitly. If you use a different name, remember to define the FILE\_SET's type with the appropriate TYPE <TYPE> keyword.
+前面的代码片段定义了一个名为 HEADERS 的新目标文件集。我们在这里使用了一个特殊情况：如果文件集的名称与可用类型之一匹配，CMake 会假定我们希望文件集是此类类型，从而消除了明确定义类型的需要。如果您使用不同的名称，请记住使用适当的 TYPE <TYPE> 关键字来定义 FILE\_SET 的类型。
 
-Having defined the file set, we can use it in the installation command like so:
+定义了文件集后，我们可以如下所示在安装命令中使用它：
 
-\filename{ch14/02-install-targets/src/CMakeLists.txt (continued)}
+\filename{ch14/02-install-targets/src/CMakeLists.txt (续)}
 
 \begin{cmake}
 ...
@@ -240,7 +239,7 @@ include(GNUInstallDirs)
 install(TARGETS calc ARCHIVE FILE_SET HEADERS)
 \end{cmake}
 
-We include the GNUInstallDirs module and configure the installation of the calc static library and its headers. Running cmake in install mode works as expected:
+我们包含了 GNUInstallDirs 模块并配置了 calc 静态库及其头文件的安装。以安装模式运行 cmake 按预期工作：
 
 \begin{shell}
 # cmake -S <source-tree> -B <build-tree>
@@ -251,11 +250,11 @@ We include the GNUInstallDirs module and configure the installation of the calc 
 -- Installing: /usr/local/include/calc/basic.h
 \end{shell}
 
-Support for the FILE\_SET HEADERS keyword is a relatively recent update, and unfortunately, not all environments will provide the newer version of CMake.
+对 FILE\_SET HEADERS 关键字的支持是相对较新的更新，不幸的是，并非所有环境都会提供较新版本的 CMake。
 
-If you’re stuck on a version older than 3.23, you’ll need to specify public headers (as a semicolon-separated list) in the PUBLIC\_HEADER property of the library target, and deal with the relocation manually (more on this in the Understanding the issues with relocatable targets section):
+如果您还停留在 3.23 之前的版本，您将需要以分号分隔的列表形式指定公共头文件（在库目标的 PUBLIC\_HEADER 属性中），并手动处理重新定位（更多内容请参见了解可重定位目标的问题部分）：
 
-\filename{ch14/03-install-targets-legacy/src/CMakeLists.txt (fragment)}
+\filename{ch14/03-install-targets-legacy/src/CMakeLists.txt (片段)}
 
 \begin{cmake}
 add_library(calc STATIC basic.cpp)
@@ -265,9 +264,9 @@ set_target_properties(calc PROPERTIES
 )
 \end{cmake}
 
-You’ll also need to change the destination directory to include the library name in the include path:
+您还需要更改目标目录，以便在包含路径中包含库名称：
 
-\filename{ch14/02-install-targets-legacy/src/CMakeLists.txt (continued)}
+\filename{ch14/02-install-targets-legacy/src/CMakeLists.txt (续)}
 
 \begin{cmake}
 ...
@@ -279,21 +278,21 @@ install(TARGETS calc
 )
 \end{cmake}
 
-Explicitly inserting /calc in the path is necessary because files specified in the PUBLIC\_HEADER property don’t retain their directory structure. They will all be installed in the same destination, even if nested in different base directories. This significant drawback led to the development of FILE\_SET.
+明确在路径中插入 /calc 是必要的，因为指定在 PUBLIC\_HEADER 属性中的文件不会保留它们的目录结构。即使它们嵌套在不同的基本目录中，它们也都会被安装到同一个目标位置。这个显著的缺点导致了 FILE\_SET 的开发。
 
-Now, you know how to address most installation cases, but how should you approach more advanced scenarios?
+现在，您知道了如何处理大多数安装情况，但是应该如何处理更高级的场景呢？
 
-\mySubsubsection{14.3.2.}{Low-level installation}
+\mySubsubsection{14.3.2.}{低层安装}
 
-Modern CMake is moving away from directly manipulating files. Ideally, we should add files to a logical target, using it as a higher level of abstraction to represent all underlying assets: source files, headers, resources, configuration, and so on. The main advantage is the code’s dryness; usually, adding a file to the target requires changing no more than one line.
+现代 CMake 正在远离直接操作文件。理想情况下，我们应该将文件添加到逻辑目标中，使用它作为更高层次的抽象来代表所有底层资产：源文件、头文件、资源、配置等等。主要优点是代码的简洁性；通常，将文件添加到目标只需要更改不超过一行。
 
-Unfortunately, adding every installed file to a target isn’t always possible or convenient. In such cases, three options are available: install(FILES), install(PROGRAMS), and install(DIRECTORY).
+不幸的是，将每个安装的文件添加到目标并不总是可能或方便的。在这种情况下，有三个选项可用：install(FILES)、install(PROGRAMS) 和 install(DIRECTORY)。
 
-\mySamllsection{Installing with install(FILES) and install(PROGRAMS)}
+\mySamllsection{使用 install(FILES) 和 install(PROGRAMS) 安装}
 
-The FILES and PROGRAMS modes are very similar. They can be used to install various assets, including public header files, documentation, shell scripts, configuration, and runtime assets like images, audio files, and datasets.
+FILES 和 PROGRAMS 模式非常相似。它们可以用来安装各种资产，包括公共头文件、文档、shell 脚本、配置以及像图像、音频文件和数据集这样的运行时资产。
 
-Here’s the command signature:
+以下是命令签名：
 
 \begin{shell}
 install(<FILES|PROGRAMS> files...
@@ -305,26 +304,26 @@ install(<FILES|PROGRAMS> files...
 )
 \end{shell}
 
-The main difference between FILES and PROGRAMS is the default file permissions set on the copied files. install(PROGRAMS) sets EXECUTE for all users, whereas install(FILES) does not (though both will set OWNER\_WRITE, OWNER\_READ, GROUP\_READ, and WORLD\_READ).
+FILES 和 PROGRAMS 之间的主要区别在于复制文件时设置的默认文件权限。install(PROGRAMS) 为所有用户设置 EXECUTE，而 install(FILES) 则不设置（尽管两者都会设置 OWNER\_WRITE, OWNER\_READ, GROUP\_READ 和 WORLD\_READ）。
 
-ou can modify this behavior by using the optional PERMISSIONS keyword, and then choosing the leading keyword (FILES or PROGRAMS) as an indicator of what’s installed. We’ve already covered how PERMISSIONS, CONFIGURATIONS, and OPTIONAL work. COMPONENT and EXCLUDE\_FROM\_ALL will be discussed later in the Defining components section.
+您可以使用可选的 PERMISSIONS 关键字来修改这种行为，然后选择领先的关键字（FILES 或 PROGRAMS）作为安装内容的指示器。我们已经介绍了 PERMISSIONS、CONFIGURATIONS 和 OPTIONAL 的用法。COMPONENT 和 EXCLUDE\_FROM\_ALL 将在后面的定义组件部分讨论。
 
-After the initial keyword, we need to list all the files we want to install. CMake supports relative and absolute paths, as well as generator expressions. Remember that if your file path starts with a generator expression, it must be absolute.
+在初始关键字之后，我们需要列出我们想要安装的所有文件。CMake 支持相对路径和绝对路径，以及生成器表达式。请记住，如果您的文件路径以生成器表达式开头，它必须是绝对的。
 
-The next required keyword is TYPE or DESTINATION. You can either explicitly provide the DESTINATION path or ask CMake to look it up for a specific TYPE file. Unlike in install(TARGETS), TYPE in this context does not select any subset of the provided files to be installed. Nevertheless, the computation of the installation path follows the same pattern (where the + symbol denotes a platform-specific path separator):
+下一个必需的关键字是 TYPE 或 DESTINATION。您可以选择明确提供 DESTINATION 路径，或者要求 CMake 为特定 TYPE 文件查找它。与 install(TARGETS) 不同，在此上下文中，TYPE 并不选择要安装的提供的文件子集。尽管如此，安装路径的计算遵循相同的模式（其中 + 符号表示平台特定的路径分隔符）：
 
 \begin{cmake}
 ${CMAKE_INSTALL_PREFIX} + ${DESTINATION}
 \end{cmake}
 
-Similarly, every TYPE will have built-in defaults:
+同样，每种 TYPE 都将具有内置的默认值：
 
 % Please add the following required packages to your document preamble:
 % \usepackage{longtable}
 % Note: It may be necessary to compile the document several times to get a multi-page table to line up properly
 \begin{longtable}{|l|l|l|}
 \hline
-\textbf{文件类型} & \textbf{Built-In Default} & \textbf{Installation Directory Variable} \\ \hline
+\textbf{文件类型} & \textbf{内置默认值} & \textbf{安装目录变量} \\ \hline
 \endfirsthead
 %
 \endhead
@@ -345,22 +344,22 @@ DOC           & \$DATAROOT/doc            & CMAKE\_INSTALL\_DOCDIR              
 \end{longtable}
 
 \begin{center}
-Table 14.2: Built-in defaults per file type
+表14.2：每种文件类型的内置默认值
 \end{center}
 
-The behavior here follows the same principle that was described in the Utilizing the default destination for different platforms subsection: if no installation directory variable for this TYPE of file is set, CMake will provide a built-in default path. Again, for portability, we can use the GNUInstallDirs module.
+这里的行为遵循了之前描述的“为不同平台利用默认目标目录”子节中的相同原则：如果未为这种文件TYPE设置安装目录变量，CMake将提供一个内置的默认路径。同样，为了可移植性，我们可以使用GNUInstallDirs模块。
 
-Some of the built-in guesses in the table are prefixed with installation directory variables:
+表中的某些内置猜测带有安装目录变量的前缀：
 
 \begin{itemize}
 \item
-\$LOCALSTATE is CMAKE\_INSTALL\_LOCALSTATEDIR or defaults to var
+\$OCALSTATE是CMAKE\_INSTALL\_LOCALSTATEDIR，默认为var。
 
 \item
-\$DATAROOT is CMAKE\_INSTALL\_DATAROOTDIR or defaults to share
+\$DATAROOT是CMAKE\_INSTALL\_DATAROOTDIR，默认为share。
 \end{itemize}
 
-As with install(TARGETS), the GNUInstallDirs module will provide platform-specific installation directory variables. Let’s look at an example:
+与install(TARGETS)一样，GNUInstallDirs模块将为不同平台提供特定的安装目录变量。让我们看一个例子：
 
 \filename{ch14/04-install-files/CMakeLists.txt}
 
@@ -375,15 +374,15 @@ install(FILES
 )
 \end{cmake}
 
-In this case, CMake installs the two header-only libraries, basic.h and nested/calc\_extended.h, into the project-specific subdirectory within the system-wide include directory.
+在这种情况下，CMake将两个仅包含头文件的库（basic.h和nested/calc\_extended.h）安装到系统级include目录中的项目特定子目录中。
 
 \begin{myNotic}{Note}
-From the GNUInstallDirs source, we know that CMAKE\_INSTALL\_INCLUDEDIR is the same for all supported platforms. However, using it is still recommended for readability and consistency with more dynamic variables. For instance, CMAKE\_INSTALL\_LIBDIR varies by architecture and distribution – lib, lib64, or lib/<multiarchtuple>.
+从GNUInstallDirs源代码中我们知道，CMAKE\_INSTALL\_INCLUDEDIR对所有支持的平台的值是相同的。然而，使用它仍然是推荐的，以提高可读性和与更动态变量的一致性。例如，CMAKE\_INSTALL\_LIBDIR根据架构和发行版而变化——lib、lib64或lib/。
 \end{myNotic}
 
-Since CMake 3.20, you can use the RENAME keyword with theinstall(FILES) and install(PROGRAMS) commands. This keyword has to be followed by a new filename and only works if the command installs a single file.
+从CMake 3.20开始，你可以使用RENAME关键字与install(FILES)和install(PROGRAMS)命令一起使用。这个关键字后面必须跟着一个新的文件名，并且只有在命令安装单个文件时才有效。
 
-The example in this section demonstrates the ease of installing files in the appropriate directory. However, there’s one issue – observe the installation output:
+本节中的示例演示了将文件安装到适当目录的便利性。然而，存在一个问题——观察安装输出：
 
 \begin{shell}
 # cmake -S <source-tree> -B <build-tree>
@@ -394,11 +393,11 @@ The example in this section demonstrates the ease of installing files in the app
 -- Installing: /usr/local/include/calc/calc_extended.h
 \end{shell}
 
-Both files are installed in the same directory, regardless of their original nesting. Sometimes, this isn’t desirable. In the next section, we’ll explore how to handle this situation.
+两个文件都被安装到了同一个目录中，而不管它们的原始嵌套结构如何。有时，这并不理想。在下一节中，我们将探讨如何处理这种情况。
 
-\mySamllsection{Working with entire directories}
+\mySamllsection{处理整个目录}
 
-If adding individual files to your installation command isn’t suitable, you can opt for a broader approach and work with entire directories. The install(DIRECTORY) mode is designed for this, copying the specified directories verbatim to the chosen destination. Here’s how it looks:
+如果向安装命令添加单个文件不合适，你可以选择更广泛的方法，并处理整个目录。install(DIRECTORY)模式就是为了这个目的设计的，它将指定的目录原样复制到所选的目的地。这是它的样子：
 
 \begin{shell}
 install(DIRECTORY dirs...
@@ -414,86 +413,86 @@ install(DIRECTORY dirs...
 )
 \end{shell}
 
-Many options here are similar to those in install(FILES) and install(PROGRAMS) and function in the same manner. One key detail is that if the paths provided after the DIRECTORY keyword don’t end with /, the last directory of the path is appended to the destination. For example:
+这里许多选项与install(FILES)和install(PROGRAMS)中的选项类似，并按相同方式工作。一个关键的细节是，如果DIRECTORY关键字后面的路径不以/结尾，那么路径的最后一个目录将附加到目的地。例如：
 
 \begin{cmake}
 install(DIRECTORY aaa DESTINATION /xxx)
 \end{cmake}
 
-This command creates a directory, /xxx/aaa, and copies the contents of aaa to it. In contrast, the following command copies the contents of aaa directly to /xxx:
+这个命令会创建一个目录，/xxx/aaa，并将aaa的内容复制到其中。相比之下，以下命令会将aaa的内容直接复制到/xxx：
 
 \begin{cmake}
 install(DIRECTORY aaa/ DESTINATION /xxx)
 \end{cmake}
 
-install(DIRECTORY) also introduces other mechanisms that are not available for files:
+install(DIRECTORY)还引入了其他在文件上不可用的机制：
 
 \begin{itemize}
 \item
-Output silencing
+输出静默
 
 \item
-Extended permission control
+扩展权限控制
 
 \item
-File/directory filtering
+文件/目录过滤
 \end{itemize}
 
-Let’s start with the output silencing option, MESSAGE\_NEVER. It disables output diagnostics during installation. It is very useful when we have many files in the directories we’re installing and it would be too noisy to print them all.
+让我们从输出静默选项MESSAGE\_NEVER开始。它禁用了安装过程中的输出诊断。当我们有大量文件需要安装，并且打印所有文件会过于嘈杂时，这个选项非常有用。
 
-Regarding permissions, install(DIRECTORY) supports three options:
+关于权限，install(DIRECTORY)支持三个选项：
 
 \begin{itemize}
 \item
-USE\_SOURCE\_PERMISSIONS sets the permissions on installed files that follow the original files. This only works when FILE\_PERMISSIONS is not set.
+USE\_SOURCE\_PERMISSIONS设置安装文件的原有文件权限。这只有在FILE\_PERMISSIONS未设置时才有效。
 
 \item
-FILE\_PERMISSIONS allows us to specify the permissions we want to set on installed files and directories. The default permissions are OWNER\_WRITE, OWNER\_READ, GROUP\_READ, and WORLD\_READ.
+FILE\_PERMISSIONS允许我们指定我们希望为安装的文件和目录设置的权限。默认权限是OWNER\_WRITE、OWNER\_READ、GROUP\_READ和WORLD\_READ。
 
 \item
-DIRECTORY\_PERMISSIONS works similarly to FILE\_PERMISSIONS, but it will set additional EXECUTE permissions for all users (this is because EXECUTE on directories in Unix-like systems denotes permission to list their contents).
+DIRECTORY\_PERMISSIONS与FILE\_PERMISSIONS类似，但它将为所有用户设置额外的EXECUTE权限（这是因为Unix-like系统中的目录的EXECUTE权限表示列出其内容的权限）。
 \end{itemize}
 
-Note that CMake ignores permissions options on platforms that don’t support them. More nuanced permission control is achievable by adding the PERMISSIONS keyword after each filtering expression. Files or directories matched by this will receive the specified permissions.
+请注意，CMake在那些不支持权限选项的平台上将忽略这些选项。通过在每个过滤表达式后添加PERMISSIONS关键字并指定一个权限列表，可以实现更细致的权限控制。匹配这些的文件或目录将获得指定的权限。
 
-Let’s talk about filters or “globbing” expressions. They control which files/directories from source directories are installed and follow this syntax:
+让我们谈谈过滤器或“通配”表达式。它们控制源目录中哪些文件/目录将被安装，并遵循以下语法：
 
 \begin{shell}
 PATTERN <pat> | REGEX <reg> [EXCLUDE] [PERMISSIONS <perm>]
 \end{shell}
 
-There are two matching methods to choose from:
+有两种匹配方法可供选择：
 
 \begin{itemize}
 \item
-With PATTERN, which is the simpler option, you can provide a pattern with the ? placeholders (matching any character) and the * wildcards (matching any string). Only paths that end with <pat> will be matched.
+使用PATTERN，这是更简单的选项，你可以提供一个带有?占位符（匹配任何字符）和*通配符（匹配任何字符串）的模式。只有以结尾的路径才会被匹配。
 
 \item
-The REGEX option is more advanced, supporting regular expressions. It allows the matching of any part of the path, although the \^{} and \$ anchors can still denote the beginning and end of the path.
+REGEX选项更高级，支持正则表达式。它允许匹配路径的任何部分，尽管\^{}和\$锚点仍然可以表示路径的开始和结束。
 \end{itemize}
 
-Optionally, the FILES\_MATCHING keyword can be set before the first filter, specifying that the filters will apply to files and not directories.
+可选地，在第一个过滤器之前可以设置FILES\_MATCHING关键字，指定过滤器将应用于文件而不是目录。
 
-Remember two caveats:
+请记住两个注意事项：
 
 \begin{itemize}
 \item
-FILES\_MATCHING requires an inclusive filter. You may exclude some files, but no files will be copied unless you also include some. However, all directories will be created, regardless of filtering.
+FILES\_MATCHING需要一个包容性过滤器。你可以排除一些文件，但如果不同时包含一些文件，则不会有文件被复制。然而，所有目录都将被创建，无论过滤如何。
 
 \item
-All subdirectories are included by default; you can only filter out.
+所有子目录默认都会被包含；你只能过滤掉。
 \end{itemize}
 
-For each filter method, you can choose to exclude matched paths with the EXCLUDE command (this only works when FILES\_MATCHING isn’t used).
+对于每个过滤方法，你可以选择使用EXCLUDE命令来排除匹配的路径（这仅在未使用FILES\_MATCHING时有效）。
 
-Specific permissions for all matched paths can be set by adding the PERMISSIONS keyword and a list of desired permissions after any filter. Let’s explore this with an example where we install three directories in different ways. We have some static data files for runtime use:
+为所有匹配的路径设置特定权限，可以通过在过滤器后添加PERMISSIONS关键字并指定一个权限列表来实现。让我们通过一个例子来探索这一点，其中我们以不同的方式安装三个目录。我们有一些用于运行时使用的静态数据文件：
 
 \begin{shell}
 data
 - data.csv
 \end{shell}
 
-We also need some public headers located in the src directory among other unrelated files:
+我们还需要一些位于src目录中的公共头文件，其中还有其他不相关的文件：
 
 \begin{shell}
 src
@@ -506,7 +505,7 @@ src
       - calc_extended.h
 \end{shell}
 
-Finally, we need two configuration files at two levels of nesting. To make things more interesting, we’ll make /etc/calc/ contents accessible only to the file owner:
+最后，我们需要两个不同嵌套级别的配置文件。为了增加趣味性，我们将使/etc/calc/的内容只能被文件所有者访问：
 
 \begin{shell}
 etc
@@ -515,9 +514,9 @@ etc
 - sample.conf
 \end{shell}
 
-To install the directory with static data files, we start our project with the most basic form of the install(DIRECTORY) command:
+要安装包含静态数据文件的目录，我们从项目中最基本的install(DIRECTORY)命令开始：
 
-\filename{ch14/05-install-directories/CMakeLists.txt (fragment)}
+\filename{ch14/05-install-directories/CMakeLists.txt (片段)}
 
 \begin{cmake}
 cmake_minimum_required(VERSION 3.26)
@@ -525,11 +524,11 @@ project(InstallDirectories CXX)
 install(DIRECTORY data/ DESTINATION share/calc)
 \end{cmake}
 
-This command will simply take all the contents of our data directory and put it in \$\{CMAKE\_INSTALL\_PREFIX\} and share/calc. Note that our source path ends with a / symbol to indicate we don’t want to copy the data directory itself, only its contents.
+这个命令将简单地取我们数据目录的所有内容，并将其放入\$\{CMAKE\_INSTALL\_PREFIX\}和share/calc。请注意，我们的源路径以/符号结束，以表明我们不想复制数据目录本身，只想复制其内容。
 
-The second case is the opposite: we don’t add the trailing / because the directory should be included. This is because we’re relying on a system-specific path for the INCLUDE file type, which is provided by GNUInstallDirs (note how the INCLUDE and EXCLUDE keywords represent unrelated concepts):
+第二个情况正好相反：我们不添加源路径的尾随/，因为目录应该被包含。这是因为我们依赖于INCLUDE文件类型的系统特定路径，这是由GNUInstallDirs提供的（注意INCLUDE和EXCLUDE关键字代表不相关的概念）：
 
-\filename{ch14/05-install-directories/CMakeLists.txt (fragment)}
+\filename{ch14/05-install-directories/CMakeLists.txt (片段)}
 
 \begin{cmake}
 ...
@@ -540,11 +539,11 @@ install(DIRECTORY src/include/calc TYPE INCLUDE
 )
 \end{cmake}
 
-Additionally, we have excluded two paths from this operation: the entire ignored directory and all files ending with calc\_extended.h (remember how PATTERN works).
+此外，我们还从这次操作中排除了两个路径：整个ignored目录和所有以calc\_extended.h结尾的文件（记住PATTERN是如何工作的）。
 
-The third case installs some default configuration files and sets their permissions:
+第三个案例安装了一些默认配置文件并设置了它们的权限：
 
-\filename{ch14/05-install-directories/CMakeLists.txt (fragment)}
+\filename{ch14/05-install-directories/CMakeLists.txt (片段)}
 
 \begin{cmake}
 install(DIRECTORY etc/ TYPE SYSCONF
@@ -555,13 +554,13 @@ install(DIRECTORY etc/ TYPE SYSCONF
 )
 \end{cmake}
 
-We avoid appending etc from the source path to the SYSCONF path (as GNUInstallDirs has already provided this) to prevent duplication. We set two permission rules: subdirectories are editable and listable only by the owner, and files ending with nested.conf are editable only by the owner.
+我们避免在SYSCONF路径中添加etc（因为GNUInstallDirs已经提供了这个路径）以防止重复。我们设置了两个权限规则：子目录只能由所有者编辑和列出，以nested.conf结尾的文件只能由所有者编辑。
 
-Installing directories covers various use cases, but for other advanced scenarios (like post-install configuration), external tools may be required. How do we integrate them?
+安装目录覆盖了各种用例，但对于其他高级场景（如安装后配置），可能需要外部工具。我们如何集成它们？
 
-\mySubsubsection{14.3.3.}{Invoking scripts during installation}
+\mySubsubsection{14.3.3.}{安装过程中调用脚本}
 
-If you have ever installed a shared library on a Unix-like system, you might recall needing to instruct the dynamic linker to scan trusted directories and build its cache using ldconfig (refer to the Further reading section for references). To facilitate fully automatic installations, CMake provides the install(SCRIPT) and install(CODE) modes. Here is the complete syntax:
+如果你曾在类Unix系统上安装过共享库，你可能会记得需要指导动态链接器扫描可信目录并使用ldconfig构建其缓存（请参阅进一步阅读部分以获取参考文献）。为了实现完全自动化的安装，CMake提供了install(SCRIPT)和install(CODE)模式。这里是完整的语法：
 
 \begin{shell}
 install([[SCRIPT <file>] [CODE <code>]]
@@ -570,7 +569,7 @@ install([[SCRIPT <file>] [CODE <code>]]
 )
 \end{shell}
 
-Choose between the SCRIPT and CODE modes and provide the necessary arguments – a path to a CMake script to run or a CMake snippet to execute during installation. To illustrate, let’s modify the 02-install-targets example to build a shared library:
+在SCRIPT和CODE模式之间进行选择，并提供必要的参数——一个在安装过程中要运行的CMake脚本路径或要执行的CMake代码片段。为了说明，我们将修改02-install-targets示例以构建共享库：
 
 \filename{ch14/06-install-code/src/CMakeLists.txt}
 
@@ -583,9 +582,9 @@ target_sources(calc PUBLIC FILE_SET HEADERS
 )
 \end{cmake}
 
-Change the artifact type from ARCHIVE to LIBRARY in the installation script and then add logic to run ldconfig afterward:
+在安装脚本中将工件类型从ARCHIVE改为LIBRARY，并在之后添加运行ldconfig的逻辑：
 
-\filename{ch14/06-install-code/CMakeLists.txt (fragment)}
+\filename{ch14/06-install-code/CMakeLists.txt (片段)}
 
 \begin{cmake}
 install(TARGETS calc LIBRARY FILE_SET HEADERS))
@@ -594,9 +593,9 @@ if (UNIX)
 endif()
 \end{cmake}
 
-The if() condition ensures the command is appropriate for the operating system (ldconfig should not be executed on Windows or macOS). The provided code must be syntactically valid in CMake (errors will only surface during installation).
+if()条件确保命令适用于操作系统（ldconfig不应在Windows或macOS上执行）。提供的代码必须在CMake中语法正确（错误仅在安装过程中出现）。
 
-After running the installation command, confirm its success by printing the cached libraries:
+运行安装命令后，通过打印缓存库来确认其成功：
 
 \begin{shell}
 # cmake -S <source-tree> -B <build-tree>
@@ -609,38 +608,38 @@ After running the installation command, confirm its success by printing the cach
         libcalc.so (libc6,x86-64) => /usr/local/lib/libcalc.so
 \end{shell}
 
-Both SCRIPT and CODE modes support generator expressions, adding versatility to this command. It can be used for various purposes: printing user messages, verifying successful installations, extensive configuration, file signing, and more.
+SCRIPT和CODE模式都支持生成器表达式，为这个命令增加了灵活性。它可以用于各种目的：打印用户消息、验证成功安装、广泛配置、文件签名等。
 
-Next, let’s delve into the aspect of managing runtime dependencies in CMake installations, one of the newest features of CMake.
+接下来，让我们深入探讨CMake安装中的运行时依赖管理，这是CMake的最新特性之一。
 
-\mySubsubsection{14.3.4.}{Installing runtime dependencies}
+\mySubsubsection{14.3.4.}{安装运行时依赖项}
 
-We’ve covered almost all kinds of installable artifacts and their respective commands. The final subject to discuss is runtime dependencies. Executables and shared libraries often depend on other libraries that must be present in the system and are dynamically loaded at program initialization. Since version 3.21, CMake can build a list of these required libraries for each target and capture their location at build time by referencing the appropriate sections of the binary file. This list can then be used to install these runtime artifacts in the system for future use.
+我们已经涵盖了几乎所有可安装工件及其相应的命令。最后一个要讨论的主题是运行时依赖。执行程序和共享库通常依赖于其他必须在系统中存在的库，并在程序初始化时动态加载。从CMake 3.21版本开始，CMake可以为每个目标构建这些所需库的列表，并通过引用二进制文件的适当部分在构建时捕获它们的位置。这个列表随后可以用来在系统中安装这些运行时工件，以供将来使用。
 
-For a target defined in the project, this can be achieved in two steps:
+对于项目中的目标，这可以通过以下两个步骤实现：
 
 \begin{shell}
 install(TARGETS ... RUNTIME_DEPENDENCY_SET <set-name>)
 install(RUNTIME_DEPENDENCY_SET <set-name> <arg>...)
 \end{shell}
 
-Alternatively, this can be accomplished with a single command with the same effect:
+或者，这可以通过一个具有相同效果的单一命令来完成：
 
 \begin{shell}
 install(TARGETS ... RUNTIME_DEPENDENCIES <arg>...)
 \end{shell}
 
-If a target is imported, rather than defined in the project, its runtime dependencies can be installed as follows:
+如果目标是通过导入而不是在项目中定义的，它的运行时依赖项可以按照以下方式安装：
 
 \begin{shell}
 install(IMPORTED_RUNTIME_ARTIFACTS <target>...)
 \end{shell}
 
-The preceding snippet can be extended with the RUNTIME\_DEPENDENCY\_SET <set-name> argument to create a named reference that can be later used in the install(RUNTIME\_DEPENDENCY\_SET) command.
+上述代码段可以通过添加RUNTIME\_DEPENDENCY\_SET <set-name> 参数来扩展，以创建一个可以稍后用于install(RUNTIME\_DEPENDENCY\_SET)命令的命名引用。
 
-If this feature sounds beneficial for your project, I recommend checking the official documentation of the install() command to learn more.
+如果你的项目可以从这个功能中受益，我建议你查看install()命令的官方文档以了解更多。
 
-Now that we understand all the different ways we can install files on the system, let’s explore how to turn them into a natively available package for other CMake projects.
+现在，我们了解了可以在系统上以各种方式安装文件的所有不同方法，接下来让我们探讨如何将它们转换为其他CMake项目本地的可用包。
 
 
 

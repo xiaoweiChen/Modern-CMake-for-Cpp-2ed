@@ -1,18 +1,18 @@
-One of the most established and popular tools for generating documentation from C++ sources is Doxygen. And when I say “established,” I mean it: the first version was released by Dimitri van Heesch in October 1997. Since then, it has grown immensely and is actively supported by almost 250 contributors to its repository (\url{https://github.com/doxygen/doxygen}).
+Doxygen是最成熟和流行的从C++源代码生成文档的工具之一。当我说“成熟”时，我是认真的：第一个版本是由Dimitri van Heesch在1997年10月发布的。从那时起，它已经极大地发展了，并且几乎有250名贡献者活跃地支持它的仓库 (\url{https://github.com/doxygen/doxygen})。
 
-You might be concerned about the challenge of incorporating Doxygen into larger projects that haven’t used documentation generation from the start. Indeed, the task of annotating every function can appear overwhelming. However, I encourage you to start small. Focus on documenting elements you’ve recently worked on in your latest commits. Remember, even partially complete documentation is a step forward compared to none at all, and it gradually helps in building a more comprehensive understanding of your project.
+您可能会担心将Doxygen整合到尚未从一开始就使用文档生成的较大项目中的挑战。确实，为每个函数添加注释可能看起来令人生畏。然而，我鼓励您从小处着手。专注于记录您最近在最新提交中处理过的元素。请记住，即使是部分完整的文档，也比完全没有文档要好，并且它逐渐帮助建立对项目的更全面的理解。
 
-Doxygen can produce documentation in the following formats:
+Doxygen可以生成以下格式的文档：
 
 \begin{itemize}
 \item
-HyperText Markup Language (HTML)
+超文本标记语言 (HTML)
 
 \item
-Rich Text Format (RTF)
+富文本格式 (RTF)
 
 \item
-Portable Document Format (PDF)
+可移植文档格式t (PDF)
 
 \item
 Lamport TeX (LaTeX)
@@ -21,44 +21,44 @@ Lamport TeX (LaTeX)
 PostScript (PS)
 
 \item
-Unix manual (man pages)
+Unix 手册 (man 页面)
 
 \item
-Microsoft Compiled HTML Help (.CHM)
+微软编译HTML帮助 (.CHM)
 \end{itemize}
 
-If you annotate your code with comments providing additional information in the format specified by Doxygen, it will parse them to enrich the output file. Moreover, the code structure will be analyzed to produce helpful charts and diagrams. The latter is optional, as it requires the external Graphviz tool (\url{https://graphviz.org/}).
+如果您使用Doxygen指定的格式在代码中添加提供额外信息的注释，它将解析这些注释以丰富输出文件。此外，将分析代码结构以生成有用的图表和图形。后者是可选的，因为它需要外部Graphviz工具 (\url{https://graphviz.org/})。
 
-The developer should first consider the following question: Will the users of the project only receive the documentation, or will they generate it themselves (perhaps when building from source)? The first option implies that documentation is distributed with the binaries, available online, or (less elegantly) checked in with the source code into the repository.
+开发者首先应该考虑以下问题：项目的用户只会接收文档，还是他们自己生成文档（可能是从源代码构建时）？第一个选项意味着文档随二进制文件分发，在线提供，或者（不太优雅地）与源代码一起检入到仓库中。
 
-This consideration matters because if you want users to generate documentation during the build, they will need the dependencies present in their system. This isn’t a significant problem since Doxygen and Graphviz are available through most package managers, and all that’s required is a simple command, such as this one for Debian:
+这个考虑很重要，因为如果您希望用户在构建过程中生成文档，他们将需要在他们的系统中存在依赖项。这并不是一个严重的问题，因为Doxygen和Graphviz可以通过大多数包管理器获得，并且只需要一个简单的命令，例如在Debian上：
 
 \begin{shell}
 apt-get install doxygen graphviz
 \end{shell}
 
-Binaries are also available for Windows (check the project’s website in the Further reading section).
+Windows的二进制文件也可以在项目网站上找到（请参阅“进一步阅读”部分）。
 
-However, some users might not be comfortable installing this tooling. We must decide whether to generate documentation for users or have them add the dependencies if needed. The project could automatically add them for users as well, as described in Chapter 9, Managing Dependencies in CMake. Note that Doxygen is built with CMake, so you already know how to compile it from sources if needed.
+然而，一些用户可能不太愿意安装这个工具。我们必须决定是为用户生成文档，还是让他们在需要时添加依赖项。项目也可以像第9章“在CMake中管理依赖项”中描述的那样，为用户自动添加它们。请注意，Doxygen是用CMake构建的，所以如果您需要的话，您已经知道如何从源代码编译它。
 
-When Doxygen and Graphviz are installed in the system, we can add the generation to our project. Contrary to what some online sources suggest, this isn’t as difficult or involved as it might seem. We don’t need to create external configuration files, provide paths to the Doxygen executable, or add custom targets. Since CMake 3.9, we can use the doxygen\_add\_docs() function from the FindDoxygen find-module, which sets up the documentation target.
+当Doxygen和Graphviz安装到系统中后，我们可以将生成过程添加到我们的项目中。与一些在线资源建议的相反，这并不像看起来那么困难或复杂。我们不需要创建外部配置文件，提供Doxygen可执行文件的路径，或添加自定义目标。自从CMake 3.9以来，我们可以使用FindDoxygen查找模块中的doxygen\_add\_docs()函数，它设置文档目标。
 
-The signature looks like this:
+签名如下：
 
 \begin{shell}
 doxygen_add_docs(targetName [sourceFilesOrDirs...]
   [ALL] [WORKING_DIRECTORY dir] [COMMENT comment])
 \end{shell}
 
-The first argument specifies the target name, which we need to build explicitly with the -t argument to cmake (after generating a build tree), as follows:
+第一个参数指定目标名称，我们需要使用-t参数显式构建它，通过cmake生成构建树，如下所示：
 
 \begin{shell}
 # cmake --build <build-tree> -t targetName
 \end{shell}
 
-Or, we can ensure that the documentation is always built by adding the ALL argument, although this is usually not necessary. The WORKING\_DIRECTORY option is straightforward; it specifies the directory where the command should be run. The value set by the COMMENT option is displayed before the documentation generation starts, providing useful information or instructions.
+或者，我们可以通过添加ALL参数来确保始终构建文档，尽管这通常不是必需的。WORKING\_DIRECTORY选项很直接；它指定命令应该运行的目录。COMMENT选项设置的值将在文档生成开始之前显示，提供有用的信息或指令。
 
-We’ll follow the practice from previous chapters and create a utility module with a helper function (so it can be reused in other projects), as follows:
+我们将遵循前几章的做法，并创建一个带有辅助函数的实用模块（以便可以在其他项目中重用），如下所示：
 
 \filename{ch13/01-doxygen/cmake/Doxygen.cmake}
 
@@ -80,25 +80,25 @@ function(Doxygen input output)
 endfunction()
 \end{cmake}
 
-The function accepts two arguments—input and output directories—and creates a custom doxygen target. Here’s what happens:
+该函数接受两个参数——输入和输出目录——并创建一个自定义的doxygen目标。以下是发生的情况：
 
 \begin{enumerate}
 \item
-First, we use CMake’s built-in Doxygen find-module to determine whether Doxygen is available in the system.
+首先，我们使用CMake内置的Doxygen查找模块来确定系统中是否可用Doxygen。
 
 \item
-If it isn’t available, we create a dummy doxygen target that informs the user and runs a false command, which (on Unix-like systems) returns 1, causing the build to fail. We terminate the function at that point with return().
+如果不可用，我们创建一个虚拟的doxygen目标，通知用户并运行false命令（在类Unix系统中返回1，导致构建失败）。我们在此处用return()终止函数。
 
 \item
-If Doxygen is available, we configure it to generate HTML output in the provided output directory. Doxygen is extremely configurable (find out more in the official documentation). To set any option, simply follow the example by calling set() and prepend its name with DOXYGEN\_.
+如果Doxygen可用，我们将其配置为在提供的输出目录中生成HTML输出。Doxygen非常可配置（更多信息请参阅官方文档）。要设置任何选项，只需按照示例调用set()，并在其名称前加上DOXYGEN\_。
 
 \item
-Set up the actual doxygen target. All the DOXYGEN\_ variables will be forwarded to Doxygen’s configuration file, and documentation will be generated from the provided input directory in the source tree.
+设置实际的doxygen目标。所有DOXYGEN\_变量都将被转发到Doxygen的配置文件中，并将从源树中提供的输入目录生成文档。
 \end{enumerate}
 
-If your documentation is to be generated by users, step 2 should probably involve installing Doxygen instead.
+如果你的文档将由用户生成，那么第二步可能应该涉及安装Doxygen。
 
-To use this function, we can incorporate it into the main listfile of our project as follows:
+要使用这个函数，我们可以将其纳入我们项目的主列表文件中，如下所示：
 
 \filename{ch13/01-doxygen/CMakeLists.txt}
 
@@ -112,13 +112,13 @@ include(Doxygen)
 Doxygen(src docs)
 \end{cmake}
 
-Not difficult at all! Building the doxygen target generates HTML documentation that looks like this:
+一点也不难！构建doxygen目标将生成如下所示的HTML文档：
 
-\myGraphic{0.8}{content/chapter13/images/1.png}{Figure 13.1: Class reference generated with Doxygen}
+\myGraphic{0.9}{content/chapter13/images/1.png}{图13.1：使用Doxygen生成的类参考}
 
-To add important details in Member Function Documentation, we can precede the C++ method declaration with an appropriate comment in the header file, like so:
+为了在成员函数文档中添加重要细节，我们可以在头文件中的C++方法声明前加上适当的注释，如下所示：
 
-\filename{ch13/01-doxygen/src/calc.h (fragment)}
+\filename{ch13/01-doxygen/src/calc.h (片段)}
 
 \begin{cpp}
 /**
@@ -130,17 +130,17 @@ To add important details in Member Function Documentation, we can precede the C+
 int Multiply(int a, int b);
 \end{cpp}
 
-This format is known as Javadoc. It is important to begin the comment block with double asterisks: /**. More information can be found in the description of Doxygen’s docblocks (see the link in the Further reading section). The Multiply function with such annotations will be rendered as shown in the following figure:
+这种格式被称为Javadoc。重要的是，注释块要以双星号开始：/**。更多关于Doxygen的docblocks的描述可以在“进一步阅读”部分的链接中找到。带有此类注释的Multiply函数将呈现如下所示的图形：
 
-\myGraphic{0.8}{content/chapter13/images/2.png}{Figure 13.2: Annotations of the parameters and result}
+\myGraphic{0.5}{content/chapter13/images/2.png}{图13.2：参数和结果的注释}
 
-As mentioned earlier, if Graphviz is installed, Doxygen will detect it and generate dependency diagrams, as illustrated here:
+如前所述，如果安装了Graphviz，Doxygen将检测到它并生成依赖关系图，如下所示：
 
-\myGraphic{0.8}{content/chapter13/images/3.png}{Figure 13.3: Inheritance and collaboration diagrams generated by Doxygen}
+\myGraphic{0.9}{content/chapter13/images/3.png}{图13.3：Doxygen生成的继承和协作图}
 
-By generating documentation directly from the source code, we establish a process that enables quick updates in tandem with any code changes during the development cycle. Also, any overlooked updates in the comments are likely to be noticed during code review.
+通过直接从源代码生成文档，我们建立了一个过程，使得在开发周期中与任何代码更改同步快速更新成为可能。此外，代码审查期间很可能会注意到被忽略的注释更新。
 
-Many developers express concerns that the design provided by Doxygen appears dated, making them hesitant to showcase the generated documentation to their clients. However, there is a simple solution to this issue.
+许多开发者表示担忧，Doxygen提供的设计看起来过时，这让他们犹豫是否向客户展示生成的文档。然而，这个问题有一个简单的解决方案。
 
 
 

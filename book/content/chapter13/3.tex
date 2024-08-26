@@ -1,16 +1,16 @@
-Having your project documented with a clean, fresh design is important. After all, if we put all this work into writing high-quality documentation for our cutting-edge project, it is imperative that the user perceives it as such. Although Doxygen is feature-rich, it isn’t renowned for adhering to the latest visual trends. However, revamping its appearance doesn’t require substantial effort.
+使用清新设计来记录你的项目是非常重要的。毕竟，如果我们投入大量工作来为我们的尖端项目编写高质量的文档，那么用户必须将其视为如此。尽管Doxygen功能丰富，但它并不以遵循最新的视觉趋势而闻名。然而，改造其外观并不需要大量的努力。
 
-Luckily, a developer named jothepro created a theme called doxygen-awesome-css, which offers a modern, customizable design. This theme is presented in the following screenshot:
+幸运的是，一位名为jothepro的开发者创建了一个名为doxygen-awesome-css的主题，它提供了一个现代化、可定制的设计。以下截图展示了这个主题：
 
-\myGraphic{0.8}{content/chapter13/images/4.png}{Figure 13.4: HTML documentation in doxygen-awesome-css theme}
+\myGraphic{0.8}{content/chapter13/images/4.png}{图13.4：使用doxygen-awesome-css主题的HTML文档}
 
-The theme doesn’t require any additional dependencies and can be easily fetched from its GitHub page at \url{https://github.com/jothepro/doxygen-awesome-css}.
+这个主题不需要任何额外的依赖，可以轻松地从其GitHub页面获取，网址为： \url{https://github.com/jothepro/doxygen-awesome-css}。
 
 \begin{myNotic}{Note}
-While some online sources recommend using a combination of applications, like transforming Doxygen’s output with Sphinx via Breathe and Exhale extensions, this method can be complex and dependency-heavy (requiring Python, for example). A simpler approach is usually more practical, particularly for teams where not all members are deeply familiar with CMake.
+有些在线资源推荐使用应用程序组合，比如通过Sphinx的Breathe和Exhale扩展来转换Doxygen的输出，这种方法可能比较复杂且依赖较多（例如需要Python）。对于一个并非所有成员都深入了解CMake的团队来说，更简单的方法通常更实用。
 \end{myNotic}
 
-We can efficiently implement this theme with an automated process. Let’s see how we can extend our Doxygen.cmake file to use it by adding a new macro:
+我们可以通过一个自动化过程高效地实现这个主题。让我们看看如何通过添加一个新的宏来扩展我们的Doxygen.cmake文件以使用它：
 
 \filename{ch13/02-doxygen-nice/cmake/Doxygen.cmake (fragment)}
 
@@ -33,22 +33,22 @@ macro(UseDoxygenAwesomeCss)
 endmacro()
 \end{cmake}
 
-We already know all of these commands from previous chapters of the book, but let’s reiterate what happens for perfect clarity:
+我们已经从本书的前几章中了解了所有这些命令，但为了完全清晰，让我们再次重申发生了什么：
 
 \begin{enumerate}
 \item
-Fetching doxygen-awesome-css from Git using the FetchContent module
+使用FetchContent模块从Git获取doxygen-awesome-css
 
 \item
-Configuring extra options for Doxygen (these are specifically recommended by the theme’s README file)
+为Doxygen配置额外的选项（这些选项特别由主题的README文件推荐）
 
 \item
-Copying the theme’s css file to Doxygen’s output directory
+将主题的css文件复制到Doxygen的输出目录
 \end{enumerate}
 
-As you can imagine, it’s best to call this macro in the Doxygen function right before doxygen\_add\_docs(), like this:
+如你所想，最好在Doxygen函数中调用这个宏，正好在doxygen\_add\_docs()之前，如下所示：
 
-\filename{ch13/02-doxygen-nice/cmake/Doxygen.cmake (fragment)}
+\filename{ch13/02-doxygen-nice/cmake/Doxygen.cmake (片段)}
 
 \begin{cmake}
 function(Doxygen input output)
@@ -62,10 +62,9 @@ macro(UseDoxygenAwesomeCss)
 endmacro()
 \end{cmake}
 
-Remember, all variables in macros are set in the scope of the calling function.
-We can now enjoy a modern style in our generated HTML documentation and share it proudly with the world. However, our theme offers some JavaScript modules to enhance the experience.
+请记住，宏中的所有变量都在调用函数的作用域内设置。 现在，我们可以享受生成的HTML文档中的现代风格，并且自豪地与世界分享。然而，我们的主题提供了一些JavaScript模块来增强体验。
 
-How do we include them?
+我们如何包含它们？
 
 
 

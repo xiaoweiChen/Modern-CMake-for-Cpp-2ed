@@ -1,26 +1,26 @@
-Our project has been built, tested, and documented. Now, it’s finally time to release it to our users. This chapter primarily focuses on the final two steps we need to take: installation and packaging. These are advanced techniques that build on top of everything we’ve learned so far: managing targets and their dependencies, transient usage requirements, generator expressions, and much more.
+我们的项目已经构建、测试并记录在案。现在，终于到了将其发布给用户的时候。本章主要关注我们需要采取的最后两个步骤：安装和打包。这些是在我们迄今为止所学的一切基础上的高级技术：管理目标和它们的依赖关系，短暂的使用需求，生成器表达式，等等。
 
-Installation allows our project to be discoverable and accessible system-wide. We will cover how to export targets for use by other projects without needing installation and how to install our projects for easy system-wide accessibility. We’ll learn how to configure our project to automatically place various artifact types in their appropriate directories. To handle more advanced scenarios, we’ll introduce low-level commands for installing files and directories, as well as for executing custom scripts and CMake commands.
+安装使得我们的项目能够在整个系统中被发现和访问。我们将介绍如何在不进行安装的情况下导出目标以供其他项目使用，以及如何安装我们的项目以便于整个系统轻松访问。我们将学习如何配置项目以自动将各种工件类型放置到适当的目录中。为了处理更高级的场景，我们将介绍用于安装文件和目录以及执行自定义脚本和 CMake 命令的低级命令。
 
-Next, we’ll explore setting up reusable CMake packages that other projects can discover using the find\_package() command. We’ll explain how to ensure that targets and their definitions are not restricted to a specific file system location. We’ll also discuss how to write basic and advanced config files, along with the version files associated with packages. Then, to make things modular, we’ll briefly introduce the concept of components, both in terms of CMake packages and the install() command. All this preparation will pave the way for the final aspect we’ll be covering in this chapter: using CPack to generate archives, installers, bundles, and packages that are recognized by all kinds of package managers in different operating systems. These packages can distribute pre-built artifacts, executables, and libraries. It’s the easiest way for end users to start using our software.
+接下来，我们将探索设置可重用的 CMake 包，其他项目可以使用 find\_package() 命令来发现它们。我们将解释如何确保目标和它们的定义不局限于特定的文件系统位置。我们还将讨论如何编写基本和高级的配置文件，以及与包相关联的版本文件。然后，为了使事物模块化，我们将简要介绍组件的概念，这既适用于 CMake 包也适用于 install() 命令。所有这些准备工作将为我们在本章最后要介绍的方面铺平道路：使用 CPack 生成各种操作系统中的包管理器都能识别的存档、安装程序、捆绑包和包。这些包可以分发预构建的工件、可执行文件和库。这是最终用户开始使用我们软件的最简单方式。
 
-In this chapter, we’re going to cover the following main topics:
+在本章中，将包含以下内容：
 
 \begin{itemize}
 \item
-Exporting without installation
+无需安装即可导出
 
 \item
-Installing projects on the system
+在系统上安装项目
 
 \item
-Creating reusable packages
+创建可重用包
 
 \item
-Defining components
+定义组件
 
 \item
-Packaging with CPack
+使用 CPack 打包
 \end{itemize}
 
 

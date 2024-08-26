@@ -1,34 +1,34 @@
 
-Static program analysis involves examining source code without running the compiled version. Consistently using static checkers can significantly improve code quality by making it more consistent and less susceptible to bugs and known security vulnerabilities. The C++ community offers a wide range of static checkers like Astrée, clang-tidy, CLazy, CMetrics, Cppcheck, Cpplint, CQMetrics, ESBMC, FlawFinder, Flint, IKOS, Joern, PC-Lint, Scan-Build, Vera++, and more.
+静态程序分析涉及在不运行编译版本的情况下检查源代码。一致地使用静态检查器可以显著提高代码质量，使其更加一致，不易受错误和已知安全漏洞的影响。C++社区提供了广泛的静态检查器，如Astrée、clang-tidy、CLazy、CMetrics、Cppcheck、Cpplint、CQMetrics、ESBMC、FlawFinder、Flint、IKOS、Joern、PC-Lint、Scan-Build、Vera++等。
 
-Many of these tools recognize CMake as an industry standard and offer ready-to-use support or integration tutorials. Some build engineers prefer not to write CMake code and instead include static checkers through external modules available online. An example is the collection by Lars Bilke on his GitHub repository: \url{https://github.com/bilke/cmake-modules}.
+许多这些工具将CMake视为行业标准，并提供现成的支持或集成教程。一些构建工程师更喜欢不编写CMake代码，而是通过在线可用的外部模块包含静态检查器。一个例子是Lars Bilke在他的GitHub仓库中的集合： \url{https://github.com/bilke/cmake-modules}.
 
-A common belief is that setting up static checkers is complicated. This perception exists because static checkers often emulate the behavior of a real compiler to understand the code. But it doesn’t have to be difficult.
+有一种普遍的观点认为设置静态检查器很复杂。这种观念存在是因为静态检查器经常模拟真实编译器的行为来理解代码。但这并不一定困难。
 
-Cppcheck outlines the following simple steps in its manual:
+Cppcheck在其手册中概述了以下简单步骤：
 
 \begin{enumerate}
 \item
-Locate the static checker’s executable.
+定位静态检查器的可执行文件。
 
 \item
-Generate a compile database with the following:
+使用以下内容生成编译数据库：
 \begin{itemize}
 \item
 cmake -DCMAKE\_EXPORT\_COMPILE\_COMMANDS=ON.
 \end{itemize}
 
 \item
-Run the checker using the generated JSON file:
+使用生成的JSON文件运行检查器：
 \begin{itemize}
 \item
 <path-to-cppcheck> -{}-project=compile\_commands.json
 \end{itemize}
 \end{enumerate}
 
-These steps should be integrated into the build process to ensure they are not overlooked.
+这些步骤应集成到构建过程中，以确保不被忽视。
 
-Since CMake knows how to build our targets, can it also support any static checkers? Absolutely, and it’s easier than you might think. CMake allows you to enable checkers on a per-target basis for the following tools:
+既然CMake知道如何构建我们的目标，它是否也能支持任何静态检查器？绝对可以，而且比你想象的要简单。CMake允许你按目标启用以下工具的检查器：
 
 \begin{itemize}
 \item
@@ -38,7 +38,7 @@ include-what-you-use (\url{https://include-what-you-use.org})
 clang-tidy (\url{https://clang.llvm.org/extra/clang-tidy})
 
 \item
-Link What You Use (a built-in CMake checker)
+Link What You Use (CMake内置检查器)
 
 \item
 Cpplint (\url{https://github.com/cpplint/cpplint})
@@ -47,7 +47,7 @@ Cpplint (\url{https://github.com/cpplint/cpplint})
 Cppcheck (\url{https://cppcheck.sourceforge.io})
 \end{itemize}
 
-To enable these checkers, set a target property to a semicolon-separated list containing the path to the checker’s executable and any command-line options to forward:
+要启用这些检查器，请将目标属性设置为以分号分隔的列表，其中包含检查器可执行文件的路径和要转发的任何命令行选项：
 
 \begin{itemize}
 \item
@@ -66,13 +66,13 @@ To enable these checkers, set a target property to a semicolon-separated list co
 LINK\_WHAT\_YOU\_USE
 \end{itemize}
 
-Replace <LANG> with C for C sources and CXX for C++. If you want to enable a checker for all project targets, set a global variable prefixed with CMAKE\_ – for example:
+将<LANG>替换为C以用于C源文件，替换为CXX以用于C++源文件。如果你想要为所有项目目标启用检查器，请设置以CMAKE\_为前缀的全局变量——例如：
 
 \begin{shell}
 set(CMAKE_CXX_CLANG_TIDY /usr/bin/clang-tidy-3.9;-checks=*)
 \end{shell}
 
-Any target defined after this statement will have its CXX\_CLANG\_TIDY property set to this value. Remember that enabling this analysis may slightly extend your build time. On the other hand, having more detailed control over how targets are tested by the checker can be useful. We can create a straightforward function to handle this:
+在此声明之后定义的任何目标都将其CXX\_CLANG\_TIDY属性设置为该值。请记住，启用此分析可能会略微延长构建时间。另一方面，对目标如何被检查器测试的控制更加详细可能很有用。我们可以创建一个简单的函数来处理这个问题：
 
 \filename{ch12/02-clang-tidy/cmake/ClangTidy.cmake}
 
@@ -86,17 +86,17 @@ function(AddClangTidy target)
 endfunction()
 \end{cmake}
 
-The AddClangTidy function follows two basic steps:
+AddClangTidy函数遵循两个基本步骤：
 
 \begin{enumerate}
 \item
-Locate the clang-tidy binary and store its path in CLANG-TIDY\_PATH. The REQUIRED keyword ensures that configuration stops with an error if the binary is not found.
+定位clang-tidy二进制文件并将其路径存储在CLANG-TIDY\_PATH中。REQUIRED关键字确保如果找不到二进制文件，配置将停止并报错。
 
 \item
-Enable clang-tidy for the target by providing the binary path and specific options to activate all checks and treat warnings as errors.
+通过提供二进制路径和特定选项来为目标启用clang-tidy，以激活所有检查并将警告视为错误。
 \end{enumerate}
 
-To use this function, we just need to include the module and call it for the chosen target:
+要使用此函数，我们只需包含模块并针对所选目标调用它：
 
 \filename{ch12/02-clang-tidy/src/CMakeLists.txt}
 
@@ -109,7 +109,7 @@ include(ClangTidy)
 AddClangTidy(sut)
 \end{cmake}
 
-This approach is concise and very effective. When building the solution, the clang-tidy output will appear as follows:
+这种方法简洁而有效。构建解决方案时，clang-tidy的输出将如下所示：
 
 \begin{shell}
 [ 6%] Building CXX object bin/CMakeFiles/sut.dir/calc.cpp.o
@@ -132,63 +132,64 @@ auto c = new Calc();
 ^
 \end{shell}
 
-Note that unless you add the -{}-warnings-as-errors=* option to the command-line arguments, the build will succeed. Organizations should decide on a set of rules that must be strictly followed to prevent non-compliant code from entering the repository.
+请注意，除非你在命令行参数中添加 -{}-warnings-as-errors=* 选项，否则构建将成功。组织应该决定一套必须严格遵循的规则，以防止不符合规范的代码进入仓库。
 
-clang-tidy also offers a useful -{}-fix option that automatically corrects your code when possible. This feature is a valuable time-saver and is particularly helpful when expanding the list of checks. Just like with formatting, be cautious of merge conflicts when adding changes made by static analysis tools to existing code bases.
+clang-tidy还提供了一个有用的 -{}-fix 选项，当可能时自动更正你的代码。这个特性是一个宝贵的时间节省器，特别是在扩大检查列表时特别有用。与格式化类似，在将静态分析工具做出的更改添加到现有代码库时，要小心合并冲突。
 
-Depending on your situation, the repository size, and team preferences, you should select a handful of checkers that best suit your needs. Including too many can become disruptive. Here’s a brief overview of the checkers supported by CMake right out of the box.
+根据你的情况、仓库大小和团队偏好，你应该选择最适合你需求的几个检查器。包含太多可能会变得干扰性。这里是对CMake直接支持的检查器的简要概述。
 
 \mySubsubsection{12.3.1.}{clang-tidy}
 
-Here’s what the official website says about clang-tidy:
+以下是clang-tidy官方网站上的介绍：
 
 \begin{myTip}{Tip}
-clang-tidy is a clang-based C++ “linter” tool. Its purpose is to provide an extensible framework for diagnosing and fixing typical programming errors, like style violations, interface misuse, or bugs that can be deduced via static analysis. clang-tidy is modular and provides a convenient interface for writing new checks.
+clang-tidy是基于clang的C++“lint”工具。它的目的是提供一个可扩展的框架，用于诊断和修复典型的编程错误，如风格违规、接口误用，或可以通过静态分析推断出的错误。clang-tidy是模块化的，并为编写新检查提供了方便的接口。
 \end{myTip}
 
-The tool is quite versatile, offering more than 400 checks. It pairs well with ClangFormat, enabling automatically applied fixes (over 150 are available) to conform to the same format file. The checks it offers cover performance, readability, modernization, C++ core guidelines, and bug-prone areas.
+这个工具相当多才多艺，提供了超过400个检查。它与ClangFormat配合得很好，可以自动应用修复（超过150个可用），以符合同一格式文件。它提供的检查覆盖了性能、可读性、现代化、C++核心指南和易出错区域。
 
 \mySubsubsection{12.3.2.}{Cpplint}
 
-Here’s a description of Cpplint from its official website:
+以下是Cpplint官方网站上的描述：
 
 \begin{myTip}{Tip}
-Cpplint is a command-line tool to check C/C++ files for style issues following Google’s C++ style guide. Cpplint is developed and maintained by Google Inc. at google/ styleguide.
+Cpplint是一个命令行工具，用于检查遵循Google的C++风格指南的C/C++文件中的风格问题。Cpplint由Google Inc.开发和维护。
 \end{myTip}
 
-This linter aims to align your code with Google’s style guide. Written in Python, it may introduce an unwanted dependency for some projects. The fixes are offered in formats consumable by Emacs, Eclipse, VS7, Junit, and as sed commands.
+这个linter旨在使你的代码与Google的风格指南保持一致。它使用Python编写，可能对某些项目引入了不受欢迎的依赖。修复格式可供Emacs、Eclipse、VS7、Junit和sed命令使用。
 
 \mySubsubsection{12.3.3.}{Cppcheck}
 
-Here’s what the official website says about Cppcheck:
+以下是Cppcheck官方网站上的介绍：
 
 \begin{myTip}{Tip}
-Cppcheck is a static analysis tool for C/C++ code. It provides unique code analysis to detect bugs and focuses on detecting undefined behaviour and dangerous coding constructs. The goal is to have very few false positives. Cppcheck is designed to be able to analyze your C/C++ code even if it has non-standard syntax (common in embedded projects).
+Cppcheck是一个用于C/C++代码的静态分析工具。它提供独特的代码分析来检测错误，并专注于检测未定义的行为和危险的编码构造。目标是尽量减少误报。Cppcheck设计为即使代码具有非标准语法（在嵌入式项目中很常见）也能分析你的C/C++代码。
 \end{myTip}
 
-This tool is particularly good for minimizing false positives, making it a reliable option for code analysis. It has been around for over 14 years and is still actively maintained. It’s especially useful if your code is not compatible with Clang.
+这个工具特别擅长于最小化误报，使其成为一个可靠的代码分析选项。它已经存在了14年以上，并且仍在积极维护。如果你的代码与Clang不兼容，它尤其有用。
 
 \mySubsubsection{12.3.4.}{include-what-you-use}
 
-Here’s a description of include-what-you-use from its official website:
+以下是include-what-you-use官方网站上的描述：
 
 \begin{myTip}{Tip}
-The main goal of include-what-you-use is to remove superfluous \#includes. It does this both by figuring out what \#includes are not actually needed for this file (for both .cc and .h files), and replacing \#includes with forward-declares when possible.
+include-what-you-use的主要目标是移除多余的\#include。它通过确定哪些\#include实际上不需要此文件（对于.cc和.h文件），并在可能的情况下用前向声明替换\#include来实现这一点。
 \end{myTip}
 
-While having too many included headers may not seem like a significant issue in small projects, the time saved from avoiding needless compilation of header files can quickly accumulate in larger projects.
+虽然在小项目中拥有太多包含的头文件可能看起来不是一个大问题，但避免不必要的头文件编译所节省的时间在大型项目中会迅速累积。
 
 \mySubsubsection{12.3.5.}{Link What You Use}
 
-Here is a description of “Link what you use” on CMake's blog:
+以下是CMake博客上“Link what you use”的描述：
 
 \begin{myTip}{Tip}
-This is a built in CMake feature that uses options of ld and ldd to print out if executables link more libraries than they actually require.
+这是一个内置的CMake特性，使用ld和ldd的选项来打印出如果可执行文件链接了比实际所需更多的库。
 \end{myTip}
 
-Static analysis plays a crucial role in industries like medicine, nuclear power, aviation, automotive, and machinery, where software errors could be life-threatening. Wise developers also adopt these practices in less critical environments, especially when the costs are low. Using static analysis during the build process is not only more cost-effective than manual bug finding and fixing, but it’s also easy to enable with CMake. I’d go as far as to say that there’s almost no reason to skip these checks in any quality-sensitive software, which includes any software involving people other than just the developer.
+静态分析在医学、核能、航空、汽车和机械等行业中扮演着关键角色，在这些行业中，软件错误可能是致命的。明智的开发者也在不那么关键的环境中采用这些实践，尤其是当成本很低时。在构建过程中使用静态分析不仅比手动查找和修复错误更经济，而且使用CMake也很容易启用。我甚至可以说，在质量敏感的软件中，几乎没有理由跳过这些检查，这包括除了开发者之外还涉及其他人的任何软件。
 
-This feature also helps speed up the build time by focusing on eliminating unneeded binary artifacts. Unfortunately, not all bugs can be detected before running a program. Luckily, we can take additional steps to gain a deeper understanding of our projects, like using Valgrind.
+这个特性还有助于通过专注于消除不必要的二进制文件来加速构建时间。不幸的是，不是所有的错误都能在运行程序之前检测到。不幸的是，不是所有的错误都能在运行程序之前被检测到。幸运的是，我们可以采取额外的步骤来更深入地了解我们的项目，比如使用Valgrind。
+
 
 
 
