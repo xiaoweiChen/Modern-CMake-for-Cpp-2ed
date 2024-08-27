@@ -1,17 +1,17 @@
 
 
-Stage-specific presets are simply presets that configure individual CMake stages: configure, build, test, package, and install. They allow for a granular and structured approach to defining build configurations. Here’s an overview of the common features shared across all preset stages, followed by an introduction to defining presets for individual stages.
+特定阶段的预设仅仅是配置各个 CMake 阶段的预设：配置、构建、测试、打包和安装。它们允许以精细和结构化的方式来定义构建配置。以下是所有预设阶段共有的特性概览，随后我们将介绍如何为各个阶段定义预设。
 
-\mySubsubsection{16.4.1.}{Common features across presets}
+\mySubsubsection{16.4.1.}{各预设阶段的共同特性}
 
-There are three features that are used to configure presets regardless of the CMake stage. Namely, these are unique name fields, optional fields, and associations with configuration presets. The following sections will cover each, respectively.
+无论 CMake 阶段如何，有三个特性用于配置预设。具体来说，这些特性包括独特的名称字段、可选字段以及与配置阶段预设的关联。接下来的各节将分别介绍这些特性
 
 
-\mySamllsection{Unique name fields}
+\mySamllsection{独特的名称字段}
 
-Every preset must have a unique name field within its stage. Given that CMakeUserPresets.json (if it exists) implicitly includes CMakePresets.json (if it exists), both files share the namespace, preventing duplicate names across them. For example, you can’t have two package-stage presets with the name myPreset in both files.
+每个预设在其所属阶段内必须有一个独特的名称字段。考虑到如果 CMakeUserPresets.json 存在，它会隐式地包含 CMakePresets.json（如果该文件也存在），这意味着两个文件共享命名空间，防止了名称重复。例如，你不能在两个文件中都有名为 myPreset 的打包阶段预设。
 
-A minimal preset file might look like this:
+一个最小化的预设文件可能如下所示：
 
 \begin{json}
 {
@@ -28,81 +28,81 @@ A minimal preset file might look like this:
 \end{json}
 
 
-\mySamllsection{Optional fields}
+\mySamllsection{可选字段}
 
-Every stage-specific preset can use the same optional fields:
+每个特定阶段的预设都可以使用相同的可选字段：
 
 \begin{itemize}
 \item
-displayName: This is a string that provides a user-friendly name for the preset
+displayName: 一个字符串，为预设提供一个用户友好的名称。
 
 \item
-description: This is a string that offers an explanation of what the preset does
+description: 一个字符串，说明预设的功能。
 
 \item
-inherits: This is a string, or an array of strings, that effectively copies the configuration of presets named in this field as a base, to be further extended or modified
+inherits: 一个字符串或字符串数组，有效地复制了在此字段中命名的预设的配置作为基础，进一步扩展或修改。
 
 \item
-hidden: This is a Boolean that hides the preset from the listings; such hidden presets can only be used through inheritance
+hidden: 一个布尔值，隐藏预设使其不显示在列表中；这样的隐藏预设只能通过继承使用。
 
 \item
-environment: This is an object that overrides ENVvariables for this stage; each key identifies an individual variable, and values can be strings or null; it supports macros
+environment: 一个对象，为这个阶段覆盖环境变量；每个键标识一个单独的变量，值可以是字符串或 null；它支持宏。
 
 \item
-condition: This is an object that enables or disables this preset (more on this later)
+condition: 一个对象，启用或禁用此预设（稍后会有更多介绍）。
 
 \item
-vendor: This is a custom object that contains vendor-specific values and follows the same convention as a root-level vendor field
+vendor: 一个自定义对象，包含供应商特定的值，并遵循与根级 vendor 字段相同的约定。
 \end{itemize}
 
-Presets can form a graph-like inheritance structure, provided there are no cyclic dependencies. CMakeUserPresets.json can inherit from project-level presets but not the other way around.
+预设可以形成类似图的继承结构，前提是不存在循环依赖。CMakeUserPresets.json 可以从项目级别的预设继承，但反之则不行。
 
-\mySamllsection{Association with configuration-stage presets}
+\mySamllsection{与配置阶段预设的关联}
 
-All stage-specific presets must be associated with a configuration preset, as they must know the location of the build tree. While the configure preset is inherently associated with itself, build, test, and package presets need to explicitly define this association via the configurePreset field.
+所有特定阶段的预设都必须与一个配置预设相关联，因为它们必须知道构建树的位置。虽然配置预设本质上与自身关联，但构建、测试和打包预设需要明确地通过 configurePreset 字段定义这种关联。
 
-Contrary to what you might think, this association doesn’t mean CMake will automatically execute the configuration preset when you decide to run any of the subsequent presets. You still need to execute each preset manually, or use a workflow preset (we’ll get to that in a bit).
+与你可能认为的不同，这种关联并不意味着当你决定运行任何后续预设时 CMake 将自动执行配置预设。你仍然需要手动执行每个预设，或者使用工作流预设（稍后我们会介绍这一点）。
 
-With these foundational concepts in place, we can continue into the specifics of presets for individual stages, starting with the configuration stage. As we progress, we’ll explore how these presets interact and how they can be used to streamline the project configuration and building process in CMake.
+有了这些基础概念，我们可以继续深入探讨各个阶段的预设细节，从配置阶段开始。随着进展，我们将探索这些预设是如何相互作用的，以及它们如何被用来简化 CMake 中的项目配置和构建过程。
 
-\mySubsubsection{16.4.2.}{Defining configuration-stage presets}
+\mySubsubsection{16.4.2.}{定义配置阶段预设}
 
-As previously indicated, configuration presets reside within the configurePresets array. They can be listed by adding the -{}-list-presets argument to the command line, specific to the configuration stage:
+正如前面所述，配置预设位于 configurePresets 数组中。可以通过向命令行添加 -{}-list-presets 参数来列出它们，具体针对配置阶段：
 
 \begin{shell}
 cmake --list-presets
 \end{shell}
 
-To configure a project with a chosen preset, specify its name after the -{}-preset argument, like so:
+要用选定的预设配置项目，请在 -{}-preset 参数后指定其名称：
 
 \begin{shell}
 cmake --preset myConfigurationPreset
 \end{shell}
 
-The configuration preset has some general fields like name and description, but it also has its own unique set of optional fields. Here are the simplified descriptions of the most important ones:
+配置预设有像名称和描述这样的通用字段，但它也有自己的一套可选字段。以下是最重要的几个字段的简化描述：
 
 \begin{itemize}
 \item
-generator: A string that specifies a generator to use for the preset; required for schema version < 3
+generator: 一个字符串，指定了预设使用的生成器；对于小于第 3 版的架构是必需的。
 
 \item
-architecture and toolset: A string that configures generators supporting these options
+architecture 和 toolset: 一个字符串，配置支持这些选项的生成器。
 
 \item
-binaryDir: A string that provides a relative or absolute path to the build tree; required for schema version < 3; supports macros
+binaryDir: 一个字符串，提供了构建树的相对或绝对路径；对于小于第 3 版的架构是必需的；支持宏。
 
 \item
-installDir: A string that provides a relative or absolute path to the installation directory; it is required for schema version < 3 and it supports macros
+installDir: 一个字符串，提供了安装目录的相对或绝对路径；对于小于第 3 版的架构是必需的；支持宏。
 
 \item
-cacheVariables: A map that defines cache variables; values support macros
+cacheVariables: 一个映射，定义了缓存变量；值支持宏。
 \end{itemize}
 
-When defining the cacheVariables map, remember the order in which variables are resolved in the project. As you can see in Figure 16.1, any cache variables defined through the command line will override preset variables. Any cache or environment preset variables will override those coming from the cache file or the host environment.
+在定义 cacheVariables 映射时，要记住项目中变量解析的顺序。如图 16.1 所示，通过命令行定义的任何缓存变量都会覆盖预设变量。任何缓存或环境预设变量都会覆盖来自缓存文件或主机环境的变量。
 
-\myGraphic{0.8}{content/chapter16/images/1.png}{Figure 16.1: How presets override CMakeCache.txt and the system environment variables}
+\myGraphic{0.4}{content/chapter16/images/1.png}{图16.1: 预设如何覆盖CMakeCache.txt和系统环境变量}
 
-Let’s declare a simple myConfigure configuration preset that specifies the generator, build tree, and installation path:
+让我们声明一个简单的 myConfigure 配置预设，它指定了生成器、构建树和安装路径：
 
 \filename{ch16/01-presets/CMakePresets.json (continued)}
 
@@ -121,41 +121,41 @@ Let’s declare a simple myConfigure configuration preset that specifies the gen
 ...
 \end{json}
 
-Our introduction to configure presets is complete, which brings us to build-stage presets.
+我们对配置预设的介绍已经完成，接下来是构建阶段预设。
 
-\mySubsubsection{16.4.3.}{Defining build-stage presets}
+\mySubsubsection{16.4.3.}{定义构建阶段预设}
 
-You won’t be surprised to learn that build presets reside within the buildPresets array. They can be listed by adding the -{}-list-presets argument to the command line, specific to the build stage:
+你不会惊讶地发现构建预设位于 buildPresets 数组中。可以通过向命令行添加 -{}-list-presets 参数来列出它们，具体针对构建阶段：
 
 \begin{shell}
 cmake --build --list-presets
 \end{shell}
 
-To build a project with a chosen preset, specify its name after the -{}-preset argument, like so:
+要用选定的预设构建项目，请在 -{}-preset 参数后指定其名称：
 
 \begin{shell}
 cmake --build --preset myBuildingPreset
 \end{shell}
 
-The build preset also has some general fields like name and description, and it has its unique set of optional fields. The simplified descriptions of the most important ones are:
+构建预设有像名称和描述这样的通用字段，它也有一套自己的可选字段。以下是最重要的几个字段的简化描述：
 
 \begin{itemize}
 \item
-jobs: An integer that sets the number of parallel jobs used to build the project
+jobs: 一个整数，设置了用于构建项目的并行作业的数量。
 
 \item
-targets: A string or string array that sets targets to build and supports macros
+targets: 一个字符串或字符串数组，设置了要构建的目标，并支持宏。
 
 \item
-configuration: A string that determines the build type for multi-configuration generators (Debug, Release, etc.)
+configuration: 一个字符串，确定了多配置生成器的构建类型(Debug, Release等)。
 
 \item
-cleanFirst: A Boolean that ensures that the project is always cleaned before the build
+cleanFirst: 一个布尔值，确保在构建前总是清理项目。
 \end{itemize}
 
-That’s it. Now, we can write a build preset like so:
+现在，我们可以这样写一个构建预设：
 
-\filename{ch16/01-presets/CMakePresets.json (continued)}
+\filename{ch16/01-presets/CMakePresets.json (续)}
 
 \begin{json}
 ...
@@ -171,77 +171,77 @@ That’s it. Now, we can write a build preset like so:
 ...
 \end{json}
 
-You’ll notice that the required configurePreset field is set to point to the myConfigure preset we defined in the previous section. Now, we’re able to move on to the test presets.
+你会注意到必需的 configurePreset 字段设置为指向我们在上一节中定义的 myConfigure 预设。现在，我们可以继续介绍测试预设。
 
-\mySubsubsection{16.4.4.}{Defining test-stage presets}
+\mySubsubsection{16.4.4.}{定义测试阶段预设}
 
-Test presets live within the testPresets array. They can be displayed by adding the -{}-listpresets argument to the command line, specific to the test stage:
+测试预设位于 testPresets 数组中。可以通过向命令行添加 -{}-list-presets 参数来列出它们，具体针对测试阶段：
 
 \begin{shell}
 ctest --list-presets
 \end{shell}
 
-To test a project using a preset, specify its name after the -{}-preset argument, like so:
+要用预设测试项目，请在 -{}-preset 参数后指定其名称：
 
 \begin{shell}
 ctest --preset myTestPreset
 \end{shell}
 
-The test preset also has its own unique set of optional fields. The simplified descriptions of the most important ones are:
+测试预设有它自己的一套可选字段。以下是最重要的几个字段的简化描述：
 
 \begin{itemize}
 \item
-configuration: A string that determines the build type for multi-configuration generators (Debug, Release, etc.)
+configuration: 一个字符串，确定了多配置生成器的构建类型 (Debug, Release等)
 
 \item
-output: An object that configures the output
+output: 一个对象，配置输出。
 
 \item
-filter: An object that specifies which tests to run
+filter: 一个对象，指定要运行哪些测试。
 
 \item
-execution: An object that configures the execution of tests
+execution: 一个对象，配置测试的执行。
 \end{itemize}
 
-Each object maps the appropriate command-line options to configuration values. We’ll highlight a few essential options, but this isn’t an exhaustive list. Refer to the Further reading section for a full reference.
+每个对象将相应的命令行选项映射到配置值。我们将突出一些基本选项，但这并不是一个详尽的列表。请参阅“进一步阅读”部分获取完整的参考。
 
-Optional entries for the output object include:
+output 对象的可选条目包括：
 
 \begin{itemize}
 \item
-shortProgress: Boolean; progress will be reported within a single line
+shortProgress: 布尔值；进度将在一行内报告。
 
 \item
-verbosity: A string that sets the output verbosity to one of the following levels: default, verbose, or extra
+verbosity:  一个字符串，将输出的详细程度设置为以下级别之一：默认、详细或额外详细。
 
 \item
-outputOnFailure: A Boolean that prints the program output upon test failure
+outputOnFailure: 布尔值；在测试失败时打印程序输出。
 
 \item
-quiet: Boolean; suppress all output
+quiet: 布尔值；抑制所有输出。
 \end{itemize}
 
-For exclude, some of the accepted entries are:
+对于 exclude，接受的一些条目是：
 
 \begin{itemize}
 \item
-name: A string that excludes tests with names matching a regex pattern and supports macros
+name: 一个字符串，排除匹配正则表达式模式的测试名称，并支持宏。
 
 \item
-label: A string that excludes tests with labels matching a regex pattern and supports macros
+label:  一个字符串，排除匹配正则表达式模式的测试标签，并支持宏。
 
 \item
-fixtures: An object that determines which fixtures to exclude from the test (see official documentation for more details)
+fixtures: 一个对象，确定要排除哪些测试夹具（参见官方文档了解更多详情）。
 \end{itemize}
 
-Finally, the execution object accepts the following optional entry:
+最后，execution 对象接受以下可选条目：
 
 \begin{itemize}
 \item
-outputLogFile: A string that specifies the output logfile path and supports macros
+outputLogFile: 一个字符串，指定了输出日志文件的路径，并支持宏。
 \end{itemize}
 
-The filter object accepts include and exclude keys to configure the filtering of test cases; here’s a partially filled structure to illustrate this:
+filter 对象接受 include 和 exclude 键来配置测试案例的筛选；这里是一个部分填充的结构以说明这一点
 
 \begin{json}
     "testPresets": [
@@ -261,38 +261,38 @@ The filter object accepts include and exclude keys to configure the filtering of
 ...
 \end{json}
 
-Each key defines its own object of options:
+每个键定义了自己的选项对象：
 
-For include, entries include:
-
-\begin{itemize}
-\item
-name: A string that includes tests with names matching a regex pattern and supports macros
-
-\item
-label: A string that includes tests with labels matching a regex pattern and supports macros
-
-\item
-index: An object that selects tests to run with accepting start, end, and stride integers, and a specificTests array of integers; it supports macros
-
-\item
-useUnion: A Boolean that enables the usage of a union of tests determined by index and name, rather than the intersection
-\end{itemize}
-
-For exclude, entries include:
+对于 include，条目包括：
 
 \begin{itemize}
 \item
-name: A string that excludes tests with names matching a regex pattern and supports macros
+name:  一个字符串，包含匹配正则表达式模式的测试名称，并支持宏。
 
 \item
-label: A string that excludes tests with labels matching a regex pattern and supports macros
+label: 一个字符串，包含匹配正则表达式模式的测试标签，并支持宏。
 
 \item
-fixtures: An object that determines which fixtures to exclude from the test (see official documentation for more details)
+index: 一个对象，通过接受起始、结束和步长整数以及一个特定测试的整数数组来选择要运行的测试；它支持宏。
+
+\item
+useUnion: 一个布尔值，启用使用由 index 和 name 确定的测试的并集，而不是交集。
 \end{itemize}
 
-Finally, the execution object can be added right here:
+对于 exclude，条目包括：
+
+\begin{itemize}
+\item
+name: 一个字符串，排除匹配正则表达式模式的测试名称，并支持宏。
+
+\item
+label: 一个字符串，排除匹配正则表达式模式的测试标签，并支持宏。
+
+\item
+fixtures: 一个对象，确定要从测试中排除哪些夹具（参见官方文档了解更多信息）。
+\end{itemize}
+
+最后，execution 对象可以在这里添加：
 
 \begin{json}
     "testPresets": [
@@ -309,41 +309,41 @@ Finally, the execution object can be added right here:
 ...
 \end{json}
 
-It accepts the following optional entries:
+它接受以下可选条目：
 
 \begin{itemize}
 \item
-stopOnFailure: A Boolean that enables halting the tests if any fail
+stopOnFailure: 一个布尔值，如果任何测试失败则停止测试。
 
 \item
-enableFailover: A Boolean that resumes previously interrupted tests
+enableFailover: 一个布尔值，恢复之前中断的测试。
 
 \item
-jobs: An integer that runs a number of multiple tests in parallel
+jobs: 一个整数，以并行方式运行多个测试。
 
 \item
-repeat: An object that determines how to repeat tests; the object must have the following fields:
+repeat: 一个对象，确定如何重复测试；该对象必须具有以下字段：
 \begin{itemize}
 \item
-mode – A string with one of the following values: until-fail, until-pass, aftertimeout
+mode – 一个字符串，其值可以是：until-fail, until-pass, aftertimeout。
 
 \item
-count – An integer that determines the number of repeats
+count – 一个整数，确定重复次数。
 \end{itemize}
 
 \item
-scheduleRandom: A Boolean that enables a random order of test execution
+scheduleRandom: 一个布尔值，启用随机顺序执行测试。
 
 \item
-timeout: An integer that sets a limit (in seconds) on the total execution time for all tests
+timeout: 一个整数，设置所有测试总执行时间的限制（秒）。
 
 \item
-noTestsAction: A string that defines the action if no tests are found, with options like default, error, and ignore
+noTestsAction: 一个字符串，定义如果没有找到测试时的动作，选项包括：default, error, 和 ignore。
 \end{itemize}
 
-While there are many configuration options, simple presets are also viable:
+尽管有许多配置选项，简单的预设也是可行的：
 
-\filename{ch16/01-presets/CMakePresets.json (continued)}
+\filename{ch16/01-presets/CMakePresets.json (续)}
 
 \begin{json}
 ...
@@ -361,41 +361,41 @@ While there are many configuration options, simple presets are also viable:
 ...
 \end{json}
 
-As with the build preset, we also set the required configurePreset field for the new test preset to neatly tie things together. Let’s take a look at the last stage-specific preset type, the package preset.
+与构建预设一样，我们也为新的测试预设设置了必需的 configurePreset 字段，以便整洁地将它们联系起来。让我们看一下最后一个特定阶段的预设类型：打包预设。
 
-\mySubsubsection{16.4.5.}{Defining package-stage presets}
+\mySubsubsection{16.4.5.}{定义打包阶段预设}
 
-Package presets were introduced in schema version 6, meaning you’ll need at least CMake 3.25 to utilize them. These presets should be included in the packagePresets array. They can also be displayed by appending the -{}-list-presets argument to the command line, specific to the test stage:
+打包预设是在第 6 版架构中引入的，这意味着你需要至少使用 CMake 3.25 才能利用它们。这些预设应该包含在 packagePresets 数组中。也可以通过向命令行追加 -{}-list-presets 参数来显示它们，具体针对打包阶段：
 
 \begin{shell}
 cpack --list-presets
 \end{shell}
 
-To create a project package using a preset, specify its name after the -{}-preset argument, like so:
+要用预设创建项目包，请在 -{}-preset 参数后指定其名称：
 
 \begin{shell}
 cpack --preset myTestPreset
 \end{shell}
 
-A package preset leverages the same shared fields as other presets while introducing some optional fields specific to itself:
+打包预设利用与其他预设相同的共享字段，并引入了一些特定于自身的可选字段：
 
 \begin{itemize}
 \item
-generators: An array of strings that sets the package generators to use (ZIP, 7Z, DEB, etc.)
+generators: 一个字符串数组，设置了要使用的包生成器（ZIP, 7Z, DEB 等）。
 
 \item
-configuration: An array of strings that determines the list of build types for CPack to package (Debug, Release, etc.)
+configuration: 一个字符串数组，确定了 CPack 要打包的构建类型列表。 (Debug, Release等)。
 
 \item
-filter: An object that specifies which tests to run
+filter:  一个对象，指定了要运行的测试。
 
 \item
-packageName, packageVersion, packageDirectory, and vendorName: Strings that specify the metadata for the created package
+packageName, packageVersion, packageDirectory 和 vendorName: 字符串，指定了创建的包的元数据。
 \end{itemize}
 
-Let’s extend our preset file with a concise package preset as well:
+让我们在预设文件中添加一个简洁的打包预设：
 
-\filename{ch16/01-presets/CMakePresets.json (continued)}
+\filename{ch16/01-presets/CMakePresets.json (续)}
 
 \begin{json}
 ...
@@ -413,15 +413,15 @@ Let’s extend our preset file with a concise package preset as well:
 ...
 \end{json}
 
-Such a configuration will allow us to streamline the creation of project packages, but we’re still missing one key ingredient: project installation. Let’s find out how we can make it work.
+这样的配置将使我们能够简化项目包的创建，但我们还缺少一个关键成分：项目安装。让我们看看如何让它工作。
 
-\mySubsubsection{16.4.6.}{Adding the installation preset}
+\mySubsubsection{16.4.6.}{添加安装预设}
 
-You might’ve noticed that the CMakePresets.json object doesn’t support defining "installPresets". There’s no explicit way to install your project through a preset, which seems odd since the configure preset provides an installDir field! So, do we have to resort to manual installation commands?
+你可能已经注意到 CMakePresets.json 对象不支持定义 "installPresets"。没有明确的方式通过预设安装你的项目，这似乎有些奇怪，因为配置预设提供了 installDir 字段！那么我们是否需要诉诸于手动安装命令？
 
-Fortunately, no. There’s a workaround that enables us to use the build preset to achieve our goal.
+幸运的是，不需要。有一个变通方法可以让我们使用构建预设实现目标。
 
-Take a look:
+来看一下：
 
 \filename{ch16/01-presets/CMakePresets.json (continued)}
 
@@ -442,7 +442,7 @@ Take a look:
 ...
 \end{json}
 
-We can create a build preset with a targets field set to install. The install target is implicitly defined by the project when we configure the installation correctly. Building with this preset will execute the necessary steps to install the project to installDir specified in the associated configure preset (if the installDir field is empty, the default location will be used):
+我们可以创建一个构建预设，其中 targets 字段设置为 install。当正确配置安装时，install 目标由项目隐式定义。使用这个预设构建将执行必要的步骤来安装项目到在关联的配置预设中指定的 installDir（如果 installDir 字段为空，则使用默认位置）：
 
 \begin{shell}
 $ cmake --build --preset myInstall
@@ -459,5 +459,5 @@ $ cmake --build --preset myInstall
 console" to ""
 \end{shell}
 
-This neat trick can help us save a few cycles. It would be even better if we could provide a single command for our end users that takes care of everything, from configuration to installation. Well, we can, with workflow presets. Let’s take a look.
+这个巧妙的方法可以帮助我们节省一些步骤。如果我们可以为最终用户提供一个单一命令，从配置到安装全部处理好，那就更好了。确实可以做到，通过工作流预设。让我们来看看。
 

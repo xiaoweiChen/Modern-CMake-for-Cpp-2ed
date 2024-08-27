@@ -1,32 +1,32 @@
 
 
-The final touch to a professional project is the documentation. Undocumented projects are very difficult to navigate and understand when working in teams and when shared with external audiences. I would even go as far as saying that programmers often read their own documentation after stepping away from a specific file to understand what is happening inside.
+专业项目的最后一环是文档。未经文档化的项目在团队合作或者与外部受众共享时很难理解和导航。我甚至可以说，程序员在离开某个特定文件一段时间后，经常会阅读他们自己的文档来理解其中的内容。
 
-Documentation is also important for legal and compliance reasons and to inform the users how to act with the software. If time permits, we should invest in setting up documentation for our project.
+文档对于法律和合规性方面也很重要，并且可以告知用户如何使用软件。如果时间允许的话，我们应该投入精力为我们的项目设置文档。
 
-Documentation usually falls into two categories:
+文档通常分为两类：
 
 \begin{itemize}
 \item
-Technical documentation (covering interfaces, designs, classes, and files)
+技术文档（涵盖接口、设计、类和文件）
 
 \item
-General documentation (encompassing all other non-technical documents)
+一般文档（包含所有其他非技术性文档）
 \end{itemize}
 
-As we saw in Chapter 13, Generating Documentation, much of the technical documentation can be automatically generated with CMake using Doxygen.
+正如我们在第13章“生成文档”中所看到的那样，许多技术文档都可以使用CMake和Doxygen自动生成。
 
-\mySubsubsection{15.7.1.}{Generating the technical documentation}
+\mySubsubsection{15.7.1.}{生成技术文档}
 
-While some projects generate documentation during the build phase and include it in the package, we’ve chosen not to do so for this project. However, there could be valid reasons to opt otherwise, like if the documentation needs to be hosted online.
+虽然有些项目会在构建阶段生成文档并将其包含在包中，但我们在这个项目中并没有这样做。但是，如果文档需要在线托管的话，可能会有正当的理由选择这样做。
 
-Figure 15.7 provides an overview of the documentation generation process:
+图15.7概述了文档生成的过程：
 
-\myGraphic{0.8}{content/chapter15/images/7.png}{Figure 15.7: Files used to generate documentation}
+\myGraphic{0.8}{content/chapter15/images/7.png}{图15.7: 用于生成文档的文件}
 
-To generate documentation, we’ll create another CMake utility module, Doxygen. Start by using the Doxygen find-module and download the doxygen-awesome-css project for themes:
+为了生成文档，我们将创建另一个CMake实用模块——Doxygen。首先使用Doxygen找模块，并下载doxygen-awesome-css项目用于主题：
 
-\filename{ch15/01-full-project/cmake/Doxygen.cmake (fragment)}
+\filename{ch15/01-full-project/cmake/Doxygen.cmake (片段)}
 
 \begin{cmake}
 find_package(Doxygen REQUIRED)
@@ -41,9 +41,9 @@ FetchContent_Declare(doxygen-awesome-css
 FetchContent_MakeAvailable(doxygen-awesome-css)
 \end{cmake}
 
-Then, we’ll need a function to create targets that generate documentation. We’ll adapt the code introduced in Chapter 13, Generating Documentation, to support multiple targets:
+然后，我们需要一个函数来创建生成文档的目标。我们将修改第13章“生成文档”中介绍的代码，以支持多个目标：
 
-\filename{ch15/01-full-project/cmake/Doxygen.cmake (continued)}
+\filename{ch15/01-full-project/cmake/Doxygen.cmake (续)}
 
 \begin{cmake}
 function(Doxygen target input)
@@ -65,7 +65,7 @@ endfunction()
 # UseDoxygenAwesomeExtensions
 \end{cmake}
 
-Use this function by calling it for the library target:
+使用此函数为库目标调用：
 
 \filename{ch15/01-full-project/src/calc/CMakeLists.txt (fragment)}
 
@@ -78,7 +78,7 @@ Doxygen(calc src/calc)
 # ... file continues
 \end{cmake}
 
-And for the console executable:
+以及为控制台可执行文件：
 
 \filename{ch15/01-full-project/src/calc\_console/CMakeLists.txt (fragment)}
 
@@ -90,37 +90,37 @@ Doxygen(calc_console src/calc_console)
 # ... file continues
 \end{cmake}
 
-This setup adds two targets to the project: doxygen-calc and doxygen-calc\_console, allowing for the on-demand generation of technical documentation. Now, let’s consider what other documents should be included.
+这个设置为项目添加了两个目标：doxygen-calc 和 doxygen-calc\_console，允许按需生成技术文档。现在，让我们考虑应该包含哪些其他文档。
 
-\mySubsubsection{15.7.2.}{Writing non-technical documents for a professional project}
+\mySubsubsection{15.7.2.}{为专业项目编写非技术性文档}
 
-Professional projects should include a set of non-technical documents stored in the top-level directory, essential for comprehensive understanding and legal clarity:
-
-\begin{itemize}
-\item
-README: Provides a general description of the project
-
-\item
-LICENSE: Details the legal parameters regarding the project’s use and distribution
-\end{itemize}
-
-Additional documents you might consider include:
+专业项目应该包含一组存储在顶级目录中的非技术性文档，这对于全面理解和法律清晰度至关重要：
 
 \begin{itemize}
 \item
-INSTALL: Offers step-by-step installation instructions
+README: 提供项目的总体描述
 
 \item
-CHANGELOG: Presents significant changes across versions
-
-\item
-AUTHORS: Lists contributors and their contact information if the project has multiple contributors
-
-\item
-BUGS: Advises on known issues and details on reporting new ones
+LICENSE: 详细说明项目使用的法律条款和发行细节
 \end{itemize}
 
-CMake doesn’t directly interact with these files, as they don’t involve automated processing or scripting. Yet, their presence is vital for a well-documented C++ project. Here’s a minimal example of each document:
+您可以考虑的其他文档包括：
+
+\begin{itemize}
+\item
+INSTALL: 提供逐步的安装指南
+
+\item
+CHANGELOG: 展示各版本的重要更改
+
+\item
+AUTHORS: 列出贡献者及其联系方式（如果有多个贡献者）
+
+\item
+BUGS: 提供已知问题的建议和报告新问题的详细信息
+\end{itemize}
+
+CMake不会直接与这些文件交互，因为它们不涉及自动化处理或脚本。然而，这些文件的存在对于一个文档完备的C++项目来说是至关重要的。下面是每个文档的一个简单示例：
 
 \filename{ch15/01-full-project/README.md}
 
@@ -138,9 +138,9 @@ This application is written in C++ and built with CMake.
 - License is in the LICENSE file
 \end{shell}
 
-This is short and maybe a little silly. Note the .md extension – it stands for Markdown, which is a text-based formatting language that is easily readable. Websites such as GitHub and many text editors will render these files with rich formatting.
+这是一个简短的例子，可能看起来有点傻。注意.md扩展名——它代表Markdown，这是一种基于文本的格式化语言，易于阅读。像GitHub这样的网站和许多文本编辑器都会以丰富的格式渲染这些文件。
 
-Our INSTALL file will look like this:
+我们的 INSTALL 文件将如下所示：
 
 \filename{ch15/01-full-project/INSTALL}
 
@@ -176,7 +176,7 @@ cmake --build <temporary-directory> -t doxygen-calc
 cmake --build <temporary-directory> -t doxygen-calc_console
 \end{shell}
 
-The LICENSE file is a bit tricky, as it requires some expertise in copyright law (and otherwise). Instead of writing all the clauses by ourselves, we can do what many other projects do and use a readily available software license. For this project, we’ll go with the MIT License, which is extremely permissive. Check the Further reading section for some useful references:
+LICENSE 文件稍微有点棘手，因为它需要一些版权法的专业知识。而不是自己编写所有条款，我们可以像许多其他项目一样，使用现成可用的软件许可证。对于这个项目，我们将使用MIT许可证，这是一个极其宽容的许可。请查阅进一步阅读部分获取一些有用的参考资料：
 
 \filename{ch15/01-full-project/LICENSE}
 
@@ -201,7 +201,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 \end{shell}
 
-Lastly, we have the CHANGELOG. As suggested earlier, it’s good to keep track of changes in a file so that developers using your project can easily find out which version supports the features they need. For example, it might be useful to say that a multiplication feature was added to the library in version 0.8.2. Something as simple as the following is already helpful:
+最后，我们有 CHANGELOG。正如前面提到的，最好在文件中记录变更，以便使用您项目的开发者可以轻松找到他们所需的特性所在的版本。例如，可以说在0.8.2版本中向库中添加了乘法功能。像下面这样简单的记录就已经很有帮助了：
 
 \filename{ch15/01-full-project/CHANGELOG}
 
@@ -213,7 +213,7 @@ Lastly, we have the CHANGELOG. As suggested earlier, it’s good to keep track o
 0.2.0 Basic Calc library with Sum function
 \end{shell}
 
-With these documents, the project not only gains an operational structure but also communicates its usage, changes, and legal considerations effectively, ensuring users and contributors have all the necessary information at their disposal.
+有了这些文档，项目不仅获得了操作结构，还能有效地传达其使用方法、变更和法律考量，确保用户和贡献者可以获得所有必要的信息。
 
 
 

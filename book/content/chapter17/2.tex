@@ -1,96 +1,96 @@
 
 
-The string() command is used to manipulate strings. It comes with a variety of modes that perform different actions on the string: search and replace, manipulation, comparison, hashing, generation, and JSON operations (the last one available since CMake 3.19).
+string() 命令用于处理字符串。它具有多种模式，可以对字符串执行不同的操作：搜索替换、操作、比较、哈希、生成以及 JSON 操作（最后一个自 CMake 3.19 开始可用）。
 
-Full details can be found in the online documentation: \url{https://cmake.org/cmake/help/latest/ command/string.html}.
+完整的详情可以在在线文档中找到: \url{https://cmake.org/cmake/help/latest/ command/string.html}
 
 \begin{myNotic}{Note}
-Note that string() modes that accept the <input> argument will accept multiple <input> values and concatenate them before the execution of the command, so:
+接受 <input> 参数的 string() 模式将接受多个 <input> 值并在命令执行前将它们连接起来，因此：
 
 \begin{cmake}
 string(PREPEND myVariable "a" "b" "c")
 \end{cmake}
 
-is the equivalent of the following:
+等同于以下操作：
 
 \begin{cmake}
 string(PREPEND myVariable "abc")
 \end{cmake}
 \end{myNotic}
 
-Available string() modes are search and replace, manipulation, comparison, hashing, generation, and JSON.
+可用的 string() 模式包括搜索替换、操作、比较、哈希、生成以及 JSON。
 
-\mySubsubsection{A.2.1.}{Search and replace}
+\mySubsubsection{A.2.1.}{搜索和替换}
 
-The following modes are available:
-
-\begin{itemize}
-\item
-string(FIND <haystack> <pattern> <out> [REVERSE]) searches for <pattern> in the <haystack> string and writes the position found as an integer to the <out> variable. If the REVERSE flag was used, it searches from the end of the string to the beginning. This works only for ASCII strings (multibyte support isn’t provided).
-
-\item
-string(REPLACE <pattern> <replace> <out> <input>) replaces all occurrences of <pattern> in <input> with <replace> and stores them in the <out> variable.
-
-\item
-string(REGEX MATCH <pattern> <out> <input>) regex-matches the first occurrence of <pattern> in <input> with <replace> and stores it in the <out> variable.
-
-\item
-string(REGEX MATCHALL <pattern> <out> <input>) regex-matches all occurrences of <pattern> in <input> with <replace> and stores them in the <out> variable as a comma-separated list.
-
-\item
-string(REGEX REPLACE <pattern> <replace> <out> <input>) regex-replaces all occurrences of <pattern> in <input> with the <replace> expression and stores them in the <out> variable.
-\end{itemize}
-
-Regular expression operations follow C++ syntax, as defined in the standard library in the <regex> header. You can use capturing groups to add matches to the <replace> expression with numeric placeholders: \verb|\\|1, \verb|\\|2... (double backslashes are required so arguments are parsed correctly).
-
-\mySubsubsection{A.2.2.}{Manipulation}
-
-The following modes are available:
+以下是可用的模式：
 
 \begin{itemize}
 \item
-string(APPEND <out> <input>)mutates strings stored in <out>by appending the <input> string.
+string(FIND <haystack> <pattern> <out> [REVERSE])：在 <haystack> 字符串中搜索 <pattern> 并将找到的位置作为整数写入 <out> 变量。如果使用了 REVERSE 标志，则从字符串末尾向开头搜索。这仅适用于 ASCII 字符串（不支持多字节字符）。
 
 \item
-string(PREPEND <out> <input>) mutates strings stored in <out> by prepending the <input> string.
+string(REPLACE <pattern> <replace> <out> <input])：在 <input> 中替换所有 <pattern> 的出现，并将结果存储在 <out> 变量中。
 
 \item
-string(CONCAT <out> <input>) concatenates all provided <input> strings and stores them in the <out> variable.
+string(REGEX MATCH <pattern> <out> <input>)：使用正则表达式匹配 <input> 中 <pattern> 的首次出现，并将结果存储在 <out> 变量中。
 
 \item
-string(JOIN <glue> <out> <input>) interleaves all provided <input> strings with a <glue> value and stores them as a concatenated string in the <out> variable (don’t use this mode for list variables).
+string(REGEX MATCHALL <pattern> <out> <input>)：使用正则表达式匹配 <input> 中所有 <pattern> 的出现，并将结果作为一个逗号分隔的列表存储在 <out> 变量中。
 
 \item
-string(TOLOWER <string> <out>) converts <string> to lowercase and stores it in the <out> variable.
-
-\item
-string(TOUPPER <string> <out>) converts <string> to uppercase and stores it in the <out> variable.
-
-\item
-string(LENGTH <string> <out>) counts the bytes of <string> and stores the result in the <out> variable.
-
-\item
-string(SUBSTRING <string> <begin> <length> <out>)extracts a substring of <string> of <length> bytes starting at the <begin> byte, and stores it in the <out> variable. Providing -1 as the length is understood as “till the end of the string.”
-
-\item
-string(STRIP <string> <out>) removes trailing and leading whitespace from <string> and stores the result in the <out> variable.
-
-\item
-string(GENEX\_STRIP <string> <out>) removes all generator expressions used in <string> and stores the result in the <out> variable.
-
-\item
-string(REPEAT <string> <count> <out>) generates a string containing <count> repetitions of <string> and stores it in the <out> variable.
+string(REGEX REPLACE <pattern> <replace> <out> <input>)：使用正则表达式替换 <input> 中所有 <pattern> 的出现，并将替换表达式的结果存储在 <out> 变量中。
 \end{itemize}
 
-\mySubsubsection{A.2.3.}{Comparison}
+正则表达式操作遵循 C++ 语法，如标准库中的 <regex> 头文件所定义。你可以使用捕获组将匹配添加到 <replace> 表达式中，使用数字占位符：\verb|\\|1, \verb|\\|2 ... （需要双反斜杠以正确解析参数）。
 
-A comparison of strings takes the following form:
+\mySubsubsection{A.2.2.}{操作}
+
+以下是可用的模式：
+
+\begin{itemize}
+\item
+string(APPEND <out> <input>)：通过追加 <input> 字符串来修改存储在 <out> 中的字符串。
+
+\item
+string(PREPEND <out> <input>)：通过前置 <input> 字符串来修改存储在 <out> 中的字符串。
+
+\item
+string(CONCAT <out> <input>)：连接所有提供的 <input> 字符串并将它们存储在 <out> 变量中。
+
+\item
+string(JOIN <glue> <out> <input>)：在所有提供的 <input> 字符串之间插入 <glue> 值，并将它们作为连接后的字符串存储在 <out> 变量中（不要将此模式用于列表变量）。
+
+\item
+string(TOLOWER <string> <out>)：将 <string> 转换为小写并将其存储在 <out> 变量中。
+
+\item
+string(TOUPPER <string> <out>)：将 <string> 转换为大写并将其存储在 <out> 变量中。
+
+\item
+string(LENGTH <string> <out>)：计算 <string> 的字节数并将结果存储在 <out> 变量中。
+
+\item
+string(SUBSTRING <string> <begin> <length> <out>)：提取从 <begin> 字节开始长度为 <length> 的子字符串，并将其存储在 <out> 变量中。将 -1 作为长度被理解为“直到字符串末尾”。
+
+\item
+string(STRIP <string> <out>)：从 <string> 中移除前后空白并将结果存储在 <out> 变量中。
+
+\item
+string(GENEX\_STRIP <string> <out>)：从 <string> 中移除所有生成器表达式并将结果存储在 <out> 变量中。
+
+\item
+string(REPEAT <string> <count> <out>)：生成包含 <count> 次重复的 <string> 的字符串，并将其存储在 <out> 变量中。
+\end{itemize}
+
+\mySubsubsection{A.2.3.}{比较}
+
+字符串比较采用以下形式：
 
 \begin{cmake}
 string(COMPARE <operation> <stringA> <stringB> <out>)
 \end{cmake}
 
-The <operation> argument is one of the following:
+<operation> 参数是以下之一：
 
 \begin{itemize}
 \item
@@ -112,36 +112,36 @@ LESS\_EQUAL
 GREATER\_EQUAL
 \end{itemize}
 
-It will be used to compare <stringA> with <stringB> and the result (true or false) will be stored in the <out> variable.
+它将用于比较 <stringA> 和 <stringB>，并将结果（真或假）存储在 <out> 变量中。
 
-\mySubsubsection{A.2.4.}{Hashing}
+\mySubsubsection{A.2.4.}{哈希}
 
-The hashing mode has the following signature:
+哈希模式具有以下签名：
 
 \begin{cmake}
 string(<hashing-algorithm> <out> <string>)
 \end{cmake}
 
-It hashes <string> with <hashing-algorithm> and stores the result in the <out> variable. The following algorithms are supported:
+它使用 <hashing-algorithm> 对 <string> 进行哈希处理，并将结果存储在 <out> 变量中。以下算法得到支持：
 
 \begin{itemize}
 \item
-MD5: Message-Digest Algorithm 5, RFC 1321
+MD5: 消息摘要算法 5，RFC 1321
 
 \item
-SHA1: US Secure Hash Algorithm 1, RFC 3174
+SHA1: 美国安全哈希算法 1，RFC 3174
 
 \item
-SHA224: US Secure Hash Algorithms, RFC 4634
+SHA224: 美国安全哈希算法，RFC 4634
 
 \item
-SHA256: US Secure Hash Algorithms, RFC 4634
+SHA256: 美国安全哈希算法，RFC 4634
 
 \item
-SHA384: US Secure Hash Algorithms, RFC 4634
+SHA384: 美国安全哈希算法，RFC 4634
 
 \item
-SHA512: US Secure Hash Algorithms, RFC 4634
+SHA512: 美国安全哈希算法，RFC 4634
 
 \item
 SHA3\_224: Keccak SHA-3
@@ -156,64 +156,64 @@ SHA3\_384: Keccak SHA-3
 SHA3\_512: Keccak SHA-3
 \end{itemize}
 
-\mySubsubsection{A.2.5.}{Generation}
+\mySubsubsection{A.2.5.}{生成}
 
-The following modes are available:
+以下是可用的模式：
 
 \begin{itemize}
 \item
-string(ASCII <number>... <out>) stores ASCII characters of given <number> in the <out> variable.
+string(ASCII <number>... <out>)：将给定 <number> 的 ASCII 字符存储在 <out> 变量中。
 
 \item
-string(HEX <string> <out>) converts <string> to its hexadecimal representation and stores it in the <out> variable (since CMake 3.18).
+string(HEX <string> <out>)：将 <string> 转换为其十六进制表示并将其存储在 <out> 变量中（自 CMake 3.18 开始）。
 
 \item
-string(CONFIGURE <string> <out> [@ONLY] [ESCAPE\_QUOTES]) works exactly like configure\_file() but for strings. The result is stored in the <out> variable. As a reminder, using the @ONLY keyword restricts replacements to variables in the form of @VARIABLE@.
+string(CONFIGURE <string> <out> [@ONLY] [ESCAPE\_QUOTES])：完全像 configure\_file() 一样工作，但针对字符串。结果存储在 <out> 变量中。作为提醒，使用 @ONLY 关键词将限制替换为形如 @VARIABLE@ 的变量。
 
 \item
-string(MAKE\_C\_IDENTIFIER <string> <out>) converts non-alphanumeric characters in <string> to underscores and stores the result in the <out> variable.
+string(MAKE\_C\_IDENTIFIER <string> <out>)：将 <string> 中的非字母数字字符转换为下划线并将结果存储在 <out> 变量中。
 
 \item
-string(RANDOM [LENGTH <len>] [ALPHABET <alphabet>] [RANDOM\_SEED <seed>] <out>)generates a random string of <len> characters (default 5) using the optional <alphabet> from the random seed, <seed>, and stores the result in the <out> variable.
+string(RANDOM [LENGTH <len>] [ALPHABET <alphabet>] [RANDOM\_SEED <seed>] <out>)：使用随机种子 <seed> 和可选的 <alphabet> 生成长度为 <len>（默认为 5）的随机字符串，并将结果存储在 <out> 变量中。
 
 \item
-string(TIMESTAMP <out> [<format>] [UTC]) generates a string representing the current date and time and stores it in the <out> variable.
+string(TIMESTAMP <out> [<format>] [UTC])：生成代表当前日期和时间的字符串，并将其存储在 <out> 变量中。
 
 \item
-string(UUID <out> NAMESPACE <ns> NAME <name> TYPE <type>) generates a universally unique identifier. Application of this mode is a bit complex to use; you need to provide a namespace (which has to be a UUID), a name (for example, a domain name), and a type (either MD5 or SHA1).
+string(UUID <out> NAMESPACE <ns> NAME <name> TYPE <type>)：生成全局唯一标识符。此模式的应用稍微复杂，你需要提供一个命名空间（必须是一个 UUID）、一个名称（例如，域名）以及一个类型（MD5 或 SHA1）。
 \end{itemize}
 
 \mySubsubsection{A.2.6.}{JSON}
 
-Operations on JSON-formatted strings use the following signature:
+对 JSON 格式的字符串的操作采用以下签名：
 
 \begin{cmake}
 string(JSON <out> [ERROR_VARIABLE <error>] <operation + args>)
 \end{cmake}
 
-Several operations are available. They all store their results in the <out> variable, and errors in the <error> variable. Operations and their arguments are as follows:
+有几个操作可用。它们都将结果存储在 <out> 变量中，错误则存储在 <error> 变量中。操作及其参数如下：
 
 \begin{itemize}
 \item
-GET <json> <member|index>... returns the value of one or more elements from a <json> string using the <member> path or <index>.
+GET <json> <member|index>... ：使用 <member> 路径或 <index> 从 <json> 字符串中返回一个或多个元素的值。
 
 \item
-TYPE <json> <member|index>... returns the type of one or more elements from a <json> string using the <member> path or <index>.
+TYPE <json> <member|index>... ：使用 <member> 路径或 <index> 从 <json> 字符串中返回一个或多个元素的类型。
 
 \item
-MEMBER <json> <member|index>... <array-index>returns the member name of one or more array-typed elements on the <array-index> position from the <json> string using the <member> path or <index>.
+MEMBER <json> <member|index>... ：使用 <member> 路径或 <index> 从 <json> 字符串中返回位于 <array-index> 位置的一个或多个数组类型的元素的成员名称。
 
 \item
-LENGTH <json> <member|index>...returns the element count of one or more array-typed elements from the <json> string using the <member> path or <index>.
+LENGTH <json> <member|index>...：使用 <member> 路径或 <index> 从 <json> 字符串中返回一个或多个数组类型元素的元素计数。
 
 \item
-REMOVE <json> <member|index>...returns the result of removal of one or more elements from the <json> string using the <member> path or <index>.
+REMOVE <json> <member|index>...：使用 <member> 路径或 <index> 从 <json> 字符串中移除一个或多个元素。
 
 \item
-SET <json> <member|index>... <value> returns the result of upsertion of <value> to one or more elements from a <json> string using the <member> path or <index>.
+SET <json> <member|index>... ：使用 <member> 路径或 <index> 将 <value> 更新或插入到 <json> 字符串中的一个或多个元素中。
 
 \item
-EQUAL <jsonA> <jsonB> evaluates whether <jsonA> and <jsonB> are equal.
+EQUAL <jsonA> <jsonB>：评估 <jsonA> 和 <jsonB> 是否相等。
 \end{itemize}
 
 

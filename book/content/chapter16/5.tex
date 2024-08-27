@@ -1,22 +1,22 @@
-Workflow presets are the ultimate automation solution for our project. They allow us to automatically execute multiple stage-specific presets in the predetermined order. That way, we can practically perform an end-to-end build in a single step.
+工作流预设是我们项目的终极自动化解决方案。它们允许我们按照预定顺序自动执行多个特定阶段的预设。这样，我们实际上可以用一步完成端到端的构建。
 
-To discover available workflows for a project, we can execute the following command:
+要发现项目的可用工作流，我们可以执行以下命令：
 
 \begin{shell}
 cmake --workflow --list-presets
 \end{shell}
 
-To select and apply a preset, use the following command:
+要选择并应用一个预设，使用以下命令：
 
 \begin{shell}
 cmake –workflow --preset <preset-name>
 \end{shell}
 
-Additionally, with the -{}-fresh flag, we can wipe the build tree and clear the cache.
+此外，使用 -{}-fresh 标志，我们可以清除构建树和缓存。
 
-Defining workflow presets is quite simple; we need to define a name and we can optionally provide displayName and description, just like for stage-specific presets. After that, we must enumerate all the stage-specific presets the workflow should execute. This is done by providing a steps array containing objects with type and name properties, as illustrated here:
+定义工作流预设非常简单；我们需要定义一个名称，并且可以像为特定阶段的预设那样可选地提供 displayName 和 description。之后，我们必须枚举出工作流应该执行的所有特定阶段的预设。这是通过提供一个 steps 数组来完成的，数组中的对象包含 type 和 name 属性，如下面所示：
 
-\filename{ch16/01-presets/CMakePresets.json (continued)}
+\filename{ch16/01-presets/CMakePresets.json (续)}
 
 \begin{json}
 ...
@@ -48,13 +48,13 @@ Defining workflow presets is quite simple; we need to define a name and we can o
 ...
 \end{json}
 
-Each object in the steps array references a preset we defined earlier in this chapter, indicating its type (configure, build, test, or package) and a name. These presets collectively execute all necessary steps to fully build and install a project from scratch with a single command:
+steps 数组中的每个对象引用了我们在本章中早些时候定义的预设，指示其类型（configure, build, test, 或 package）和名称。这些预设一起执行所有必要的步骤，只需一条命令即可从头开始完全构建和安装项目：
 
 \begin{shell}
 cmake --workflow --preset myWorkflow
 \end{shell}
 
-Workflow presets are the ultimate solution for automating C++ building, testing, packaging, and installing. Next, let’s explore how to manage some edge cases with conditions and macros.
+工作流预设是用于自动化 C++ 构建、测试、打包和安装的终极解决方案。接下来，让我们探讨如何通过条件和宏来管理一些特殊情况。
 
 
 

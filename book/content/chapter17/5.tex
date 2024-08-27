@@ -1,26 +1,26 @@
-CMake also supports some simple arithmetical operations. See the online documentation for full details:
+CMake 还支持一些简单的算术运算。请参阅在线文档获取完整详情：
 
 \url{https://cmake.org/cmake/help/latest/command/math.html}
 
-To evaluate a mathematical expression and store it in the <out> variable as the string in an optional <format> (HEXADECIMAL or DECIMAL), use the following signature:
+要计算一个数学表达式并将结果以字符串形式存储在 <out> 变量中，可选地使用 <format>（HEXADECIMAL 或 DECIMAL）格式化输出，可以使用以下签名：
 
 \begin{cmake}
 math(EXPR <out> "<expression>" [OUTPUT_FORMAT <format>])
 \end{cmake}
 
-The <expression> value is a string that supports operators present in C code (they have the same meaning here):
+<expression> 的值是一个字符串，支持 C 代码中存在的运算符（它们在这里具有相同的意义）：
 
 \begin{itemize}
 \item
-Arithmetical: +, -, *, /, and \% modulo division
+算术运算符: +, -, *, / 和 \% 模运算
 
 \item
-Bitwise: | or, \& and, \^{} xor, $\textasciitilde$ not, <{}< shift left, and >{}> shift right
+位运算符: | 或运算, \& 与运算, \^{} 异或运算, $\textasciitilde$ 非运算, <{}< 左移 和 >{}> 右移
 
 \item
-Parenthesis (...)
+括号 (...)
 \end{itemize}
 
-Constant values can be provided in decimal or hexadecimal format.
+常数值可以以十进制或十六进制格式提供。
 
 

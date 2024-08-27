@@ -1,24 +1,24 @@
-Presets were added to CMake in version 3.19 to make it easier to manage project settings. Before presets, users had to memorize lengthy command-line configurations or set overrides directly in the project files, which could become complicated and prone to mistakes. Presets let users handle settings such as the generator used for configuring the project, the number of concurrent build tasks, and the project components to build or test in a more straightforward manner. With presets, CMake becomes simpler to use. Users can set up presets once and use them whenever needed, making each CMake execution more consistent and easier to understand. They also help standardize settings across different users and computers, simplifying collaborative project work.
+在 CMake 3.19 版本中引入了预设（Presets），目的是简化项目设置的管理。在预设出现之前，用户不得不记住冗长的命令行配置或是直接在项目文件中设置覆盖选项，这往往会变得复杂且容易出错。预设让用户能够以更简单的方式处理诸如用于配置项目的生成器、并发构建任务的数量、以及要构建或测试的项目组件等设置。通过使用预设，CMake 变得更加易于使用。用户可以一次性设置预设，并在需要时使用它们，从而使每次 CMake 执行更加一致且易于理解。它们还有助于跨不同用户和计算机标准化设置，从而简化协作项目的工作流程。
 
-Presets are compatible with four primary modes of CMake: configuring the buildsystem, building, running tests, and packaging. They allow users to link these parts together in workflows, making the whole process more automatic and organized. Additionally, presets offer features like conditions and macro expressions (or simply macros), granting users greater control.
+预设兼容 CMake 的四种主要模式：配置构建系统、构建、运行测试和打包。它们允许用户将这些部分链接在一起形成工作流，使整个过程更加自动化和有序。此外，预设提供了如条件和宏表达式（或简称宏）等功能，给予用户更大的控制力。
 
-In this chapter, we’re going to cover the following main topics:
+在本章中，将包含以下内容：
 
 \begin{itemize}
 \item
-Using presets defined in a project
+使用项目中定义的预设
 
 \item
-Writing a preset file
+编写预设文件
 
 \item
-Defining stage-specific presets
+定义特定阶段的预设
 
 \item
-Defining workflow presets
+定义工作流预设
 
 \item
-Adding conditions and macros
+添加条件和宏
 \end{itemize}
 
 

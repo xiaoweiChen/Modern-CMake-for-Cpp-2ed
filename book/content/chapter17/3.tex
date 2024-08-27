@@ -1,91 +1,91 @@
 
-This command provides basic operations on lists: reading, searching, modification, and ordering. Some modes will change list (mutate the original value). Be sure to copy the original value if you’ll need it later.
 
-Full details can be found in the online documentation:
+此命令提供了基本的列表操作：读取、查找、修改及排序。某些模式会改变列表（即修改原始值）。如果你稍后还需要原始值，请确保先复制一份。
+
+完整详情可以在在线文档中找到：
 
 \url{https://cmake.org/cmake/help/latest/command/list.html}
 
-The categories for the available list() modes are reading, searching, modification, and ordering.
+可用的 list() 模式的类别包括读取、查找、修改及排序。
 
-\mySubsubsection{A.3.1.}{Reading}
+\mySubsubsection{A.3.1.}{读取}
 
-The following modes are available:
+以下是可用的模式：
 
 \begin{itemize}
 \item
-list(LENGTH <list> <out>) counts the elements in the <list> variable and stores the result in the <out> variable.
+list(LENGTH <list> <out>)：计算 <list> 变量中的元素数量，并将结果存储在 <out> 变量中。
 
 \item
-list(GET <list> <index>... <out>) copies the <list> elements specified with the list of <index> indexes to the <out> variable.
+list(GET <list> <index>... <out>)：将由 <index> 索引列表指定的 <list> 元素复制到 <out> 变量中。
 
 \item
-list(JOIN <list> <glue> <out>) interleaves <list> elements with the <glue> delimiter and stores the resulting string in the <out> variable.
+list(JOIN <list> <glue> <out>)：使用 <glue> 分隔符交错 <list> 元素，并将结果字符串存储在 <out> 变量中。
 
 \item
-list(SUBLIST <list> <begin> <length> <out>) works like the GET mode but operates on range instead of explicit indexes. If <length> is -1, elements from the <begin> index to the end of the list provided in the <list> variable will be returned.
+list(SUBLIST <list> <begin> <length> <out>)：其作用类似于 GET 模式，但不是使用显式索引而是使用范围。如果 <length> 是 -1，则从 <begin> 索引到 <list> 变量中的列表末尾的所有元素都会被返回。
 \end{itemize}
 
-\mySubsubsection{A.3.2.}{Searching}
+\mySubsubsection{A.3.2.}{查找}
 
-This mode simply finds the index of the <needle> element in the <list> variable and stores the result in the <out> variable (or -1 if the element wasn’t found):
+此模式仅仅是在 <list> 变量中查找 <needle> 元素的索引，并将结果存储在 <out> 变量中（如果没有找到该元素，则存储 -1）：
 
 \begin{cmake}
 list(FIND <list> <needle> <out>)
 \end{cmake}
 
-\mySubsubsection{A.3.3.}{Modification}
+\mySubsubsection{A.3.3.}{修改}
 
-The following modes are available:
-
-\begin{itemize}
-\item
-list(APPEND <list> <element>...) adds one or more <element> values to the end of the <list> variable.
-
-\item
-list(PREPEND <list> [<element>...]) works like APPEND but adds elements to the beginning of the <list> variable.
-
-\item
-list(FILTER <list> \{INCLUDE | EXCLUDE\} REGEX <pattern>) filters the <list> variable to INCLUDE or EXCLUDE the elements matching the <pattern> value.
-
-\item
-list(INSERT <list> <index> [<element>...]) adds one or more <element> values to the <list> variable at the given <index>.
-
-\item
-list(POP\_BACK <list> [<out>...]) removes an element from the end of the <list> variable and stores it in the optional <out> variable. If multiple <out> variables were provided, more elements would be removed to fill them.
-
-\item
-list(POP\_FRONT <list> [<out>...])works like POP\_BACK but removes an element from the beginning of the <list> variable.
-
-\item
-list(REMOVE\_ITEM <list> <value>...) is shorthand for FILTER EXCLUDE but without the support of regular expressions.
-
-\item
-list(REMOVE\_AT <list> <index>...)removes elements from <list>at a specific <index>.
-
-\item
-list(REMOVE\_DUPLICATES <list>) removes duplicates from <list>.
-
-\item
-list(TRANSFORM <list> <action> [<selector>] [OUTPUT\_VARIABLE <out>]) applies a specific transformation to the <list> elements. By default, the action is applied to all elements, but we may limit the effect by adding a <selector>. The provided list will be mutated (changed in place) unless the OUTPUT\_VARIABLE keyword is provided, in which case, the result is stored in the <out> variable.
-\end{itemize}
-
-The following selectors are available: AT <index>, FOR <start> <stop> [<step>], and REGEX <pattern>.
-
-Actions include APPEND <string>, PREPEND <string>, TOLOWER, TOUPPER, STRIP, GENEX\_STRIP, and REPLACE <pattern> <expression>. They work exactly like the string() modes with the same name.
-
-\mySubsubsection{A.3.4.}{Ordering}
-
-The following modes are available:
+以下是可用的模式：
 
 \begin{itemize}
 \item
-list(REVERSE <list>) simply reverses the order of <list>.
+list(APPEND <list> <element>...) ：将一个或多个 <element> 值添加到 <list> 变量的末尾。
+\item
+list(PREPEND <list> [<element>...])：其作用类似于 APPEND，但将元素添加到 <list> 变量的开头。
 
 \item
-list(SORT <list>) sorts the list alphabetically.
+list(FILTER <list> \{INCLUDE | EXCLUDE\} REGEX <pattern>)：根据 <pattern> 值过滤 <list> 变量，以 INCLUDE 或 EXCLUDE 匹配的元素。
+
+\item
+list(INSERT <list> <index> [<element>...])：在给定的 <index> 位置将一个或多个 <element> 值添加到 <list> 变量中。
+
+\item
+list(POP\_BACK <list> [<out>...])：从 <list> 变量的末尾移除一个元素，并将它存储在可选的 <out> 变量中。如果提供了多个 <out> 变量，则会移除更多元素来填充它们。
+
+\item
+list(POP\_FRONT <list> [<out>...])：其作用类似于 POP\_BACK，但从 <list> 变量的开头移除元素。
+
+\item
+list(REMOVE\_ITEM <list> <value>...)：是 FILTER EXCLUDE 的简写，但不支持正则表达式。
+
+\item
+list(REMOVE\_AT <list> <index>...)：从 <list> 中移除特定 <index> 的元素。
+
+\item
+list(REMOVE\_DUPLICATES <list>)：从 <list> 中移除重复项。
+
+\item
+list(TRANSFORM <list> <action> [<selector>] [OUTPUT\_VARIABLE <out>]) ：对 <list> 元素应用特定的转换。默认情况下，操作应用于所有元素，但我们可以通过添加 <selector> 来限制其效果。除非提供 OUTPUT\_VARIABLE 关键词，在这种情况下结果将存储在 <out> 变量中，否则提供的列表将被修改（就地更改）。
 \end{itemize}
 
-Refer to the online manual for more advanced options.
+以下选择器可用：AT <index>，FOR <start> <stop> [<step>]，以及 REGEX <pattern>。
+
+操作包括 APPEND <string>，PREPEND <string>，TOLOWER，TOUPPER，STRIP，GENEX\_STRIP，以及 REPLACE <pattern> <expression>。它们的工作方式与具有相同名称的 string() 模式完全相同。
+
+\mySubsubsection{A.3.4.}{排序}
+
+以下是可用的模式:
+
+\begin{itemize}
+\item
+list(REVERSE <list>)：简单地反转 <list> 的顺序。
+
+\item
+list(SORT <list>)：按字母顺序对列表进行排序。
+\end{itemize}
+
+有关更高级选项的参考，请参阅在线手册。
 
 
 

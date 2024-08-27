@@ -1,11 +1,11 @@
 
-Figure 15.6 shows where we’ll configure our project for installation and packaging:
+图15.6展示了我们将如何配置项目以便进行安装和打包：
 
-\myGraphic{0.8}{content/chapter15/images/6.png}{Figure 15.6: File configuring installation and packaging}
+\myGraphic{0.8}{content/chapter15/images/6.png}{图15.6: 配置安装和打包的文件}
 
-The top-level listfile includes the Packaging utility module:
+顶级列表文件包含了Packaging实用模块：
 
-\filename{ch15/01-full-project/CMakeLists�txt (fragment)}
+\filename{ch15/01-full-project/CMakeLists�txt (片段)}
 
 \begin{cmake}
 # ... configure project
@@ -15,26 +15,26 @@ The top-level listfile includes the Packaging utility module:
 include(Packaging)
 \end{cmake}
 
-The Packaging module details the package configuration for the project, which we will explore in the Packaging with CPack section. Our focus now is on installing three main components:
+Packaging模块详细说明了项目的包配置，这部分我们将在使用CPack进行打包的部分进行探讨。我们现在关注的是安装三个主要组件：
 
 \begin{itemize}
 \item
-The Calc library artifacts: static and shared libraries, header files, and target export files
+Calc库工件：静态和共享库、头文件以及目标导出文件
 
 \item
-The package definition config file for the Calc library
+Calc库的包定义配置文件
 
 \item
-The Calc console executable
+Calc控制台可执行文件
 \end{itemize}
 
-Everything is planned, so it’s time to configure the installation of the library.
+一切已经计划好了，现在是时候配置库的安装了。
 
-\mySubsubsection{15.6.1.}{Installation of the library}
+\mySubsubsection{15.6.1.}{库的安装}
 
-To install the library, we start by defining logical targets and their artifact destinations, utilizing the GNUInstallDirs module’s default values to avoid manual path specification. Artifacts will be grouped into components. The default installation will install all files, but you may choose to only install the runtime component and skip the development artifacts:
+为了安装库，我们首先定义逻辑目标及其工件的目的地，利用GNUInstallDirs模块的默认值以避免手动指定路径。工件将被分组到组件中。默认安装会安装所有文件，但您可以选择只安装运行时组件并跳过开发工件：
 
-\filename{ch15/01-full-project/src/calc/CMakeLists.txt (continued)}
+\filename{ch15/01-full-project/src/calc/CMakeLists.txt (续)}
 
 \begin{cmake}
 # ... calc library targets definition
@@ -50,9 +50,9 @@ install(TARGETS calc_obj calc_shared calc_static
 )
 \end{cmake}
 
-For UNIX systems, we also configure post-installation registration of the shared library with ldconfig:
+对于UNIX系统，我们还配置了安装后注册共享库到ldconfig：
 
-\filename{ch15/01-full-project/src/calc/CMakeLists.txt (continued)}
+\filename{ch15/01-full-project/src/calc/CMakeLists.txt (续)}
 
 \begin{cmake}
 if (UNIX)
@@ -62,9 +62,9 @@ if (UNIX)
 endif()
 \end{cmake}
 
-To enable reusability in other CMake projects, we’ll package the library by generating and installing a target export file and a config file that references it:
+为了使其他CMake项目能够复用，我们将通过生成并安装一个目标导出文件和一个引用它的配置文件来打包库：
 
-\filename{ch15/01-full-project/src/calc/CMakeLists.txt (continued)}
+\filename{ch15/01-full-project/src/calc/CMakeLists.txt (续)}
 
 \begin{cmake}
 install(EXPORT CalcLibrary
@@ -78,7 +78,7 @@ install(FILES "CalcConfig.cmake"
 )
 \end{cmake}
 
-For simplicity, the CalcConfig.cmake file is kept minimal:
+为了简化，CalcConfig.cmake文件保持最小化：
 
 \filename{ch15/01-full-project/src/calc/CalcConfig.cmake}
 
@@ -86,15 +86,15 @@ For simplicity, the CalcConfig.cmake file is kept minimal:
 include("${CMAKE_CURRENT_LIST_DIR}/CalcLibrary.cmake")
 \end{cmake}
 
-This file is located in src/calc since it only includes the library targets. If there were target definitions from other directories, like calc\_console, you would typically place CalcConfig.cmake in the top-level or src directory.
+这个文件位于src/calc目录下，因为它只包含了库目标。如果还有其他目录的目标定义，比如calc\_console，通常会把CalcConfig.cmake放在顶级目录或src目录下。
 
-Now, the library is prepared to be installed with the cmake -{}-install command after building the project. However, we still need to configure the installation of the executable.
+现在，库已经准备好通过cmake -{}-install命令在构建项目后进行安装。不过，我们还需要配置可执行文件的安装。
 
-\mySubsubsection{15.6.2.}{Installation of the executable}
+\mySubsubsection{15.6.2.}{可执行文件的安装}
 
-We, of course, want our users to be able to enjoy the executable in their system, so we will install it with CMake. Preparing the installation of the binary executable is straightforward; to achieve it, we only need to include GNUInstallDirs and use a single install() command:
+当然，我们希望用户能够在他们的系统中使用可执行文件，因此我们将使用CMake来安装它。准备二进制可执行文件的安装很简单；为了实现这一点，我们只需要包含GNUInstallDirs并使用一个install()命令：
 
-\filename{ch15/01-full-project/src/calc\_console/CMakeLists.txt (continued)}
+\filename{ch15/01-full-project/src/calc\_console/CMakeLists.txt (续)}
 
 \begin{cmake}
 # ... calc_console_static definition
@@ -108,11 +108,11 @@ install(TARGETS calc_console
 )
 \end{cmake}
 
-With that, the executable is set to be installed. Now, let’s proceed to packaging.
+这样，可执行文件就设置好进行安装了。现在，我们继续进行打包。
 
-\mySubsubsection{15.6.3.}{Packaging with CPack}
+\mySubsubsection{15.6.3.}{使用CPack进行打包}
 
-We could go wild and configure a vast multitude of supported package types; for this project, however, a basic configuration will be enough:
+我们可以尽情配置大量的支持的包类型；然而，对于这个项目，基本配置就足够了：
 
 \filename{ch15/01-full-project/cmake/Packaging.cmake}
 
@@ -124,7 +124,7 @@ set(CPACK_PACKAGE_DESCRIPTION "Simple Calculator")
 include(CPack)
 \end{cmake}
 
-Such a minimal setup works well for standard archives, such as ZIP files. To test the installation and packaging processes after building the project, use the following command within the build tree:
+这样的最小化配置对于标准存档，如ZIP文件，工作得很好。为了在构建项目后测试安装和打包过程，请在构建树内使用以下命令：
 
 \begin{shell}
 # cpack -G TGZ -B packages
@@ -136,7 +136,7 @@ CPack: Create package
 CPack: - package: .../packages/Calc-1.0.0-Linux.tar.gz generated.
 \end{shell}
 
-This concludes the installation and packaging; the next order of business is documentation.
+这就完成了安装和打包的过程；接下来的任务是文档。
 
 
 

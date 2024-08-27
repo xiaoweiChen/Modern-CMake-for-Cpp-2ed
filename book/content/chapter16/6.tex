@@ -1,24 +1,24 @@
-When we discussed the general fields for each stage-specific preset, we mentioned the condition field. It’s time to return to that subject. The condition field enables or disables a preset, revealing its true potential when integrated with workflows. Essentially, it allows us to bypass presets that aren’t suitable under certain conditions and create alternative presets that are.
+当我们讨论每个特定阶段预设的一般字段时，提到了 condition 字段。现在是回到这个话题的时候了。condition 字段可以启用或禁用一个预设，在与工作流集成时揭示其真正的潜力。本质上，它允许我们在某些条件下绕过不适合的预设，并创建替代的预设。
 
-Conditions require preset schema version 3 or above (introduced in CMake 3.22) and are JSON objects that codify a few simple logical operations that can determine whether circumstances, like used OS, environment variables, or even chosen generators, fit the scenario of a preset. CMake provides this data through macros, which are essentially a limited set of read-only variables usable in the preset file.
+条件要求预设架构版本 3 或以上（在 CMake 3.22 中引入），并且是 JSON 对象，编码了一些简单的逻辑操作，可以根据所使用的操作系统、环境变量甚至选定的生成器等条件来判断预设是否适用。CMake 通过宏提供了这些数据，这些宏基本上是一组只读变量，可以在预设文件中使用。
 
-The structure of a condition object varies based on the check type. Each condition must include a type field and additional fields as defined by the type. Recognized basic types include:
+condition 对象的结构根据检查类型的不同而变化。每个条件都必须包含一个 type 字段，以及由该类型定义的其他字段。认可的基本类型包括：
 
 \begin{itemize}
 \item
-const: This checks whether the value provided in the value field is Boolean true
+const: 这个检查 value 字段中提供的值是否为布尔真。
 
 \item
-equals, notEquals: This compares the lhs field value to the value in the rhs field
+equals, notEquals: 这个比较 lhs 字段的值与 rhs 字段的值。
 
 \item
-inList and notInList: These check for the presence of the value provided in the string field within the array in the list field
+inList 和 notInList: 这些检查 string 字段中提供的值是否存在于 list 字段的数组中。
 
 \item
-matches and notMatches: These evaluate whether the string field’s value aligns with the pattern defined in the regex field
+matches 和 notMatches: 这些判断 string 字段的值是否符合 regex 字段中定义的模式。
 \end{itemize}
 
-An example condition looks like this:
+一个示例条件如下所示：
 
 \begin{json}
 "condition": {
@@ -28,19 +28,19 @@ An example condition looks like this:
 }
 \end{json}
 
-The const condition’s practical use is primarily for disabling a preset without removing it from the JSON file. Apart from const, all basic conditions permit the use of macros in the fields they introduce: lhs, rhs, string, list, and regex.
+const 条件的实际用途主要是为了在不从 JSON 文件中删除预设的情况下禁用它。除了 const 之外，所有基本条件都允许在其引入的字段 (lhs, rhs, string, list, regex) 中使用宏。
 
-Advanced condition types, which function like “not”, “and”, and “or” operations, utilize other conditions as arguments:
+高级条件类型，类似于“not”，“and”，和“or”操作，使用其他条件作为参数：
 
 \begin{itemize}
 \item
-not: A Boolean inversion of the condition provided in the condition field
+not: 这是对 condition 字段中提供的条件进行布尔反转。
 
 \item
-anyOf and allOf: These check whether any or all conditions in the conditions array are true
+anyOf 和 allOf: 这些检查 conditions 数组中的任意条件或所有条件是否为真。
 \end{itemize}
 
-For instance:
+例如：
 
 \begin{json}
 "condition": {
@@ -60,48 +60,49 @@ For instance:
 }
 \end{json}
 
-This condition evaluates as true if the system is either Linux or Windows.
-Through these examples, we’ve introduced our first macro: \$\{hostSystemName\}. Macros follow a simple syntax and are limited to specific instances, like:
+这个条件在系统为 Linux 或 Windows 时评估为真。
+
+通过这些示例，我们引入了第一个宏：\$\{hostSystemName\}。宏遵循简单的语法，并限于特定实例，例如：
 
 \begin{itemize}
 \item
-\$\{sourceDir\}: This is the path of the source tree
+\$\{sourceDir\}: 这是源代码树的路径。
 
 \item
-\$\{sourceParentDir\}: This is the path of the source tree’s parent directory
+\$\{sourceParentDir\}: 这是源代码树父目录的路径。
 
 \item
-\$\{sourceDirName\}: This is the project’s directory name
+\$\{sourceDirName\}: 这是项目的目录名。
 
 \item
-\$\{presetName\}: This is the name of the preset
+\$\{presetName\}: 这是预设的名称。
 
 \item
-\$\{generator\}: This is the generator used to create the buildsystem
+\$\{generator\}: 这是用于创建构建系统的生成器。
 
 \item
-\$\{hostSystemName\}: This is the system name: Linux, Windows, or Darwin on macOS
+\$\{hostSystemName\}: 这是系统名称：Linux, Windows, 或 macOS 上的 Darwin。
 
 \item
-\$\{fileDir\}: This is the name of the file containing the current preset (applicable when an include array is used to import external presets)
+\$\{fileDir\}: 这是包含当前预设的文件名（当使用 include 数组导入外部预设时适用）。
 
 \item
-\$\{dollar\}: This is the escaped dollar sign (\$)
+\$\{dollar\}:这是转义的美元符号 \$。
 
 \item
-\$\{pathListSep\}: This is the environment-specific path separator
+\$\{pathListSep\}: 这是环境特定的路径分隔符。
 
 \item
-\$env\{<variable-name>\}: This returns the environment variable if specified by the preset (case-sensitive), or the parent environment value
+\$env\{<variable-name>\}: 如果预设指定了环境变量，则返回该环境变量（区分大小写），否则返回父环境中的值。
 
 \item
-\$penv\{<variable-name>\}: This returns the environment variable from the parent environment
+\$penv\{<variable-name>\}: 返回父环境中的环境变量。
 
 \item
-\$vendor\{<macro-name>\}: This allows IDE vendors to introduce their own macros
+\$vendor\{<macro-name>\}: 允许 IDE 厂商引入自己的宏。
 \end{itemize}
 
-These macros provide sufficient flexibility for use in presets and their conditions, enabling the effective toggling of workflow steps as needed.
+这些宏为在预设及其条件中的使用提供了足够的灵活性，使我们能够根据需要有效地切换工作流步骤。
 
 
 

@@ -1,54 +1,54 @@
 
-To build any project, we should start with a clear understanding of what logical targets are going to be created within it. In this case, we’ll follow the structure shown in the following figure:
+为了构建任何项目，我们应该首先明确项目内部将创建哪些逻辑目标。在这个案例中，我们将遵循下图所示的结构：
 
-\myGraphic{0.8}{content/chapter15/images/2.png}{Figure 15.2: A structure of logical targets}
+\myGraphic{0.8}{content/chapter15/images/2.png}{图 15.2: 逻辑目标的结构}
 
-Let’s explore the structure by following the build order. First, we compile calc\_obj, an object library. For a refresher on object libraries, please check Chapter 5, Working with Targets. We should then turn our attention to static libraries and shared libraries.
+让我们按照构建顺序来探索这个结构。首先，我们编译calc\_obj，一个对象库。关于对象库的回顾，请参阅第5章，《处理目标》。然后，我们将注意力转向静态库和共享库。
 
-\mySubsubsection{15.3.1.}{Shared libraries versus static libraries}
+\mySubsubsection{15.3.1.}{共享库与静态库}
 
-In Chapter 8, Linking Executables and Libraries, we introduced both shared and static libraries. We noted that shared libraries can reduce overall memory usage when multiple programs use the same library. Also, it’s common for users to already have popular libraries installed or to know how to install them quickly.
+在第8章，《链接可执行文件和库》中，我们介绍了共享库和静态库。我们注意到，当多个程序使用相同的库时，共享库可以减少整体内存使用量。而且，用户通常已经安装了流行的库或者知道如何快速安装它们。
 
-More importantly, shared libraries are separate files that must be placed in specific paths for the dynamic linker to locate them. In contrast, static libraries are embedded directly into the executable file, which leads to faster usage as there are no additional steps required to locate the code in memory.
+更重要的是，共享库是独立的文件，必须放置在特定路径以便动态链接器能够找到它们。相比之下，静态库直接嵌入到可执行文件中，这使得使用更快，因为不需要额外步骤在内存中定位代码。
 
-As library authors, we can decide whether we’re providing a static or a shared version of the library, or we can simply ship both versions and leave this decision to the programmer using our library in their project. Since we’re exercising our knowledge, we will deliver two versions.
+作为库的作者，我们可以决定提供静态版本还是共享版本的库，或者我们也可以同时发布两个版本，将这个决定留给使用我们库的程序员。既然我们在锻炼知识，我们将提供两个版本。
 
-The calc\_test target, which includes unit tests to verify the library’s core functionality, will utilize the static library. Although we are building both types of libraries from the same object files, testing with either library type is acceptable since their functionalities should be identical. The console app associated with calc\_console\_static target will use the shared library. This target also links against an external dependency, the Functional Terminal (X) User Interface (FTXUI) library by Arthur Sonzogni (there is a link to the GitHub project in the Further reading section).
+calc\_test目标包含了单元测试以验证库的核心功能，它将使用静态库。虽然我们是从相同的对象文件构建两种类型的库，但无论使用哪种类型的库进行测试都是可以接受的，因为它们的功能应该是相同的。与calc\_console\_static目标相关的控制台应用程序将使用共享库。此目标还链接了一个外部依赖，即Arthur Sonzogni的Functional Terminal (X) User Interface (FTXUI)库（在进一步阅读部分中有GitHub项目的链接）。
 
-The last two targets, calc\_console and calc\_console\_test, are designed to tackle a common issue in testing executables: the clash of multiple entry points provided by both the test frameworks and the executables. To circumvent this, we have intentionally isolated the main() function into a bootstrap target, calc\_console, which merely invokes the primary function from calc\_console\_static.
+最后两个目标，calc\_console和calc\_console\_test，旨在解决测试可执行文件中的常见问题：测试框架和可执行文件提供的多个入口点之间的冲突。为此，我们有意将main()函数隔离到一个引导目标calc\_console中，该目标仅仅调用calc\_console\_static中的主要函数。
 
-With an understanding of the necessary targets and their interrelations, our next step is to organize the project’s structure with appropriate files and directories.
+理解了必要的目标及其相互关系之后，我们的下一步是通过适当的文件和目录来组织项目的结构。
 
-\mySubsubsection{15.3.2.}{Project file structure}
+\mySubsubsection{15.3.2.}{项目文件结构}
 
-The project consists of two key elements: the calc libraries and the calc\_console executable. To organize our project effectively, we will employ the following directory structure:
+项目由两个关键元素组成：calc库和calc\_console可执行文件。为了有效地组织我们的项目，我们将采用以下目录结构：
 
 \begin{itemize}
 \item
-src contains sources for all released targets and library header files.
+src 包含所有发布的目标的源代码和库头文件。
 
 \item
-test contains tests for the above libraries and executables.
+test 包含上述库和可执行文件的测试。
 
 \item
-cmake contains utility modules and helper files used by CMake to build and install the project.
+cmake 包含用于构建和安装项目的CMake辅助模块和文件。
 
 \item
-root directory contains top-level configuration and documentation files.
+根目录包含顶级配置和文档文件。
 \end{itemize}
 
-This structure (shown in Figure 15.3) ensures a clear separation of concerns, facilitating easier navigation and maintenance of the project:
+这一结构（如图15.3所示）确保了职责的清晰划分，便于更轻松地导航和维护项目：
 
-\myGraphic{0.8}{content/chapter15/images/3.png}{Figure 15.3: The directory structure of the project}
+\myGraphic{0.8}{content/chapter15/images/3.png}{图 15.3: 项目的目录结构}
 
-Here’s the full list of files in each of the four main directories:
+下面是每个主要目录中的文件完整列表：
 
 % Please add the following required packages to your document preamble:
 % \usepackage{longtable}
 % Note: It may be necessary to compile the document several times to get a multi-page table to line up properly
 \begin{longtable}{|l|l|}
 \hline
-\textbf{Root directory} &
+\textbf{根目录} &
 \textbf{./test} \\ \hline
 \endfirsthead
 %
@@ -67,12 +67,12 @@ CMakeLists.txt \\ \hline
 \end{longtable}
 
 \begin{center}
-Table 15.1: File structure of the project
+表 15.1: 项目的文件结构
 \end{center}
 
-While it may appear that CMake introduces considerable overhead, with the cmake directory initially containing more content than the actual business code, this dynamic will shift as the project expands in functionality. The initial effort to establish a clean and organized project structure is substantial, but rest assured, this investment will yield significant benefits in the future.
+尽管看起来CMake引入了相当大的开销，初始阶段cmake目录包含的内容比实际业务代码还要多，但随着项目的扩展，这种状况将会改变。建立干净且有组织的项目结构需要较大的初始努力，但请放心，这种投资在未来将带来显著的好处。
 
-We’ll go through all the files mentioned in Table 15.1 throughout the chapter and see in detail what they do and what role they play in the project. This will happen in four steps: building, testing, installing, and providing documentation.
+我们将在整个章节中详细介绍表15.1中列出的所有文件，以及它们的作用和在项目中的角色。这将分为四个步骤：构建、测试、安装和提供文档。
 
 
 

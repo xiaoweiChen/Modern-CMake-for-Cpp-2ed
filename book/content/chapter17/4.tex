@@ -1,120 +1,120 @@
 
-This command provides all kinds of operations related to files: reading, transferring, locking, and archiving. It also provides modes to inspect the filesystem and operations on strings representing paths.
+此命令提供了与文件相关的各种操作：读取、传输、锁定及归档。它还提供了用于检查文件系统和对路径字符串进行操作的模式。
 
-Full details can be found in the online documentation:
+完整详情可以在在线文档中找到：
 
 \url{https://cmake.org/cmake/help/latest/command/file.html}
 
-The categories for available file() modes are reading, writing, filesystem, path conversion, transfer, locking, and archiving.
+可用的 file() 模式的类别包括读取、写入、文件系统、路径转换、传输、锁定及归档。
 
-\mySubsubsection{A.4.1.}{Reading}
+\mySubsubsection{A.4.1.}{读取}
 
-The following modes are available:
-
-\begin{itemize}
-\item
-file(READ <filename> <out> [OFFSET <o>] [LIMIT <max>] [HEX])reads the file from <filename> to the <out> variable. The read optionally starts at offset <o> and follows the optional limit of <max> bytes. The HEX flag specifies that output should be converted to hexadecimal representation.
-
-\item
-file(STRINGS <filename> <out>) reads strings from the file at <filename> to the <out> variable.
-
-\item
-file(<hashing-algorithm> <filename> <out>) computes the <hashing-algorithm> hash from the file at <filename> and stores the result in the <out> variable. Available algorithms are the same as for the string() hashing function.
-
-\item
-file(TIMESTAMP <filename> <out> [<format>]) generates a string representation of a timestamp of the file at <filename> and stores it in the <out> variable. It optionally accepts a <format> string.
-
-\item
-file(GET\_RUNTIME\_DEPENDENCIES [...]) gets runtime dependencies for specified files. This is an advanced command to be used only in install(CODE) or install(SCRIPT) scenarios. Available since CMake 3.21.
-\end{itemize}
-
-\mySubsubsection{A.4.2.}{Writing}
-
-The following modes are available:
+以下是可用的模式：
 
 \begin{itemize}
 \item
-file(\{WRITE | APPEND\} <filename> <content>...) writes or appends all <content> arguments to the file at <filename>. If the provided system path doesn’t exist, it will be recursively created.
+file(READ <filename> <out> [OFFSET <o>] [LIMIT <max>] [HEX])：从 <filename> 读取文件到 <out> 变量。读取可选地从偏移量 <o> 开始，并遵循最大字节数 <max> 的限制。HEX 标志指明输出应转换为十六进制表示。
 
 \item
-file(\{TOUCH | TOUCH\_NOCREATE\} [<filename>...]) updates the timestamp of the <filename>. If the file doesn’t exist, it will only be created in the TOUCH mode.
+file(STRINGS <filename> <out>)：从 <filename> 中读取字符串到 <out> 变量。
 
 \item
-file(GENERATE OUTPUT <output-file> [...]) is an advanced mode that generates an output file for each build configuration of the current CMake generator.
+file(<hashing-algorithm> <filename> <out>)：计算 <filename> 文件的 <hashing-algorithm> 哈希值，并将结果存储在 <out> 变量中。可用的算法与 string() 哈希函数相同。
 
 \item
-file(CONFIGURE OUTPUT <output-file> CONTENT <content> [...]) works like GENERATE\_OUTPUT but also configures the generated files by substituting variable placeholders with values.
+file(TIMESTAMP <filename> <out> [<format>])：生成 <filename> 文件的时间戳字符串表示，并将其存储在 <out> 变量中。可选地接受一个 <format> 字符串。
+
+\item
+file(GET\_RUNTIME\_DEPENDENCIES [...])：获取指定文件的运行时依赖项。这是一个高级命令，只应在 install(CODE) 或 install(SCRIPT) 场景中使用。自 CMake 3.21 开始可用。
 \end{itemize}
 
-\mySubsubsection{A.4.3.}{Filesystem}
+\mySubsubsection{A.4.2.}{写入}
 
-The following modes are available:
+以下是可用的模式：
 
 \begin{itemize}
 \item
-file(\{GLOB | GLOB\_RECURSE\} <out> [...] [<globbing-expression>...]) generates a list of files matching <globbing-expression> and stores it in the <out> variable. GLOB\_RECURSE mode will also scan nested directories.
+file(\{WRITE | APPEND\} <filename> <content>...)：将所有 <content> 参数写入或追加到 <filename> 文件中。如果提供的系统路径不存在，它将会递归创建。
 
 \item
-file(RENAME <oldname> <newname>) moves a file from <oldname> to <newname>.
+file(\{TOUCH | TOUCH\_NOCREATE\} [<filename>...])：更新 <filename> 的时间戳。如果文件不存在，则仅在 TOUCH 模式下创建。
 
 \item
-file(\{REMOVE | REMOVE\_RECURSE \} [<files>...]) deletes <files>. REMOVE\_RECURSE will also remove directories.
+file(GENERATE OUTPUT <output-file> [...])：这是一种高级模式，为当前 CMake 生成器的每个构建配置生成输出文件。
 
 \item
-file(MAKE\_DIRECTORY [<dir>...]) creates a directory.
-
-\item
-file(COPY <file>... DESTINATION <dir> [...]) copies files to the <dir> destination. It offers options for filtering, setting permissions, symlink chain following, and more.
-
-\item
-file(COPY\_FILE <file> <destination> [...])copies a single file to the <destination> path. Available since CMake 3.21.
-
-\item
-file(SIZE <filename> <out>) reads the size of <filename> in bytes and stores it in the <out> variable.
-
-\item
-file(READ\_SYMLINK <linkname> <out>) reads the destination path of the <linkname> symlink and stores it in the <out> variable.
-
-\item
-file(CREATE\_LINK <original> <linkname> [...]) creates a symlink to <original> at <linkname>.
-
-\item
-file(\{CHMOD|CHMOD\_RECURSE\} <files>... <directories>... PERMISSIONS <permissions>... [...]) sets permissions on files and directories.
-
-\item
-file(GET\_RUNTIME\_DEPENDENCIES [...])collects the runtime dependencies for various types of files: executables, libraries, and modules. Use with install(RUNTIME\_DEPENDENCY\_SET).
+file(CONFIGURE OUTPUT <output-file> CONTENT <content> [...]) ：其作用类似于 GENERATE\_OUTPUT，但同时通过替换变量占位符来配置生成的文件。
 \end{itemize}
 
-\mySubsubsection{A.4.4.}{Path conversion}
+\mySubsubsection{A.4.3.}{文件系统}
 
-The following modes are available:
+以下是可用的模式：
 
 \begin{itemize}
 \item
-file(REAL\_PATH <path> <out> [BASE\_DIRECTORY <dir>]) computes the absolute path from the relative path and stores it in the <out> variable. It optionally accepts the <dir> base directory. Available since CMake 3.19.
+file(\{GLOB | GLOB\_RECURSE\} <out> [...] [<globbing-expression>...])：生成匹配 <globbing-expression> 的文件列表，并将其存储在 <out> 变量中。GLOB\_RECURSE 模式也会扫描嵌套目录。
 
 \item
-file(RELATIVE\_PATH <out> <directory> <file>) computes the <file> path relative to <directory> and stores it in the <out> variable.
+file(RENAME <oldname> <newname>)：将文件从 <oldname> 移动到 <newname>。
 
 \item
-file(\{TO\_CMAKE\_PATH | TO\_NATIVE\_PATH\} <path> <out>) converts <path> to a CMake path (directories separated with a forward slash) to the native path of the platform and back. The result is stored in the <out> variable.
+file(\{REMOVE | REMOVE\_RECURSE \} [<files>...])：删除 <files>。REMOVE\_RECURSE 也会删除目录。
+
+\item
+file(MAKE\_DIRECTORY [<dir>...])：创建目录。
+
+\item
+file(COPY <file>... DESTINATION <dir> [...])：将文件复制到 <dir> 目的地。它提供了过滤、设置权限、跟随符号链接链等选项。
+
+\item
+file(COPY\_FILE <file> <destination> [...])：将单个文件复制到 <destination> 路径。自 CMake 3.21 开始可用。
+
+\item
+file(SIZE <filename> <out>)：读取 <filename> 的大小（以字节为单位），并将其存储在 <out> 变量中。
+
+\item
+file(READ\_SYMLINK <linkname> <out>)：读取 <linkname> 符号链接的目标路径，并将其存储在 <out> 变量中。
+
+\item
+file(CREATE\_LINK <original> <linkname> [...])：在 <linkname> 创建指向 <original> 的符号链接。
+
+\item
+file(\{CHMOD|CHMOD\_RECURSE\} <files>... <directories>... PERMISSIONS <permissions>... [...])：设置文件和目录的权限。
+
+\item
+file(GET\_RUNTIME\_DEPENDENCIES [...])：收集各种类型文件的运行时依赖项：可执行文件、库和模块。与 install(RUNTIME\_DEPENDENCY\_SET) 结合使用。
 \end{itemize}
 
-\mySubsubsection{A.4.5.}{Transfer}
+\mySubsubsection{A.4.4.}{路径转换}
 
-The following modes are available:
+以下是可用的模式：
 
 \begin{itemize}
 \item
-file(DOWNLOAD <url> [<path>] [...]) downloads a file from <url> and stores it in <path>.
+file(REAL\_PATH <path> <out> [BASE\_DIRECTORY <dir>])：从相对路径计算绝对路径，并将其存储在 <out> 变量中。可选地接受 <dir> 基础目录。自 CMake 3.19 开始可用。
 
 \item
-file(UPLOAD <file> <url> [...]) uploads <file> to a URL.
+file(RELATIVE\_PATH <out> <directory> <file>)：计算 <file> 相对于 <directory> 的路径，并将其存储在 <out> 变量中。
+
+\item
+file(\{TO\_CMAKE\_PATH | TO\_NATIVE\_PATH\} <path> <out>)：将 <path> 转换为 CMake 路径（目录以正斜杠分隔）到平台原生路径及反之。结果存储在 <out> 变量中。
 \end{itemize}
 
-\mySubsubsection{A.4.6.}{Locking}
+\mySubsubsection{A.4.5.}{传输}
 
-Locking mode places an advisory lock on the <path> resource:
+以下是可用的模式：
+
+\begin{itemize}
+\item
+file(DOWNLOAD <url> [<path>] [...])：从 <url> 下载文件，并将其存储在 <path> 中。
+
+\item
+file(UPLOAD <file> <url> [...])：将 <file> 上传到 URL。
+\end{itemize}
+
+\mySubsubsection{A.4.6.}{锁定}
+
+锁定模式在 <path> 资源上放置了一个建议性锁
 
 \begin{shell}
 file(LOCK <path> [DIRECTORY] [RELEASE]
@@ -123,11 +123,11 @@ file(LOCK <path> [DIRECTORY] [RELEASE]
 )
 \end{shell}
 
-This lock can be optionally scoped to FUNCTION, FILE, or PROCESS and limited with a timeout of <seconds>. To release the lock, provide the RELEASE keyword. The result will be stored in the <out> variable.
+此锁可选地限定在 FUNCTION、FILE 或 PROCESS，并且可以用 <seconds> 的超时时间限制。为了释放锁，提供 RELEASE 关键词。结果将存储在 <out> 变量中。
 
-\mySubsubsection{A.4.7.}{Archiving}
+\mySubsubsection{A.4.7.}{归档}
 
-The creation of archives is provided with the following signature:
+归档创建提供以下签名：
 
 \begin{shell}
 file(ARCHIVE_CREATE OUTPUT <destination> PATHS <source>...
@@ -137,9 +137,9 @@ file(ARCHIVE_CREATE OUTPUT <destination> PATHS <source>...
 )
 \end{shell}
 
-It creates an archive at the <destination> path comprising <source> files in one of the supported formats: 7zip, gnutar, pax, paxr, raw, or zip (paxr is the default). If the chosen format supports the compression level, it can be provided as a single-digit integer 0-9, with 0 being the default.
+它在 <destination> 路径创建一个归档文件，其中包含 <source> 文件之一种支持的格式：7zip、gnutar、pax、paxr、raw 或 zip（默认为 paxr）。如果选定的格式支持压缩级别，则可以提供一个单数字整数 0-9，其中 0 为默认值。
 
-The extraction mode has the following signature:
+提取模式具有以下签名：
 
 \begin{shell}
 file(ARCHIVE_EXTRACT INPUT <archive> [DESTINATION <dir>]
@@ -147,7 +147,7 @@ file(ARCHIVE_EXTRACT INPUT <archive> [DESTINATION <dir>]
 )
 \end{shell}
 
-It extracts files matching optional <patterns> values from <archive> to the destination <dir>. If the LIST\_ONLY keyword is provided, files won’t be extracted but will only be listed instead.
+它从 <archive> 中提取匹配可选 <patterns> 值的文件到目的地 <dir>。如果提供了 LIST\_ONLY 关键词，则文件不会被提取，而只会列出。
 
 
 

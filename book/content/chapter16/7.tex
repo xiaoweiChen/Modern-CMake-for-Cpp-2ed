@@ -1,9 +1,9 @@
-We have just completed a comprehensive overview of CMake presets, introduced in CMake 3.19, to streamline project management. Presets allow product authors to provide a neatly prepared experience for their users by configuring all the stages of the project build and delivery. Presets not only simplify the usage of CMake but also enhance consistency and allow environment-aware setups.
+我们刚刚完成了一个关于 CMake 预设的全面概述，这些预设是从 CMake 3.19 版本开始引入的，旨在简化项目管理。预设让产品作者可以通过配置项目构建和交付的所有阶段来为用户提供整洁的体验。预设不仅简化了 CMake 的使用，还提高了一致性，并允许根据环境进行设置。
 
-We explained the structure and usage of the CMakePresets.json and CMakeUserPresets.json files, providing insights into defining various types of presets, such as configure presets, build presets, test presets, package presets, and workflow presets. Each type is described in detail: we learned about common fields, how to structure presets internally, establish inheritance between them, and the specific configuration options available for the end user.
+我们解释了 CMakePresets.json 和 CMakeUserPresets.json 文件的结构和用法，并提供了关于定义各种类型的预设的见解，包括配置预设、构建预设、测试预设、打包预设和工作流预设。每种类型都进行了详细的描述：我们了解了常见的字段，如何在内部构建预设、建立它们之间的继承关系，以及为最终用户提供特定的配置选项。
 
-For the configure preset, we covered important topics like selecting the generator, build, and installation directory, and linking presets together with the configurePreset field. We now know how to handle build presets and set the build job count, targets, and cleaning options. Then, we learned how the test preset assists with test selection through extensive filtering and ordering options, output formatting, and execution parameters such as timeouts and fault tolerance. We understand how to manage package presets by specifying package generators, filtering, and package metadata. We even introduced a workaround to execute the installation stage through a specialized build preset application.
+对于配置预设，我们讨论了重要的主题，如选择生成器、构建目录和安装目录，并通过 configurePreset 字段将预设链接在一起。我们现在知道了如何处理构建预设和设置构建作业数量、目标以及清理选项。随后，我们学习了测试预设如何通过广泛的过滤和排序选项、输出格式化以及执行参数（如超时和容错）来辅助测试选择。我们了解了如何通过指定打包生成器、过滤选项以及打包元数据来管理打包预设。我们甚至还介绍了一种通过专门的构建预设应用来执行安装阶段的变通方法。
 
-Next, we discovered how workflow presets allow the grouping of multiple stage-specific presets.Finally, we discussed conditions and macro expressions, providing project authors with greater control over the behavior of individual presets and their integration into a workflow.
+接着，我们发现了工作流预设如何允许将多个特定阶段的预设组合在一起。最后，我们讨论了条件和宏表达式，为项目作者提供了对单个预设的行为及其集成到工作流中的更大控制权。
 
-Our CMake journey is complete! Congratulations – you now possess all the tools necessary to develop, test, and package high-quality C++ software. The best way forward is to apply what you’ve learned and create excellent software for your users. Good luck!
+我们的 CMake 之旅至此结束！恭喜你——你现在拥有了开发、测试和打包高质量 C++ 软件所需的所有工具。最好的前进方式就是应用你所学的知识去创造优秀的软件给你的用户。祝你好运！
