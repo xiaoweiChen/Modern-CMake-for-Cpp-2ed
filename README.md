@@ -1,8 +1,7 @@
 # Modern CMake for C++  
 *Second Edition*  
 
-Effortlessly build cutting-edge C++ code and deliver high-quality
-solutions  <a href=""><img src="cover.png" height="256px" align="right"></a>
+*轻松构建前沿C++代码，提供高质量的解决方案*<a href=""><img src="cover.png" height="256px" align="right"></a>
 
 * 作者：Rafał Świdziński  
 * 译者：陈晓伟
@@ -15,21 +14,21 @@ solutions  <a href=""><img src="cover.png" height="256px" align="right"></a>
 
 ## 本书概述
 
-Creating top-notch software is no easy task. Developers researching this subject online often struggle to determine which advice is current and which methods have been superseded by newer, better practices. Moreover, most resources explain the process chaotically, lacking proper background, context, and structure.
+创建顶级软件并非易事。在线研究这个主题的开发者难以确定哪些建议是当前的，哪些方法已经更新，或已经有更好的实践方式。此外，大多数资源以混乱的方式解释过程，缺乏适当的背景、上下文和结构。
 
-Modern CMake for C++ provides an end-to-end guide that offers a simpler experience by treating the building of C++ solutions comprehensively. It not only teaches you how to use CMake in your projects but also highlights what makes them maintainable, elegant, and clean. The guide walks you through automating complex tasks common in many projects, including building, testing, and packaging.
+《Modern CMake for C++》提供了一个端到端的指南，通过全面处理C++解决方案的构建，提供了更简单的体验。它不仅教你如何在项目中使用CMake，还强调了如何使项目保持可维护性、优雅和简洁。该指南会引导你自动化完成许多项目中的常见任务，包括构建、测试和打包。
 
-The book instructs you on organizing source directories, building targets, and creating packages. As you progress, you will learn to compile and link executables and libraries, understand these processes in detail, and optimize each step for the best results. Additionally, you will discover how to incorporate external dependencies into your project, such as third-party libraries, testing frameworks, program analysis tools, and documentation generators. Finally, you’ll learn how to export, install, and package your solution for both internal and external use.
+本书还会指导如何组织源目录、构建目标和创建包。随着了解的深入，将学习编译和链接可执行文件和库，详细理解这些过程，并优化每个步骤以获得最佳结果。此外，将发现如何将外部依赖项（如第三方库、测试框架、程序分析工具和文档生成器），进而整合到自己的项目中。最后，将学习如何导出、安装和打包解决方案，以供内部和外部使用。
 
-After completing this book, you’ll be able to use CMake confidently on a professional level.
+完成这本书后，你将能以专业水平使用CMake。
 
 
 
 ## 作者简介
 
-Rafał Świdziński, a seasoned staff engineer at Google, boasts over 12 years of full-stack development expertise. With a track record of spearheading projects for industry giants like Cisco Meraki, Amazon, and Ericsson, he embodies a commitment to innovation. As a Londoner by choice, he remains at the forefront of technological progress, engaging in a myriad of personal ventures. His recent pivot toward AI in healthcare reflects his dedication to impactful advancements. Rafał values top-notch code quality and craftsmanship, sharing insights through his YouTube channel and published books.
+**Rafał Świdziński**是谷歌的一名资深工程师，拥有超过12年的全栈开发经验。他领导过思科Meraki、亚马逊和爱立信等行业巨头的项目，体现了对创新的承诺。作为一名自愿选择居住在伦敦的人，他始终站在技术进步的前沿，参与了许多个人创业项目。最近他转向医疗保健领域的AI。Rafał重视顶尖的代码质量和工艺，也会通过YouTube频道和出版的书籍分享见解。
 
-To Zoe – I couldn’t have written this book without you.
+致Zoe --- 无汝，无书（如果没有你，我无法写出这本书）
 
 
 
