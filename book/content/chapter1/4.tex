@@ -1,16 +1,16 @@
-本书的大部分内容将教你如何为你的用户提供准备 CMake 项目。为了满足他们的需求，我们需要彻底了解用户在不同场景中如何与 CMake 交互。这将允许你测试你的项目文件，并确保它们正确工作。
+本书的大部分内容将教你，如何为用户提供准备 CMake 项目。为了满足其需求，需要彻底了解用户在不同场景中如何与 CMake 交互。这可以测试项目文件，并确保它们能正确工作。
 
 CMake 是一组工具，包括五个可执行文件：
 
 \begin{itemize}
 \item
-cmake: 用于配置、生成和构建项目的核心可执行文件
+cmake: 配置、生成和构建项目的核心可执行文件
 
 \item
-ctest: 用于运行和报告测试结果的测试驱动程序
+ctest: 运行和报告测试结果的测试驱动程序
 
 \item
-cpack: 用于生成安装程序和源包的打包程序
+cpack: 生成安装程序和源包的打包程序
 
 \item
 cmake-gui: 窗口化的图形界面
@@ -48,11 +48,11 @@ cmake 是 CMake 套件的主要二进制文件，并提供几种操作模式（�
 获取帮助
 \end{itemize}
 
-让我们看看它们是如何工作的。
+看看它们是如何工作的。
 
 \mySamllsection{生成项目构建系统}
 
-构建我们项目的第一步是生成构建系统。以下是执行 CMake 生成项目构建系统操作的三种命令形式：
+构建项目的第一步是生成构建系统。以下是执行 CMake 生成项目构建系统操作的三种命令形式：
 
 \begin{shell}
 cmake [<options>] -S <source tree> -B <build tree>
@@ -60,22 +60,23 @@ cmake [<options>] <source tree>
 cmake [<options>] <build tree>
 \end{shell}
 
-我们将讨论可用的 <options>。目前，让我们关注选择正确的命令形式。CMake 的一个重要特性是支持源外构建或支持将构建工件存储在与源树不同的目录中。这是一种保持源目录干净，避免意外文件或忽略指令污染版本控制系统（VCS）的首选方法。
+目前，先关注选择正确的命令形式，讨论以下可用的 <options>。CMake 的一个重要特性是支持源外构建或支持，将构建工件存储在与源树不同的目录中。这是一种保持源目录干净，避免意外文件或忽略指令污染版本控制系统（VCS）的首选方法。
 
-这就是为什么第一种命令形式最实用。它允许我们指定源树和生成的构建系统的路径，分别用 -S 和 -B 指定：
+这就是为什么第一种命令形式最实用，允许指定源码树和生成的构建系统的路径，分别用 -S 和 -B 指定：
 
 \begin{shell}
 cmake -S ./project -B ./build
 \end{shell}
 
-CMake 将从 ./project 目录读取项目文件，并在 ./build 目录中生成构建系统（如果需要，事先创建）。
+CMake 将从 ./project 目录读取项目文件，并在 ./build 目录中生成构建系统。
 
-我们可以省略一个参数，cmake 会“猜测”我们打算使用当前目录作为省略的参数。请注意，省略两个参数将产生源内构建，并将构建工件与源文件一起存储，这是我们不想的。
+我们可以省略一个参数，cmake 会“猜测”我们打算使用当前目录作为省略的参数。省略-S 和 -B 参数将进行源内构建，并将构建工件与源文件一起存储，这是我们不想的。
 
 \begin{myNotic}{运行 CMake 时要明确}
-不要使用第二种或第三种形式的 cmake <directory> 命令，因为它们可能会产生混乱的源内构建。在第 4 章，设置你的第一个 CMake 项目，我们将学习如何防止用户这样做。
 
-如语法片段所示，相同的命令如果之前在 <directory> 中已经存在构建，其行为会有所不同：它会使用缓存的源路径并从此处重新构建。由于我们经常从终端命令历史记录中调用相同的命令，我们可能会在这里遇到麻烦；在使用这种形式之前，请始终检查你的 shell 是否在正确的目录中工作。
+不要使用第二种或第三种形式的 cmake <directory> ，它们会产生混乱的源内构建。在第 4 章，设置第一个 CMake 项目，我们将学习如何防止用户这样做。
+
+相同的命令如果之前在 <directory> 中已经存在构建，其行为会有所不同：会使用缓存的源路径并从此处重新构建。由于我们经常从终端命令历史记录中调用相同的命令，我们可能会在这里遇到麻烦；在使用这种形式之前，请始终检查你的 shell 是否在正确的目录中工作。
 \end{myNotic}
 
 \mySamllsubsection{示例}
@@ -94,9 +95,9 @@ cmake -B build
 
 \mySamllsubsection{选择生成器}
 
-正如之前讨论的，你可以在生成阶段指定几个选项。选择和配置生成器决定了我们将使用系统中哪个构建工具来构建后续的构建项目部分，构建文件将是什么样子，以及构建树的结构将是什么样子。
+可以在生成阶段指定几个选项。选择和配置生成器决定了，将使用系统中哪个构建工具来构建后续的构建项目部分，构建文件将是什么样子，以及构建树的结构将是什么样子。
 
-所以，你应该关心吗？幸运的是，答案通常是“不”。CMake 在许多平台上支持多种本地构建系统；然而，除非你同时安装了几个生成器，CMake 会为你正确选择一个。这可以通过设置 CMAKE\_GENERATOR 环境变量或直接在命令行上指定生成器来覆盖：
+所以，你应该关心生成器吗？答案通常是“不”。CMake 在许多平台上支持多种本地构建系统（除非同时安装了几个生成器），CMake 会选择一个。这可以通过设置 CMAKE\_GENERATOR 环境变量或直接在命令行上指定生成器来覆盖：
 
 \begin{shell}
 cmake -G <generator name> -S <source tree> -B <build tree>
@@ -111,15 +112,15 @@ cmake -G <generator name>
       -S <source tree> -B <build tree>
 \end{shell}
 
-Windows 用户通常希望为他们的首选 IDE 生成一个构建系统。在 Linux 和 macOS 上，使用 Unix Makefiles 或 Ninja 生成器非常常见。
+Windows 用户通常希望为其首选 IDE 生成一个构建系统。在 Linux 和 macOS 上，使用 Unix Makefiles 或 Ninja 生成器非常常见。
 
-要检查您的系统上可用的生成器，请使用以下命令：
+检查系统上可用的生成器，请使用以下命令：
 
 \begin{shell}
 cmake --help
 \end{shell}
 
-在帮助信息的末尾，您将获得一个生成器的完整列表，如下例所示，这是在 Windows 10 上产生的（为了便于阅读，部分输出截断了）：
+在帮助信息的末尾，将获得一个生成器的完整列表，如下例所示，这是在 Windows 10 上产生的（为了便于阅读，部分输出截断了）：
 
 以下是在此平台上可用的生成器：
 
@@ -164,33 +165,33 @@ Sublime Text 2 - Ninja
 Sublime Text 2 - Unix Makefiles
 \end{shell}
 
-正如你所见，CMake 支持许多不同的生成器风格和 IDE。
+CMake 支持许多不同风格的生成器和 IDE。
 
 \mySamllsubsection{管理项目缓存}
 
-在配置阶段，CMake 会查询系统上的各种信息。因为这些操作可能需要一些时间，所以收集到的信息会被缓存在构建树目录中的 CMakeCache.txt 文件里。有几个命令行选项可以让您更方便地管理缓存的行为。
+在配置阶段，CMake 会查询系统上的各种信息。这些操作可能需要一些时间，所以收集到的信息会缓存在构建树目录中的 CMakeCache.txt 文件里。有几个命令行选项可以有效的管理缓存的行为。
 
-我们首先可以使用的是预填充缓存信息的能力：
+首先可以使用的是预填充缓存信息的能力：
 
 \begin{shell}
 cmake -C <initial cache script> -S <source tree> -B <build tree>
 \end{shell}
 
-我们可以提供一个路径到 CMake 列表文件，这个文件（仅）包含一系列 set() 命令来指定用于初始化空构建树的变量。我们将在下一章讨论编写列表文件。
+可以提供一个路径到 CMake 列表文件，这个文件（仅）包含一系列 set() 命令来指定用于初始化空构建树的变量。我们将在下一章讨论如何编写列表文件。
 
-现有缓存变量的初始化和修改可以用另一种方式完成（例如，当创建一个文件仅为设置几个变量有些过于繁琐时）。您可以直接在命令行中设置它们，如下所示：
+现有缓存变量的初始化和修改可以用另一种方式完成（当创建一个文件仅为设置几个变量有些过于繁琐时），可以直接在命令行中设置：
 
 \begin{shell}
 cmake -D <var>[:<type>]=<value> -S <source tree> -B <build tree>
 \end{shell}
 
-这个 :<type> 部分是可选的（它由 GUI 使用）并且接受以下类型：BOOL，FILEPATH，PATH，STRING 或 INTERNAL。如果您省略类型，CMake 会检查变量是否存在于 CMakeCache.txt 文件中并使用其类型；否则，它将被设置为 UNINITIALIZED。
+:<type> 部分可选（由 GUI 使用）并且接受以下类型：BOOL，FILEPATH，PATH，STRING 或 INTERNAL。如果省略类型，CMake 会检查变量是否存在于 CMakeCache.txt 文件中并使用其类型；否则，将设置为 UNINITIALIZED。
 
-我们经常通过命令行设置的一个特别重要的变量是指定构建类型（CMAKE\_BUILD\_TYPE）。大多数 CMake 项目会在许多情况下使用它来决定诸如诊断消息的详细程度、调试信息的存在以及创建工件的优化级别等事项。
+我们经常通过命令行，设置的一个特别重要的变量是指定构建类型（CMAKE\_BUILD\_TYPE）。大多数 CMake 项目会在许多情况下，使用它来决定诸如诊断消息的详细程度、调试信息的存在，以及创建工件的优化级别等情形。
 
-对于单配置生成器（如 GNU Make 和 Ninja），您应该在配置阶段指定构建类型并为每种配置类型生成一个单独的构建树。
+对于单配置生成器（如 GNU Make 和 Ninja），应该在配置阶段指定构建类型，并为每种配置类型生成一个单独的构建树。
 
-这里使用的值有 Debug，Release，MinSizeRel 或 RelWithDebInfo。缺少这些信息可能会对依赖它进行配置的项目产生未定义的影响。
+可以使用的值有 Debug，Release，MinSizeRel 或 RelWithDebInfo。缺少这些信息可能会对依赖它进行配置的项目产生未定义的影响。
 
 这里是一个例子：
 
@@ -198,9 +199,9 @@ cmake -D <var>[:<type>]=<value> -S <source tree> -B <build tree>
 cmake -S . -B ../build -D CMAKE_BUILD_TYPE=Release
 \end{shell}
 
-请注意，多配置生成器是在构建阶段进行配置的。
+注意，多配置生成器在构建阶段进行配置。
 
-为了诊断目的，我们还可以使用 -L 选项列出缓存变量：
+为了诊断目的，还可以使用 -L 选项列出缓存变量：
 
 \begin{shell}
 cmake -L -S <source tree> -B <build tree>
@@ -213,36 +214,37 @@ cmake -LH -S <source tree> -B <build tree>
 cmake -LAH -S <source tree> -B <build tree>
 \end{shell}
 
-令人惊讶的是，使用 -D 选项手动添加的自定义变量不会在这个打印输出中显示，除非您指定了支持的类型之一。
+令人惊讶的是，使用 -D 选项手动添加的自定义变量不会在这个打印输出中显示，除非指定了支持的类型。
 
 可以使用以下选项删除一个或多个变量：
 
 \begin{shell}
 cmake -U <globbing_expr> -S <source tree> -B <build tree>
 \end{shell}
-在这里，通配表达式支持 *（通配符）和 ?（任意字符）符号。使用这些时要小心，因为很容易意外删除比预期更多的变量。
+
+使用通配表达式支持 *（通配符）和 ?（任意字符）符号时要小心，因为很容易意外删除比预期更多的变量。
 
 -U 和 -D 选项都可以重复多次使用。
 
 \mySamllsubsection{调试和跟踪}
 
-cmake 命令可以使用多种选项来让您窥视其内部工作。要获取关于变量、命令、宏和其他设置的通用信息，请运行以下命令：
+cmake 命令可以使用多种选项来让了解其内部工作。要获取关于变量、命令、宏和其他设置的通用信息，请运行以下命令：
 
 \begin{shell}
 cmake --system-information [file]
 \end{shell}
 
-可选的文件参数允许您将输出存储在文件中。在构建树目录中运行它将打印有关缓存变量和日志文件中的构建消息的额外信息。
+可选的file参数允许将输出存储在文件中。在构建树目录中运行，将打印有关缓存变量和日志文件中的构建消息的相关信息。
 
-在我们的项目中，我们将使用 message() 命令来报告构建过程的详细信息。CMake 会根据当前的日志级别（默认为 STATUS）过滤这些日志输出。以下行指定了我们感兴趣的日志级别：
+在项目中，我们使用 message() 命令来报告构建过程的详细信息。CMake 会根据当前的日志级别（默认为 STATUS）过滤这些日志输出。以下行指定了感兴趣的日志级别：
 
 \begin{shell}
 cmake --log-level=<level>
 \end{shell}
 
-在这里，级别可以是以下任一选项：ERROR, WARNING, NOTICE, STATUS, VERBOSE, DEBUG 或 TRACE。您可以在 CMAKE\_MESSAGE\_LOG\_LEVEL 缓存变量中永久指定此设置。
+级别可以是以下任一选项：ERROR, WARNING, NOTICE, STATUS, VERBOSE, DEBUG 或 TRACE。也可以在 CMAKE\_MESSAGE\_LOG\_LEVEL 缓存变量中指定此设置。
 
-另一个有趣的选项允许您在每个 message() 调用中显示日志上下文。为了调试非常复杂的项目，CMAKE\_MESSAGE\_CONTEXT 变量可以像栈一样使用。每当您的代码进入一个有趣的上下文时，您可以给它一个描述性的名称。这样做之后，我们的消息将被当前的 CMAKE\_MESSAGE\_CONTEXT 变量装饰，如下所示：
+另一个有趣的选项允许在每个 message() 调用中显示日志上下文。为了调试非常复杂的项目，CMAKE\_MESSAGE\_CONTEXT 变量可以像栈一样使用。每当代码进入一个有趣的上下文时，就可以给它一个描述性的名称。这样做之后，消息将使用当前的 CMAKE\_MESSAGE\_CONTEXT 变量装饰，如下所示：
 
 \begin{shell}
 [some.context.example] Debug message.
@@ -254,19 +256,19 @@ cmake --log-level=<level>
 cmake --log-context <source tree>
 \end{shell}
 
-我们将在第 2 章《CMake 语言》中详细讨论命名上下文和日志命令。
+我们将在第 2 章中详细讨论命名上下文和日志命令。
 
-如果其他所有方法都失败了，我们需要使用重型武器，那么总是有跟踪模式，它会打印每个执行的命令及其文件名、调用它的行号以及传递的参数列表。您可以按以下方式启用它：
+如果其他所有方法都失败了，就需要使用重型武器——跟踪模式，它会打印每个执行的命令及其文件名、调用它的行号，以及传递的参数列表。可以按以下方式启用：
 
 \begin{shell}
 cmake --trace
 \end{shell}
 
-正如您所想象的，它不建议日常使用，因为输出非常长。
+不建议日常使用，因为输出非常长。
 
 \mySamllsubsection{预设配置}
 
-有许多选项可供用户指定以从您的项目生成构建树。当涉及到构建树路径、生成器、缓存和环境变量时，很容易感到困惑或遗漏某些细节。开发人员可以通过提供一个 CMakePresets.json 文件来简化用户与项目的交互方式，并在此文件中指定一些默认设置。
+有许多选项可供用户指定，以从您的项目生成构建树。当涉及到构建树路径、生成器、缓存和环境变量时，很容易感到困惑或遗漏某些细节。开发人员可以通过提供一个 CMakePresets.json 文件来简化用户与项目的交互方式，并在此文件中指定一些默认设置。
 
 要列出所有可用的预设，请执行以下命令：
 
@@ -274,17 +276,17 @@ cmake --trace
 cmake --list-presets
 \end{shell}
 
-您可以使用其中一个可用的预设，如下所示：
+可以使用其中一个可用的预设：
 
 \begin{shell}
 cmake --preset=<preset> -S <source> -B <build tree>
 \end{shell}
 
-要了解更多信息，请参阅本章的“导航项目文件”部分以及第 16 章“编写 CMake 预设”。
+要了解更多信息，请参阅本章的“项目文件”部分，以及第 16 章的内容。
 
 \mySamllsubsection{清理构建树}
 
-有时我们可能需要删除生成的文件。这可能是由于构建之间环境发生了一些变化，或者只是为了确保我们从头开始工作。我们可以手动删除构建树目录，或者只需在命令行中添加 -{}-fresh 参数：
+有时可能需要删除生成的文件。这可能是由于构建之间环境发生了一些变化，或者只是为了确保从头开始工作。我们可以手动删除构建树目录，或在命令行中添加 -{}-fresh 参数：
 
 \begin{shell}
 cmake --fresh -S <source tree> -B <build tree>
@@ -294,10 +296,10 @@ CMake 将以系统无关的方式删除 CMakeCache.txt 和 CMakeFiles/ 文件夹
 
 \mySamllsection{构建项目}
 
-生成构建树之后，我们就可以进行项目的构建操作了。CMake 不仅知道如何为许多不同的构建工具生成输入文件，还可以根据项目需求为我们运行这些工具并提供适当的参数。
+生成构建树之后，就可以进行项目的构建操作了。CMake 不仅知道如何为许多不同的构建工具生成输入文件，还可以根据项目需求为运行这些工具，并提供适当的参数。
 
 \begin{myNotic}{避免直接调用 make}
-许多在线资源建议在生成阶段后直接通过 make 命令运行 GNU Make。因为 GNU Make 是 Linux 和 macOS 的默认生成器，所以这个建议可以奏效。然而，建议使用本节描述的方法，因为它不依赖于特定的生成器，并且在所有平台上都得到官方支持。因此，您无需担心应用程序每个用户的精确环境。
+许多在线资料建议在生成阶段后，直接通过 make 命令运行 GNU Make。因为 GNU Make 是 Linux 和 macOS 的默认生成器，所以这个建议可以奏效。然而，建议使用本节描述的方法，其不依赖于特定的生成器，并且在所有平台上都得到官方支持。因此，无需担心应用程序每个用户的精确环境。
 \end{myNotic}
 
 构建模式的语法如下：
@@ -306,27 +308,27 @@ CMake 将以系统无关的方式删除 CMakeCache.txt 和 CMakeFiles/ 文件夹
 cmake --build <build tree> [<options>] [-- <build-tool-options>]
 \end{shell}
 
-大多数情况下，只需要提供最基本的参数即可成功构建：
+大多数情况下，只需要提供最基本的参数即可构建：
 
 \begin{shell}
 cmake --build <build tree>
 \end{shell}
 
-唯一必需的参数是生成的构建树的路径。这与生成阶段中使用 -B 参数传递的路径相同。
+唯一必需的参数是生成的构建树的路径，这与生成阶段中使用 -B 参数传递的路径相同。
 
-如果您需要为所选的本地构建工具提供特殊参数，可以在命令末尾的 -{}- 符号后传递它们：
+如果需要为所选的本地构建工具提供特殊参数，可以在命令末尾的 -{}- 符号后传递：
 
 \begin{shell}
 cmake --build <build tree> -- <build tool options>
 \end{shell}
 
-让我们看看还有哪些其他选项可用。
+看看还有哪些其他选项可用。
 
 \mySamllsubsection{运行并行构建}
 
-默认情况下，许多构建工具都会使用多个并发进程来利用现代处理器，并行编译源代码。构建工具了解项目依赖结构，因此可以同时处理满足依赖关系的任务以节省用户的时间。
+默认情况下，许多构建工具都会使用多个并发进程来利用现代处理器，并行编译源代码。构建工具了解项目依赖结构，可以同时处理满足依赖关系的任务，以节省用户的时间。
 
-如果您希望在多核机器上更快地构建（或为了调试而强制单线程构建），可以覆盖该设置。
+如果希望在多核机器上更快地构建（或为了调试而强制单线程构建），可以覆盖该设置。
 
 只需使用以下任一选项指定作业数量：
 
@@ -335,11 +337,11 @@ cmake --build <build tree> --parallel [<number of jobs>]
 cmake --build <build tree> -j [<number of jobs>]
 \end{shell}
 
-或者，您可以使用 CMAKE\_BUILD\_PARALLEL\_LEVEL 环境变量设置它。命令行选项将覆盖此变量。
+或者，可以使用 CMAKE\_BUILD\_PARALLEL\_LEVEL 环境变量进行设置。命令行选项将会覆盖此变量。
 
 \mySamllsubsection{选择要构建和清理的目标}
 
-每个项目由一个或多个称为目标的部分组成（我们将在本书第二部分讨论这些）。通常我们会想要构建所有可用的目标；但是偶尔，我们可能对跳过某些目标或明确构建被故意排除在正常构建之外的目标感兴趣。可以这样做：
+每个项目由一个或多个称为目标的部分组成（将在本书第二部分讨论这些）。通常会想要构建所有可用的目标；但是偶尔，可能对跳过某些目标或明确排除在正常构建之外的目标感兴趣：
 
 \begin{shell}
 cmake --build <build tree> --target <target1> --target <target2> …
@@ -349,25 +351,25 @@ cmake --build <build tree> --target <target1> --target <target2> …
 
 \mySamllsubsection{清理构建树}
 
-有一个特殊的不会正常构建的目标叫做 clean。构建它会产生特殊的效果，即从构建目录中移除所有产物，以便稍后可以从头开始创建。
+有一个特殊的目标叫做 clean。构建它会产生特殊的效果，即从构建目录中移除所有产物，以便稍后可以从头开始创建。
 
-您可以这样启动清理过程：
+可以这样启动清理过程：
 
 \begin{shell}
 cmake --build <build tree> -t clean
 \end{shell}
 
-另外，CMake 提供了一个方便的别名，如果您想先清理再执行正常的构建：
+另外，CMake 提供了一个方便的别名，如果想先清理再执行正常的构建：
 
 \begin{shell}
 cmake --build <build tree> --clean-first
 \end{shell}
 
-这个操作与“清理构建树”部分中提到的清理不同，因为它只影响目标产物而不影响其他任何东西（例如缓存）。
+这个操作与“清理构建树”部分中提到的清理不同，它只影响目标产物而不影响其他（例如缓存）。
 
 \mySamllsubsection{为多配置生成器配置构建类型}
 
-我们已经对生成器有了一定的了解：它们有不同的类型和功能。其中一些生成器能够在一个构建树中同时构建 Debug 和 Release 构建类型。支持此功能的生成器包括 Ninja Multi-Config、Xcode 和 Visual Studio。其他每个生成器都是单一配置生成器，它们需要为每种配置类型单独构建树。
+我们已经对生成器有了一定的了解：它们有不同的类型和功能。其中一些生成器能够在一个构建树中同时构建 Debug 和 Release 构建类型，支持此功能的生成器包括 Ninja Multi-Config、Xcode 和 Visual Studio。其他每个生成器都是单一配置生成器，需要为每种配置类型单独构建树。
 
 选择 Debug、Release、MinSizeRel 或 RelWithDebInfo 并指定如下：
 
@@ -379,7 +381,7 @@ cmake --build <build tree> --config <cfg>
 
 \mySamllsubsection{调试构建过程}
 
-当出现问题时，首先应该检查输出消息。然而，经验丰富的开发者知道始终打印所有细节会令人困惑，因此他们通常默认隐藏这些细节。当我们需要查看底层情况时，可以要求 CMake 提供更详细的日志：
+出现问题时，应该首先检查输出信息。然而，经验丰富的开发者知道，打印所有细节会令人困惑，所以通常默认隐藏这些细节。当需要查看底层情况时，可以要求 CMake 提供更详细的日志：
 
 \begin{shell}
 cmake --build <build tree> --verbose
@@ -390,7 +392,7 @@ cmake --build <build tree> -v
 
 \mySamllsection{安装项目}
 
-当构建产物完成后，用户可以将它们安装到系统中。通常这意味着将文件复制到正确的目录，安装库或运行 CMake 脚本中的自定义安装逻辑。
+当构建产物完成后，用户可以将它们安装到系统中。这意味着将文件复制到正确的目录，安装库或运行 CMake 脚本中的自定义安装逻辑。
 
 安装模式的语法如下：
 
@@ -404,37 +406,29 @@ cmake --install <build tree> [<options>]
 cmake --install <build tree>
 \end{shell}
 
-安装动作也有许多额外的选项。让我们来看看它们能做什么。
+安装动作也有许多选项。
 
 \mySamllsubsection{选择安装目录}
 
-我们可以使用自选的前缀来预置安装路径（例如，当我们对某些目录的写入权限有限时）。例如，如果 /usr/local 路径前缀为 /home/user，则变为 /home/user/usr/local。
+可以使用自选的前缀来预置安装路径（当对某些目录的写入权限有限时）。例如，如果 /usr/local 路径前缀为 /home/user，则变为 /home/user/usr/local。
 
-该选项的签名如下：
-
-\begin{shell}
-cmake --install <build tree> --install-prefix <prefix>
-\end{shell}
-
-如果您使用的是 CMake 3.21 或更早版本，则必须使用不太直观的选项：
+命令如下所示：
 
 \begin{shell}
 cmake --install <build tree> --prefix <prefix>
 \end{shell}
 
-请注意，此选项在 Windows 上不起作用，因为 Windows 上的路径通常以驱动器字母开头。
+\mySamllsubsection{多配置生成器}
 
-\mySamllsubsection{多配置生成器的安装}
-
-就像在构建阶段一样，我们可以指定用于安装的构建类型（更多详情请参阅“构建项目”部分）。可用类型包括 Debug、Release、MinSizeRel 和 RelWithDebInfo。签名如下：
+就像在构建阶段一样，可以指定用于安装的构建类型（更多详情请参阅“构建项目”部分）。可用类型包括 Debug、Release、MinSizeRel 和 RelWithDebInfo：
 
 \begin{shell}
 cmake --install <build tree> --config <cfg>
 \end{shell}
 
-\mySamllsubsection{选择要安装的组件}
+\mySamllsubsection{选择组件}
 
-作为开发者，您可能会选择将项目拆分为可以独立安装的组件。我们将在第 14 章“安装和打包”中更详细地讨论组件的概念。现在，我们假设它们代表一组不需要在所有情况下使用的产物。这可能类似于 application、docs 和 extra-tools。
+作为开发者，可能会选择将项目拆分为可以独立安装的组件。现在，假设有一组不需要在所有情况下使用的产物。这可能类似于 application、docs 和 extra-tools。
 
 要安装单个组件，使用以下选项：
 
@@ -442,20 +436,18 @@ cmake --install <build tree> --config <cfg>
 cmake --install <build tree> --component <component>
 \end{shell}
 
-\mySamllsubsection{设置文件权限}
+\mySamllsubsection{设置权限}
 
-如果安装在类 Unix 平台上，您可以使用以下选项指定安装目录的默认权限，格式为 u=rwx,g=rx,o=rx：
+如果安装在类 Unix 平台上，可以使用以下选项指定安装目录的默认权限，格式为 u=rwx,g=rx,o=rx：
 
 \begin{shell}
 cmake --install <build tree>
       --default-directory-permissions <permissions>
 \end{shell}
 
-\mySamllsubsection{调试安装过程}
+\mySamllsubsection{调试}
 
-与构建阶段类似，我们也可以选择查看安装阶段的详细输出。
-
-为此，请使用以下任一命令：
+与构建阶段类似，也可以选择查看安装阶段的详细输出：
 
 \begin{shell}
 cmake --install <build tree> --verbose
@@ -464,16 +456,16 @@ cmake --install <build tree> -v
 
 如果设置了 VERBOSE 环境变量，也能达到同样的效果。
 
-\mySamllsection{运行脚本}
+\mySamllsection{执行脚本}
 
-CMake 项目是使用 CMake 自定义语言配置的。它是跨平台的并且相当强大。既然已经有了这样的语言，为什么不将其用于其他任务呢？当然，CMake 可以运行独立的脚本（有关更多信息，请参阅“发现脚本和模块”部分），如下所示：
+项目使用 CMake 自定义语言配置，跨平台并且相当强大。既然已经有了这样的语言，为什么不将其用于其他任务呢？当然，CMake 可以运行独立的脚本，如下所示：
 
 \begin{shell}
 cmake [{-D <var>=<value>}...] -P <cmake script file>
       [-- <unparsed options>...]
 \end{shell}
 
-运行此类脚本不会执行任何配置或生成阶段，也不会影响缓存。
+运行此类脚本不会进行配置或生成，也不会影响缓存。
 
 有两种方法可以将值传递给此脚本：
 
@@ -487,35 +479,35 @@ cmake [{-D <var>=<value>}...] -P <cmake script file>
 
 CMake将为传递给脚本的所有参数(包括-{}-)创建CMAKE\_ARGV<n>变量。
 
-\mySamllsection{运行命令行工具}
+\mySamllsection{命令行工具}
 
 少数情况下，我们需要以平台无关的方式运行单个命令——例如复制文件或计算校验和。并非所有的平台都完全相同，因此并非所有命令在每个系统中都可用（或者它们有不同的名称）。
 
-CMake 提供了一种模式，在这种模式下，大多数常见命令都可以跨平台地以相同方式执行。其语法如下：
+CMake 提供了一种模式，大多数常见命令都可以跨平台地以相同方式执行。其语法如下：
 
 \begin{shell}
 cmake -E <command> [<options>]
 \end{shell}
 
-由于这种特定模式的应用相对有限，我们不会深入介绍。但是，如果您对该细节感兴趣，我建议您通过运行 cmake -E 来列出所有可用的命令。为了让您快速了解提供的内容，CMake 3.26 支持以下命令： capabilities, cat, chdir, compare\_files, copy, copy\_directory, copy\_directory\_if\_different, copy\_if\_different, echo, echo\_append, env, environment, make\_directory, md5sum, sha1sum, sha224sum, sha256sum, sha384sum, sha512sum, remove, remove\_directory, rename, rm, sleep, tar, time, touch, touch\_nocreate, create\_symlink, create\_hardlink, true 和 false。
+由于这种特定模式的应用相对有限，我们不会深入介绍。但是，如果对此感兴趣，我建议您通过运行 cmake -E 来列出所有可用的命令。为了快速了解提供的内容，CMake 3.26 支持以下命令： capabilities, cat, chdir, compare\_files, copy, copy\_directory, copy\_directory\_if\_different, copy\_if\_different, echo, echo\_append, env, environment, make\_directory, md5sum, sha1sum, sha224sum, sha256sum, sha384sum, sha512sum, remove, remove\_directory, rename, rm, sleep, tar, time, touch, touch\_nocreate, create\_symlink, create\_hardlink, true 和 false。
 
-如果缺少您想要使用的命令或您需要更复杂的行为，可以考虑将它封装在脚本中，并在 -P 模式下运行。
+如果缺少想要使用的命令，或需要更复杂的行为，可以考虑将它封装在脚本中，使用 -P 运行。
 
-\mySamllsection{运行工作流预设}
+\mySamllsection{工作流预设}
 
-我们在“它是如何工作的？”部分中提到，使用 CMake 构建项目分为三个阶段：配置、生成和构建。此外，我们还可以使用 CMake 运行自动化测试甚至创建可重分配的包。通常，用户需要通过命令行单独手动执行每一个步骤。但是，高级项目可以指定工作流预设，将多个步骤捆绑成一个单一的动作，只需一个命令即可执行。目前，我们只需知道用户可以通过运行以下命令获取可用预设的列表：
+使用 CMake 构建项目分为三个阶段：配置、生成和构建。此外，还可以使用 CMake 运行自动化测试，甚至创建可重分配的包。通常，用户需要通过命令行单独手动执行每一个步骤。但是，高级项目可以指定工作流预设，将多个步骤捆绑成单一动作，只需一个命令即可执行。目前，只需知道用户可以通过运行以下命令，获取可用预设的列表：
 
 \begin{shell}
 cmake ––workflow --list-presets
 \end{shell}
 
-他们可以执行一个工作流预设，如下所示：
+可以执行一个工作流预设：
 
 \begin{shell}
 cmake --workflow --preset <name>
 \end{shell}
 
-这将在第 16 章“编写 CMake 预设”中详细介绍。
+这将在第 16 章中详细介绍。
 
 \mySamllsection{获取帮助}
 
@@ -527,13 +519,13 @@ CMake 提供了广泛的帮助信息，可以通过其命令行访问。
 cmake --help
 \end{shell}
 
-这将打印出一系列可能的主题列表，以深入了解，并解释需要向命令添加哪些参数以获取更多帮助。
+这将打输出一系列主题列表，以深入了解，并解释需要向命令添加哪些参数，以获取更多帮助。
 
-\mySubsubsection{1.4.2}{CTest 命令行}
+\mySubsubsection{1.4.2}{CTest}
 
-为了生产高质量的代码并维护其质量，自动化测试是非常重要的。CMake 套件包含了一个专门用于此目的的命令行工具 CTest。它旨在标准化测试的执行和报告方式。作为 CMake 用户，您不需要了解特定项目测试的详细信息：使用了哪个框架或如何运行它。CTest 提供了一个方便的接口来列出、过滤、随机化、重试和限制测试运行的时间。
+为了生产高质量的代码并维护其质量，自动化测试是非常重要的。CMake 套件包含了一个用于此目的的命令行工具 CTest，旨在标准化测试的执行和报告方式。作为 CMake 用户，不需要了解特定项目测试的详细信息：使用了哪个框架或如何运行。CTest 提供了一个方便的接口来列出、过滤、随机化、重试和限制测试运行的时间。
 
-要为已构建的项目运行测试，我们只需在生成的构建树中调用 ctest：
+要为已构建的项目运行测试，只需在生成的构建树中调用 ctest：
 
 \begin{shell}
 $ ctest
@@ -545,21 +537,21 @@ Guessing configuration Debug
 Total Test time (real) = 3.24 sec
 \end{shell}
 
-我们为这一主题专门编写了一整章：第 11 章“测试框架”。
+我们为这一主题专门编写了一整章：第 11 章。
 
-\mySubsubsection{1.4.3}{CPack 命令行}
+\mySubsubsection{1.4.3}{CPack}
 
 构建并测试完我们优秀的软件后，我们就准备将其分享给全世界。少数高级用户可以完全接受源代码，但绝大多数用户出于方便和节省时间的原因使用预编译的二进制文件。
 
-CMake 在这方面并没有让您束手无策；它自带了一系列工具。CPack 是一个工具，它可以为各种平台创建可重分配的包：压缩归档文件、可执行安装程序、向导、NuGet 包、macOS 应用程序包、DMG 包、RPM 包等。
+CMake 自带了一系列工具。CPack 是一个工具，可以为各种平台创建可重分配的包：压缩归档文件、可执行安装程序、向导、NuGet 包、macOS 应用程序包、DMG 包、RPM 包等。
 
-CPack 的工作方式与 CMake 非常相似：它使用 CMake 语言进行配置，并提供了许多包生成器供选择（不要与 CMake 构建系统生成器混淆）。
+CPack 的工作方式与 CMake 非常相似：使用 CMake 语言进行配置，并提供了许多包生成器供选择（不要与 CMake 构建系统生成器混淆）。
 
-我们将在第 14 章“安装和打包”中详细介绍这个工具，因为这个工具是为成熟的 CMake 项目设计的。
+这个工具为成熟的 CMake 项目设计，我们将在第 14 章中详细介绍这个工具。
 
 \mySubsubsection{1.4.4}{CMake GUI}
 
-Windows 版本的 CMake 配备了一个图形用户界面（GUI），用于配置先前准备好的项目的构建过程。对于类 Unix 平台，有一个使用 Qt 库构建的版本。Ubuntu 通过 cmake-qt-gui 包提供它。
+Windows 版本的 CMake 配备了一个图形用户界面（GUI），用于配置先前准备好的项目的构建过程。对于类 Unix 平台，有一个使用 Qt 库构建的版本。Ubuntu 通过 cmake-qt-gui 包获取。
 
 要访问 CMake GUI，运行 cmake-gui 可执行文件：
 
@@ -568,16 +560,16 @@ Windows 版本的 CMake 配备了一个图形用户界面（GUI），用于配�
 GUI 应用程序为您的应用程序用户提供了便利：对于那些不熟悉命令行并更喜欢图形界面的人来说，它很有用。
 
 \begin{myNotic}{推荐使用命令行工具}
-我肯定会推荐 GUI 给最终用户，但对于像您这样的程序员，我建议避免任何需要每次构建程序时点击表单的手动阻塞步骤。这对于成熟的项目尤其有利，因为整个构建过程可以完全无需用户交互就能执行。
+我肯定会推荐 GUI 给最终用户，但对于各位开发者，我建议避免手动阻塞步骤。这对于成熟的项目尤其有利，因为整个构建过程可以完全无需交互就能执行。
 \end{myNotic}
 
-\mySubsubsection{1.4.5}{CCMake 命令行}
+\mySubsubsection{1.4.5}{ccmake}
 
-ccmake 可执行文件是在类 Unix 平台上的 CMake 的交互式文本用户界面（在 Windows 上不可用，除非显式构建）。我在这里提一下，这样当您看到它时就知道它是什么（图 1.4，但就像 GUI 一样，开发人员直接编辑 CMakeCache.txt 文件会更有益。
+ccmake 可执行文件是在类 Unix 平台上的 CMake 的交互式文本用户界面（在 Windows 上不可用，除非显式构建）（图 1.4），像 GUI 一样。
 
 \myGraphic{1.0}{content/chapter1/images/4.png}{图 1.4：ccmake 中的配置阶段}
 
-解决了这些问题后，我们已经完成了对 CMake 套件基本命令行介绍。现在是时候探索典型 CMake 项目的结构了。
+了解了这些之后，我们已经完成了对 CMake 套件基本命令行介绍。现在是时候探索 CMake 项目的结构了。
 
 
 

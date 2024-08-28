@@ -1,15 +1,15 @@
-CMake 主要是专注于构建项目以产生其他系统（如 CI/CD 管道和测试平台，或部署到机器上或存储在工件仓库中）所消耗的工件。然而，有两种其他概念也使用 CMake 语言：脚本和模块。让我们解释它们是什么以及它们之间的区别。
+CMake 主要是专注于构建项目以产生其他系统（如 CI/CD 和测试平台，或部署到机器上或存储在工件仓库中）所消耗的工件。然而，有两种其他概念也使用 CMake 语言：脚本和模块。让我们介绍一下它们是什么，以及它们之间的区别。
 
 \mySubsubsection{1.6.1}{脚本}
 
 
 CMake 提供了一种与平台无关的编程语言，并附带了许多有用的命令。用这种语言编写的脚本可以与更大的项目捆绑在一起，也可以完全独立。
 
-将其视为一种一致的跨平台工作方式。通常，为了执行任务，您需要为 Linux 创建一个单独的 Bash 脚本，为 Windows 创建单独的批处理文件或 PowerShell 脚本，等等。CMake 抽象了这些，使您可以使用一个文件在所有平台上正常工作。当然，您可以使用 Python、Perl 或 Ruby 等外部工具的脚本，但这会增加依赖性，并增加您的 C/C++ 项目的复杂性。既然大多数时候您可以使用更简单的东西来完成工作，为什么要引入另一种语言呢？使用 CMake！
+将其视为一种一致的跨平台工作方式。通常，为了执行任务，需要为 Linux 创建一个单独的 Bash 脚本，为 Windows 创建单独的批处理文件或 PowerShell 脚本等。CMake 抽象了这些，可以使用一个文件在所有平台上正常工作。当然，可以使用 Python、Perl 或 Ruby 等外部工具的脚本，但这会增加依赖性，并增加 C/C++ 项目的复杂性。既然大多数时候可以使用更简单的东西来完成工作，为什么要引入另一种语言呢？使用 CMake！
 
-我们从“掌握命令行”部分已经了解到，我们可以使用 -P 选项执行脚本：\textit{cmake -P 脚本.cmake}。
+可以使用 -P 选项执行脚本：\textit{cmake -P 脚本.cmake}。
 
-但我们想要使用的脚本文件的实际要求是什么呢？并不多：脚本可以如您所愿地复杂，或者只是一个空文件。不过，仍然建议在每一个脚本的开头调用 cmake\_minimum\_required() 命令。这个命令告诉 CMake 应该对这个项目后续的命令应用哪些策略（更多内容请参见第 4 章，设置您的第一个 CMake 项目）。
+但使用脚本文件的实际要求是什么呢？并不多：脚本可以很复杂，或者只是一个空文件。不过，仍然建议在每一个脚本的开头调用 cmake\_minimum\_required() 命令，以告诉 CMake 应该对这个项目后续的命令应用哪些策略。
 
 以下是一个简单脚本的例子：
 
@@ -22,15 +22,15 @@ message("Hello world")
 file(WRITE Hello.txt "I am writing to a file")
 \end{cmake}
 
-在运行脚本时，CMake 不会执行任何通常的阶段（如配置或生成），也不会使用缓存，因为在脚本中没有源代码树或构建树的概念。这意味着在脚本模式下，项目特定的 CMake 命令不可用/不可使用。就是这样。愉快的脚本编写！
+运行脚本时，CMake 不会执行常规阶段（如配置或生成），也不会使用缓存，脚本中没有源代码树或构建树的概念。所以，在脚本模式下，项目特定的 CMake 命令不可用/不可使用。
 
 \mySubsubsection{1.6.2}{工具模块}
 
 CMake 项目可以使用外部模块来增强其功能。模块是用 CMake 语言编写的，包含宏定义、变量和执行各种功能的命令。它们从相当复杂的脚本（如 CPack 和 CTest 提供的脚本）到相对简单的脚本，如 AddFileDependencies 或 TestBigEndian。
 
-CMake 发行版打包了超过 80 个不同的实用模块。如果这还不够，您可以通过浏览精选列表（如 \url{https://github.com/onqtam/awesome-cmake}）从互联网上下载更多，或者从头开始编写自己的模块。
+CMake 发行版打包了超过 80 个不同的实用模块。如果这还不够，可以通过浏览精选列表（如 \url{https://github.com/onqtam/awesome-cmake}）从互联网上下载更多，或者自己编写模块。
 
-要使用实用模块，我们需要调用 include() 命令。以下是一个展示这一操作的项目示例：
+要使用工具模块，需要 include() 命令。以下是展示这一操作的项目示例：
 
 \filename{ch01/03-module/CMakeLists。txt}
 
@@ -40,21 +40,21 @@ project(ModuleExample)
 include (TestBigEndian)
 test_big_endian(IS_BIG_ENDIAN)
 if(IS_BIG_ENDIAN)
-message("BIG_ENDIAN")
+    message("BIG_ENDIAN")
 else()
-message("LITTLE_ENDIAN")
+    message("LITTLE_ENDIAN")
 endif()
 \end{cmake}
 
-我们将在它们与手头主题相关时学习哪些模块可用。如果您好奇，可以在 \url{https://cmake.org/cmake/help/latest/manual/cmake-modules.7.html} 找到打包模块的完整列表。
+我们将在它们与主题相关时，可以了解哪些模块可用。如果非常好奇，可以在 \url{https://cmake.org/cmake/help/latest/manual/cmake-modules.7.html} 找到打包模块的完整列表。
 
 \mySubsubsection{1.6.3}{Find-模块}
 
-在“包定义文件”部分，我提到了 CMake 有一种机制来查找属于不支持 CMake 且不提供 CMake 包配置文件的 external 依赖项的文件。这就是 Find-模块的作用。CMake 提供了超过 150 个 Find-模块，能够定位在系统上安装的这些包。与实用模块一样，网上还有更多的 Find-模块可用。作为最后的手段，您总是可以自己编写。
+在“包定义文件”部分，我提到了 CMake 有一种机制来查找属于不支持 CMake ，且不提供 CMake 包配置文件的 external 依赖项的文件。这就是 Find-模块的作用。CMake 提供了超过 150 个 Find-模块，能够定位在系统上安装的这些包。与实用模块一样，网上还有更多的 Find-模块可用。
 
-您可以通过调用 find\_package() 命令并提供相关包的名称来使用它们。这样的 Find-模块将玩一个捉迷藏游戏，并检查它所寻找的软件的所有已知位置。如果找到了文件，将定义包含其路径的变量（如该模块手册中所述）。现在，CMake 可以针对该依赖项进行构建。
+可以通过调用 find\_package() 命令，并提供相关包的名称进行使用。这样的 Find-模块将玩一个捉迷藏游戏，并检查它所寻找的软件的所有已知位置。如果找到了文件，将定义包含其路径的变量（如该模块手册中所述）。现在，CMake 可以针对该依赖项进行构建。
 
-例如，FindCURL 模块搜索流行的客户端 URL 库，并定义以下变量：CURL\_FOUND, CURL\_INCLUDE\_DIRS, CURL\_LIBRARIES, 和 CURL\_VERSION\_STRING。 我们将在第 9 章，管理 CMake 中的依赖项中更深入地介绍 Find-模块。
+例如，FindCURL 模块搜索流行的客户端 URL 库，并定义以下变量：CURL\_FOUND, CURL\_INCLUDE\_DIRS, CURL\_LIBRARIES, 和 CURL\_VERSION\_STRING。
 
 
 

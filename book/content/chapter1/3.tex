@@ -1,15 +1,15 @@
 
-CMake 是一个跨平台的、开源的软件，用 C++ 编写。这意味着你可以自己编译它；然而，最有可能的情况是你不需要这样做。这是因为可以从官方网站 \url{https://cmake.org/download/} 下载预编译的二进制文件。
+CMake 是一个跨平台的、开源的软件，用 C++ 编写。我们可以自己编译它；然而，最好不要这样做。可以从官方网站 \url{https://cmake.org/download/} 下载预编译的二进制文件。
 
-基于 Unix 的系统可以直接从命令行提供准备好的可安装包。
+基于 Unix 的系统可以直接从命令行提供准备好的安装包。
 
 \begin{myNotic}{Note}
-请记住，CMake 并不包含编译器。如果你的系统还没有安装它们，在使用 CMake 之前你需要提供它们。确保将它们的执行文件路径添加到 PATH 环境变量中，这样 CMake 才能找到它们。
+CMake 并不包含编译器。如果系统还没有安装编译器，在使用 CMake 之前需要进行安装。确保将它们的执行文件路径添加到 PATH 环境变量中，这样 CMake 才能找到。
 
-为了避免在学习本书时遇到工具和依赖问题，我建议通过第一种安装方法进行实践：Docker。在现实世界的场景中，你当然会想要使用本地的版本，除非你最初就在虚拟化环境中工作。
+为了避免在学习本书时遇到工具和依赖问题，我建议通过第一种安装方法进行实践：Docker。在现实世界的场景中，你当然会想要使用本地的版本，除非你最初就在虚拟化的环境中。
 \end{myNotic}
 
-让我们来看看 CMake 可以使用的不同环境。
+来看看 CMake 可以使用的环境。
 
 \mySubsubsection{1.3.1}{Docker}
 
@@ -19,19 +19,19 @@ Docker (\url{https://www.docker.com/}) 是一个跨平台的工具，提供操�
 
 Docker 平台有一个公共的容器镜像仓库，\url{https://registry.hub.docker.com/}，提供数百万个现成的镜像。
 
-为了方便起见，我发布了两个 Docker 仓库：
+方便起见，我发布了两个 Docker 镜像：
 
 \begin{itemize}
 \item
-swidzinski/cmake2:base: 一个基于 Ubuntu 的镜像，包含构建时所需的精心挑选的工具和依赖项
+swidzinski/cmake2:base: 基于 Ubuntu 的镜像，包含构建时所需的精心挑选的工具和依赖项
 
 \item
 swidzinski/cmake2:examples: 基于上述工具链的镜像，包含本书中的所有项目和示例
 \end{itemize}
 
-第一个选项是为那些只想有一个干净的镜像来构建自己项目的读者准备的，第二个选项是为我们在章节中进行示例实践而准备的。
+第一个选项，是为那些想有一个干净的镜像来构建项目的读者准备，第二个选项是为我们在章节中进行示例实践而准备。
 
-你可以按照官方文档中的说明安装 Docker（请参考 docs.docker.com/get-docker）。然后，在终端中执行以下命令来下载镜像并启动容器：
+可以按照官方文档中的说明安装 Docker（请参考 docs.docker.com/get-docker）。然后，在终端中执行以下命令来下载镜像，并启动容器：
 
 \begin{shell}
 $ docker pull swidzinski/cmake2:examples
@@ -45,25 +45,27 @@ root@b55e271a85b2:root@b55e271a85b2:#
 devuser/examples/examples/ch<N>/<M>-<title>
 \end{shell}
 
-在这里，<N>和<M>分别是零填充的章节和示例编号（例如 01, 08, 和 12）
+<N>和<M>分别是零填充的章节和示例编号（例如 01, 08, 和 12）
 
 \mySubsubsection{1.3.2}{Windows}
 
-在 Windows 上安装非常简单——只需从官方网站下载适用于 32 位或 64 位的版本即可。您还可以选择适用于 Windows Installer 的便携式 ZIP 或 MSI 包装包，它会将 CMake 的 bin 目录添加到 PATH 环境变量中（图 1.2），这样一来您就可以在任何目录中使用它而不会出现此类错误：
+Windows 上安装CMake非常简单——只需从官方网站下载适用于 32 位或 64 位的版本即可。还可以选择适用于 Windows Installer 的便携式 ZIP 或 MSI 包装包，它会将 CMake 的 bin 目录添加到 PATH 环境变量中（图 1.2），这样一来就可以在任何目录中使用它，而不会出现此类错误：
 
-\textit{cmake}未被识别为内部或外部命令，也不是可运行的程序或批处理文件。
+\begin{shell}
+'cmake' 不是内部或外部命令，也不是可运行的程序或批处理文件。
+\end{shell}
 
-如果你选择 ZIP 包，你需要手动进行。MSI 安装程序带有方便的 GUI：
+如果选择 ZIP 包，需要手动安装。MSI 安装程序带有方便的 GUI：
 
-\myGraphic{0.8}{content/chapter1/images/2.png}{图 1.2：安装向导可以为你的环境变量设置 PATH}
+\myGraphic{0.8}{content/chapter1/images/2.png}{图 1.2：安装向导可以设置环境变量 PATH}
 
-正如我之前提到的，这是一个开源软件，所以你可以自己构建 CMake。然而，在 Windows 上，你首先需要在你的系统上获取 CMake 的二进制副本。这种情况被 CMake 贡献者用来生成新版本。
+这是一个开源软件，所以可以自己构建 CMake。然而，在 Windows 上，首先需要在系统上获取 CMake 的二进制文件，从而生成新版本的CMake。
 
-Windows 平台与其他平台没有什么不同，它也需要一个构建工具来完成由 CMake 开始构建过程。这里的一个流行选择是 Visual Studio IDE，它附带了 C++ 编译器。社区版可以从 Microsoft 的网站免费获得：\url{https://visualstudio.microsoft.com/downloads/}.
+Windows 平台与其他平台没有什么不同，也需要一个构建工具来完成由 CMake 开始构建过程。这里的一个流行选择是 Visual Studio IDE，它附带了 C++ 编译器。社区版可以从 Microsoft 的网站免费获得：\url{https://visualstudio.microsoft.com/downloads/}.
 
 \mySubsubsection{1.3.3}{Linux}
 
-在 Linux 上安装 CMake 的过程与安装任何其他流行软件包相同：从命令行调用你的包管理器。包仓库通常会更新到 CMake 的最新版本，但通常不是最新版本。如果你满意于此，并且使用像 Debian 或 Ubuntu 这样的发行版，最简单的方法就是直接安装适当的包：
+Linux 上安装 CMake 的过程与安装其他软件包相同：命令行调用包管理器。包仓库通常会更新到 CMake 的最新版本，但通常不是最新版本。如果满意于此，并且使用像 Debian 或 Ubuntu 这样的发行版，最简单的方法就是直接安装适当的包：
 
 \begin{shell}
 $ sudo apt-get install cmake
@@ -76,12 +78,12 @@ $ yum install cmake
 \end{shell}
 
 \begin{myTip}{Tip}
-请注意，当安装包时，你的包管理器将获取为你的操作系统配置的仓库中可用的最新版本。在许多情况下，包仓库不提供最新版本，而是提供经过时间考验的稳定版本，以确保可靠的工作。根据你的需求选择，但请注意，旧版本可能不包含本书中描述的所有功能。
+当安装包时，包管理器将获取为操作系统配置的仓库中可用的最新版本。在许多情况下，包仓库不提供最新版本，而是提供经过时间考验的稳定版本，以确保可靠的工作。根据需求选择，但旧版本可能不包含本书中描述的某些功能。
 \end{myTip}
 
-要获取最新版本，请参考官方 CMake 网站的下载部分。如果你知道当前版本号，你可以使用以下命令之一。
+要获取最新版本，请参考官方 CMake 网站的下载部分。如果知道当前版本号，可以使用以下命令。
 
-Linux x86\_64 的命令是：
+Linux x86\_64 的命令：
 
 \begin{shell}
 $ VER=3.26.0 && wget https://github.com/Kitware/CMake/releases/download/
@@ -89,7 +91,7 @@ v$VER/cmake-$VER-linux-x86_64.sh && chmod +x cmake-$VER-linux-x86_64.sh &&
 ./cmake-$VER-linux-x86_64.sh
 \end{shell}
 
-Linux AArch64 的命令是：
+Linux AArch64 的命令：
 
 \begin{shell}
 $ VER=3.26.0 && wget https://github.com/Kitware/CMake/releases/download/
@@ -97,33 +99,33 @@ v$VER/cmake-$VER-Linux-aarch64.sh && chmod +x cmake-$VER-Linux-aarch64.sh
 && ./cmake-$VER-Linux-aarch64.sh
 \end{shell}
 
-或者，查看从源代码构建部分，了解如何在您的平台上自行编译 CMake。
+或者，查看从源代码构建部分，了解如何相应的平台上自行编译 CMake。
 
 \mySubsubsection{1.3.4}{macOS}
 
-这个平台也得到了 CMake 开发者的强烈支持。最流行的安装方法是通过 MacPorts，使用以下命令：
+这个平台也得到了 CMake 开发者的强烈支持。最流行的安装方法是通过 MacPorts：
 
 \begin{shell}
 $ sudo port install cmake
 \end{shell}
 
-请注意，在撰写本文时，MacPorts 中可用的最新版本是 3.24.4。要获取最新版本，请安装 cmake-devel 包：
+撰写本文时，MacPorts 中可用的最新版本是 3.24.4。要获取最新版本，请安装 cmake-devel 包：
 
 \begin{shell}
 $ sudo port install cmake-devel
 \end{shell}
 
-或者，可以使用 Homebrew 包管理器：
+或者，使用 Homebrew 包管理器：
 
 \begin{shell}
 $ brew install cmake
 \end{shell}
 
-macOS 包管理器将涵盖所有必要步骤，但请注意，除非你从源代码构建，否则你可能无法获得最新版本。
+macOS 包管理器将涵盖所有必要步骤，除非从源代码构建，否则无法获得最新版本。
 
 \mySubsubsection{1.3.5}{从源代码构建}
 
-如果你使用其他平台，或者只是想体验尚未发布（或被你最喜欢的包仓库采用）的最新构建，请从官方网站下载源代码并自行编译：
+如果使用其他平台，或者只是想体验尚未发布（或被你最喜欢的包仓库采用）的最新构建，请从官方网站下载源代码并自行编译：
 
 \begin{shell}
 $ wget https://github.com/Kitware/CMake/releases/
@@ -135,9 +137,9 @@ $ make
 $ make install
 \end{shell}
 
-从源代码构建相对较慢且需要更多步骤。然而，没有其他方法可以自由选择 CMake 的任何版本。这对于系统包仓库中的包陈旧时特别有用：系统版本越旧，获得的更新就越少。
+从源代码构建相对较慢且需要更多步骤，没有其他方法可以自由选择 CMake 的版本。这对于系统包仓库中的包陈旧时特别有用：系统版本越旧，获得的更新就越少。
 
-现在我们已经安装了 CMake，让我们学习如何使用它！
+现在我们已经安装了 CMake，来看看怎么使用它吧！
 
 
 
