@@ -1,5 +1,7 @@
 
-CMake 提供了许多脚本命令，允许您处理变量和环境。其中一些在附录中已经详细介绍了，例如 list()、string() 和 file()。其他如 find\_file()、find\_package() 和 find\_path()，更适合放在讨论它们各自主题的章节中。在本节中，我们将简要概述在大多数情况下都有用的常见命令：
+CMake 提供了许多脚本命令，允许处理变量和环境。其中一些在附录中已经进行了详细介绍，例如 ：list()、string() 和 file()。其他，如： find\_file()、find\_package() 和 find\_path()，更适合放在属于它们主题的章节中介绍。
+
+本节中，我们将简述一些常用命令：
 
 \begin{itemize}
 \item
@@ -18,33 +20,30 @@ file()
 execute\_process()
 \end{itemize}
 
-让我们开始吧。
-
 \mySubsubsection{2.6.1}{message()}
 
+message() 命令，将文本输出到标准输出，但其功能远不止于此。其有一个 MODE 参数，可以定义命令的行为，如下所示：message(<MODE> "text to print")。
 
-我们已经知道并喜爱我们可靠的 message() 命令，它将文本打印到标准输出。然而，它的功能远不止于此。通过提供一个 MODE 参数，您可以自定义命令的行为，如下所示：message(<MODE> "text to print")。
-
-可用的模式如下：
+可用的MODE如下所示：
 
 \begin{itemize}
 \item
 FATAL\_ERROR: 停止处理和生成。
 
 \item
-SEND\_ERROR: 继续处理但跳过生成。
+SEND\_ERROR: 继续处理，但跳过生成。
 
 \item
-WARNING:继续处理。
+WARNING: 继续处理。
 
 \item
-AUTHOR\_WARNING: CMake 警告。继续处理。
+AUTHOR\_WARNING: 输出警告，但继续处理。
 
 \item
-DEPRECATION: 如果启用了 CMAKE\_ERROR\_DEPRECATED 或 CMAKE\_WARN\_DEPRECATED 变量，则相应地工作。
+DEPRECATION: 如果启用了 CMAKE\_ERROR\_DEPRECATED 或 CMAKE\_WARN\_DEPRECATED，则输出相应地信息。
 
 \item
-NOTICE 或省略模式（默认）: 打印消息到 stderr 以吸引用户的注意。
+NOTICE 或省略模式（默认）: 输出消息到 stderr，以吸引使用者的注意。
 
 \item
 STATUS: 继续处理，推荐用于向用户显示的主要消息。
@@ -53,13 +52,13 @@ STATUS: 继续处理，推荐用于向用户显示的主要消息。
 VERBOSE: 继续处理，应用于更详细的信息，通常不是非常必要。
 
 \item
-DEBUG: 继续处理，应包含任何可能在项目出现问题时有帮助的细微细节。
+DEBUG: 继续处理，应包含项目出现问题时，对处理问题有帮助的详细信息。
 
 \item
-TRACE: 继续处理，建议在项目开发期间打印消息。通常，这类消息会在发布项目之前被移除。
+TRACE: 继续处理，建议在项目开发期间输出消息。通常，这类消息会在发布项目之前移除。
 \end{itemize}
 
-选择正确的模式需要额外的工作，但它可以通过基于严重性（自 3.21 版本起）给输出文本着色来节省调试时间，甚至在声明不可恢复的错误后停止执行：
+选择正确的模式需要花点心思，可以通过基于严重性（自 3.21 版本起）给输出文本着色来节省调试时间，甚至在声明不可恢复的错误后停止执行：
 
 \filename{ch02/10-useful/message\_error.cmake}
 
@@ -68,11 +67,11 @@ message(FATAL_ERROR "Stop processing")
 message("This won't be printed.")
 \end{cmake}
 
-消息将根据当前的日志级别（默认为 STATUS）打印。我们在上一章的调试和跟踪选项部分讨论了如何更改此设置。
+消息将根据当前的日志级别（默认为 STATUS）打印，在上一章的调试和跟踪选项部分讨论了如何更改此设置。
 
-在第 1 章《CMake 的第一步》中，我提到了使用 CMAKE\_MESSAGE\_CONTEXT 进行调试，现在是深入研究它的时候了。在此期间，我们获得了这个主题三个关键部分的见解：列表、作用域和函数。
+在第 1 章中，我提到了使用 CMAKE\_MESSAGE\_CONTEXT 进行调试，现在是深入研究它的时候了。在此期间，我们来了解了这个主题三个关键部分：列表、作用域和函数。
 
-在复杂的调试场景中，指出消息发生的上下文可能非常有用。考虑以下输出，其中在 foo 函数中打印的消息有适当的前缀：
+在复杂的调试场景中，指出消息发生的上下文会非常有用。考虑以下输出，其中在 foo 函数中打印的消息有适当的前缀：
 
 \begin{shell}
 $ cmake -P message_context.cmake --log-context
@@ -81,7 +80,7 @@ $ cmake -P message_context.cmake --log-context
 [top] After `foo`
 \end{shell}
 
-以下是它的工作原理：
+具体代码：
 
 \filename{ch02/10-useful/message\_context.cmake}
 
@@ -97,17 +96,17 @@ foo()
 message("After `foo`")
 \end{cmake}
 
-让我们来分解一下：
+来分解一下：
 
 \begin{enumerate}
 \item
-首先，我们将 top 追加到上下文跟踪变量 CMAKE\_MESSAGE\_CONTEXT，然后打印初始的“在 'foo' 之前”消息，匹配的前缀 [top] 将被添加到输出中。
+首先，将 top 追加到上下文跟踪变量 CMAKE\_MESSAGE\_CONTEXT，然后打印最初的“Before 'foo' ”，匹配的前缀 [top] 将添加到输出中。
 
 \item
-接下来，进入 foo() 函数时，我们在属于该函数的列表后追加一个名为 foo 的新上下文，并输出另一个消息，该消息在输出中显示扩展的 [top.foo] 前缀。
+接下来，进入 foo() 函数时，我们在属于该函数的列表后，追加一个名为 foo 的新上下文，并输出另一个消息，该消息在输出中显示扩展的 [top.foo] 前缀。
 
 \item
-最后，在函数执行完成后，我们打印“在 'foo' 之后”消息。消息以原始的 [foo] 作用域打印。为什么？因为变量作用域规则：更改的 CMAKE\_MESSAGE\_CONTEXT 变量只在函数作用域结束前有效，然后恢复为原始未更改的版本
+最后，在函数执行完成后，我们打印“After 'foo'”。消息以原始的 [foo] 作用域打印。为什么？因为变量作用域规则：更改的 CMAKE\_MESSAGE\_CONTEXT 变量只在函数作用域结束前有效，然后恢复为原始未更改的版本
 \end{enumerate}
 
 message() 的另一个技巧是向 CMAKE\_MESSAGE\_INDENT 列表添加缩进（与 CMAKE\_MESSAGE\_CONTEXT 完全相同的方式）：
@@ -119,7 +118,7 @@ foo()
 message("After `foo`")
 \end{cmake}
 
-然后，我们的脚本输出可以看起来更简单：
+然后，脚本输出看起来更简单：
 
 \begin{shell}
 Before `foo`
@@ -127,44 +126,58 @@ Before `foo`
 After `foo`
 \end{shell}
 
-由于CMake没有提供任何带有断点或其他工具的真正调试器，所以当事情没有完全按计划进行时，生成干净的日志消息的能力非常方便。
+由于CMake没有提供断点或其他调试工具，当事情没有按计划进行时，清晰的日志信息就显得尤为重要。
 
 \mySubsubsection{2.6.2}{include()}
 
-将代码分割成不同的文件以保持有序和分离是非常有用的。然后，我们可以通过调用 include() 从我们的父列表文件引用它们，如下所示：
+将代码分割成不同的文件，以保持有序和分离。然后，可以通过 include() 从父列表文件引用它们：
 
 \begin{shell}
 include(<file|module> [OPTIONAL] [RESULT_VARIABLE <var>])
 \end{shell}
 
-如果我们提供一个文件名（带有 .cmake 扩展名的路径），CMake 将尝试打开并执行它。
+如果提供一个文件名（带有 .cmake 扩展名的路径），CMake 将尝试打开并执行。
 
-请注意，不会创建嵌套的独立变量作用域，因此该文件中对变量的任何更改都会影响调用作用域。
+注意，这也不会创建独立的变量作用域，因此该文件中对变量的修改都会对调用作用域产生影响。
 
-如果文件不存在，CMake 将报错，除非我们使用 OPTIONAL 关键字指定它是可选的。当我们需要知道 include() 是否成功时，可以提供 RESULT\_VARIABLE 关键字以及变量的名称。在成功时，它将被填充为包含文件的完整路径，在失败时则为 NOTFOUND。
+如果文件不存在，CMake 将报错，除非使用 OPTIONAL 关键字指定相应文件为“可选的”。当需要知道 include() 是否成功时，可以提供 RESULT\_VARIABLE 关键字以及变量的名称。在成功时，它的内容为文件的完整路径；在失败时，则为 NOTFOUND。
 
-在脚本模式下运行时，任何相对路径都将从当前工作目录解析。要强制相对于脚本本身进行搜索，请提供绝对路径：
+使用脚本模式下运行时，相对路径都将以当前工作目录解析相对路径。要强制相对于脚本本身进行搜索，请提供绝对路径：
 
 \begin{cmake}
 include("${CMAKE_CURRENT_LIST_DIR}/<filename>.cmake")
 \end{cmake}
 
-如果我们不提供路径，但提供了模块的名称（不带 .cmake 或其他），CMake 将尝试找到一个模块并包含它。CMake 将在 CMAKE\_MODULE\_PATH 中搜索名为 <模块>.cmake 的文件，然后是在 CMake 模块目录中。
+如果不提供路径，但提供了模块的名称（不带 .cmake 或其他），CMake 将尝试找到一个模块并包含它。CMake 将在 CMAKE\_MODULE\_PATH 中搜索名为 <模块>.cmake 的文件，然后是在 CMake 模块目录中搜索。
 
-当 CMake 遍历源树并包含不同的列表文件时，将设置以下变量： CMAKE\_CURRENT\_LIST\_DIR, CMAKE\_CURRENT\_LIST\_FILE, CMAKE\_PARENT\_LIST\_FILE和CMAKE\_CURRENT\_LIST\_LINE。
+当 CMake 遍历源树，并包含了不同的列表文件时，将设置以下变量：
+
+\begin{itemize}
+\item
+CMAKE\_CURRENT\_LIST\_DIR
+
+\item
+CMAKE\_CURRENT\_LIST\_FILE
+
+\item
+CMAKE\_PARENT\_LIST\_FILE
+
+\item
+CMAKE\_CURRENT\_LIST\_LINE
+\end{itemize}
 
 \mySubsubsection{2.6.3}{include\_guard()}
 
-当我们包含具有副作用的文件时，我们可能希望限制它们，以便它们只被包含一次。这时 include\_guard([DIRECTORY|GLOBAL]) 就派上用场了。
+对于有些文件，我们只希望包含一次，这时 include\_guard([DIRECTORY|GLOBAL]) 就可以使用了。
 
-将 include\_guard() 放在包含文件的顶部。当 CMake 第一次遇到它时，它将在当前作用域中记录这一事实。如果文件再次被包含（可能是因为我们无法控制项目中的所有文件），它就不会再被进一步处理。
+将 include\_guard() 放在包含文件的顶部。当 CMake 第一次遇到它时，将在当前作用域中进行记录。如果文件再次包含，CMake就不会再对该文件进行处理了。
 
-如果我们希望防止在不会共享变量的不相关函数作用域中包含，我们应该提供 DIRECTORY 或 GLOBAL 参数。顾名思义，DIRECTORY 关键字将在当前目录及其以下应用保护，而 GLOBAL 关键字将把保护应用于整个构建。
+避免在隔离相关的作用域，应该提供 DIRECTORY 或 GLOBAL 参数。顾名思义，DIRECTORY 关键字将在当前目录及其子目录应用保护，而 GLOBAL 关键字将把保护应用于整个构建。
 
 
 \mySubsubsection{2.6.4}{file()}
 
-为了让您了解可以在 CMake 脚本中执行的操作，让我们快速看一下文件操作命令的最有用的变体：
+为了了解可以在 CMake 脚本中执行的操作，来了解一下文件操作命令：
 
 \begin{shell}
 file(READ <filename> <out-var> [...])
@@ -172,11 +185,11 @@ file({WRITE | APPEND} <filename> <content>...)
 file(DOWNLOAD <url> [<file>] [...])
 \end{shell}
 
-简而言之，file() 命令可以让您以系统无关的方式读取、写入和传输文件，以及与文件系统、文件锁、路径和存档等交互。有关更多详细信息，请参阅附录。
+简而言之，file() 命令可以以系统无关的方式读取、写入和传输文件，以及与文件系统、文件锁、路径和存档等交互。有关更多详细信息，请参阅附录。
 
 \mySubsubsection{2.6.5}{execute\_process()}
 
-在需要的时候，您将不得不求助于使用系统中的工具（毕竟，CMake 主要是一个构建系统生成器）。CMake 提供了一个命令以实现此目的：您可以使用 execute\_process() 来运行其他进程并收集它们的输出。这个命令非常适合脚本使用，也可以在项目中使用，但它仅在配置阶段有效。
+有时候，需要使用系统中的工具（毕竟，CMake 主要是一个构建系统生成器）。CMake 提供了一个命令以实现此目的：可以使用 execute\_process() 来运行其他进程，并收集输出。这个命令非常适合脚本使用，也可以在项目中使用，但它仅在配置阶段有效。
 
 以下是该命令的一般形式：
 
@@ -184,15 +197,15 @@ file(DOWNLOAD <url> [<file>] [...])
 execute_process(COMMAND <cmd1> [<arguments>]... [OPTIONS])
 \end{shell}
 
-CMake 将使用操作系统的 API 来创建一个子进程（因此，像 \&\&, || 和 > 这样的 shell 操作符将不起作用）。然而，您仍然可以通过多次提供 COMMAND 参数来链接命令，并将一个命令的输出传递给另一个。
+CMake 将使用操作系统的 API 来创建一个子进程（因此，像 \&\&, || 和 > 这样的 shell 操作符将不起作用），可以通过多次提供 COMMAND 参数来链接命令，并将一个命令的输出传递给另一个。
 
-可选地，您可以使用 TIMEOUT 参数来在进程未在所需限制内完成任务时终止该进程，并且可以根据需要设置 WORKING\_DIRECTORY 。
+可选地 TIMEOUT 参数，用来在进程未在所需限制内完成任务时终止该进程，并且可以根据需要设置 WORKING\_DIRECTORY 。
 
-所有任务的退出代码可以通过提供 RESULTS\_VARIABLE 参数来收集到一个列表中。如果您只对最后执行的命令的结果感兴趣，请使用单数形式：RESULT\_VARIABLE 。
+所有任务的退出代码可以通过提供 RESULTS\_VARIABLE 参数来收集到一个列表中。如果只对最后执行的命令的结果感兴趣，请使用单数形式：RESULT\_VARIABLE 。
 
-为了收集输出，CMake 提供了两个参数：OUTPUT\_VARIABLE 和 ERROR\_VARIABLE（它们的用法类似）。如果您希望合并 stdout 和 stderr，请为这两个参数使用相同的变量。
+为了收集输出，CMake 提供了两个参数：OUTPUT\_VARIABLE 和 ERROR\_VARIABLE（用法类似）。如果想合并 stdout 和 stderr，请为这两个参数使用相同的变量。
 
-请记住，当为其他用户编写项目时，您应该确保您计划使用的命令在您声称支持的平台上是可用的。
+当为其他用户编写项目时，应该确保计划使用的命令，在声明支持的平台上可用。
 
 
 

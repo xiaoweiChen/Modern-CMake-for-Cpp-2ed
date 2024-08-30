@@ -1,8 +1,8 @@
-CMake语言如果没有控制结构就不完整了！与其他所有内容一样，它们以命令的形式提供，并且分为三类：条件块、循环和命令定义。控制结构在脚本执行和项目构建系统生成期间执行。
+CMake语言要是没有控制结构就不完整了！其以命令的形式提供，并且分为三类：条件块、循环和命令定义。控制结构在脚本执行和项目构建系统生成期间执行。
 
 \mySubsubsection{2.5.1}{条件块}
 
-CMake支持的唯一条件块是朴素的if()命令。所有条件块都必须用endif()命令关闭，并且可以按照以下顺序有任意数量的elseif()命令和一个可选的else()命令：
+CMake支持的条件块是if()命令。所有条件块都必须用endif()命令关闭，并且可以按照以下顺序有任意数量的elseif()命令和一个可选的else()命令：
 
 \begin{shell}
 if(<condition>)
@@ -14,29 +14,29 @@ else() # optional block
 endif()
 \end{shell}
 
-与许多其他命令式语言一样，if()-endif()块控制哪些命令集将被执行：
+与许多其他命令式语言一样，if()-endif()块控制执行的命令集：
 
 \begin{itemize}
 \item
-如果if()命令中指定的<condition>表达式成立，将执行第一个部分。
+如果if()中指定的<condition>表达式成立，将执行第一个部分。
 
 \item
-否则，CMake将执行属于此块中第一个满足其条件的elseif()命令的部分中的命令。
+否则，CMake将执行属于此块中，第一个满足其条件的elseif()中的命令。
 
 \item
-如果没有这样的命令，CMake将检查是否提供了else()命令并执行代码该部分中的任何命令。
+如果没有这样的命令，CMake将检查是否提供了else()命令，并执行代码该部分中的命令。
 
 \item
 如果前面的条件都不满足，执行将在endif()命令之后继续。
 \end{itemize}
 
-请注意，在任何条件块中都没有创建局部变量作用域。
+注意，条件块中不存在局部作用域。
 
-提供的<condition>表达式根据非常简单的语法进行评估——让我们了解更多关于它的信息。
+提供的<condition>表达式，会根据非常简单的语法进行计算——让我们了解更多关于它的信息。
 
-\mySamllsection{条件命令的语法}
+\mySamllsection{语法}
 
-相同的语法适用于if()、elseif()和while()命令。
+if()、elseif()和while()命令的语法基本相同。
 
 \mySamllsubsection{逻辑运算符}
 
@@ -53,7 +53,7 @@ NOT <condition>
 <condition> OR <condition>
 \end{itemize}
 
-此外，条件的嵌套也是可能的，需要匹配的圆括号对(())。与所有体面的语言一样，CMake语言遵循求值顺序，并从最内层的括号开始：
+此外，嵌套条件可以，需要匹配的圆括号对(())。与所有体面的语言一样，CMake语言遵循求值顺序，并从最内层的括号开始：
 
 \begin{shell}
 (<condition>) AND (<condition> OR (<condition>))
@@ -61,7 +61,7 @@ NOT <condition>
 
 \mySamllsubsection{字符串和变量的求值}
 
-由于历史原因(因为变量引用(\$\{\})语法并不总是存在)，CMake将尝试计算未引用的参数，就好像它们是变量引用一样。换句话说，在条件中使用一个普通的变量名(例如，QUX)等于写\$\{QUX\}。这里有一个例子，也是一个陷阱:
+由于历史原因(变量引用(\$\{\})语法并不总是存在)，CMake尝试计算未引用的参数，就好像是变量引用一样。换句话说，在条件中使用一个普通的变量名(例如，QUX)等于\$\{QUX\}。这里有一个例子，也是一个陷阱:
 
 \begin{cmake}
 set(BAZ FALSE)
@@ -69,18 +69,18 @@ set(QUX "BAZ")
 if(${QUX})
 \end{cmake}
 
-这里的if()条件工作方式有些复杂——首先，它会将\$\{QUX\}求值为BAZ，这是一个已识别的变量，进而又被求值为一个包含五个字符的字符串，拼写为FALSE。字符串只有在等于以下常量之一时才被视为布尔真（这些比较不区分大小写）：ON、Y、YES、TRUE或非零数字。
+这里的if()条件工作方式有些复杂——首先，将\$\{QUX\}求值为BAZ，这是一个已识别的变量，进而解析为一个包含五个字符的字符串，拼写为FALSE。字符串只有在等于ON、Y、YES、TRUE或非零数字，才可视为真（这些比较不区分大小写）。
 
-这使我们得出结论，前面示例中的条件将求值为布尔假。
+所以，前面示例中的条件为假。
 
-然而，这里还有一个陷阱——如果一个条件的未加引号参数名为一个包含如BAR这样的值的变量，其求值会是什么？考虑以下代码示例：
+这里还有一个陷阱——如果一个条件的未加引号参数名，一个包含BAR这样的值的变量，那结果会是什么？看看以下代码示例：
 
 \begin{cmake}
 set(FOO BAR)
 if(FOO)
 \end{cmake}
 
-根据我们目前所说的，它将是假的，因为BAR字符串不符合求值为布尔真值的条件。不幸的是，情况并非如此，因为CMake在处理未加引号的变量引用时有一个例外。与加引号的参数不同，FOO不会求值为BAR以产生if(“BAR”)语句（这将是不正确的）。相反，CMake只有在以下情况下才会将if(FOO)求值为假（这些比较不区分大小写）：
+根据目前所知，条件将解析为假，因为BAR字符串不符合求值为真的条件。但情况并非如此，因为CMake在处理未加引号的变量引用时有一个例外。与加引号的参数不同，FOO不会求值为BAR，以生成if(“BAR”)语句（这将是不正确的）。相反，CMake只有在以下情况下，才会将if(FOO)计算为假：
 
 \begin{itemize}
 \item
@@ -96,13 +96,13 @@ OFF, NO, FALSE, N, IGNORE或 NOTFOUND
 零
 \end{itemize}
 
-因此，简单地请求一个未定义的变量将被求值为假：
+简单地判断一个未定义的变量，将为假：
 
 \begin{cmake}
 if (CORGE)
 \end{cmake}
 
-当变量事先定义后，情况就改变了，条件求值为真：
+当变量事先定义后，情况就改变了，条件计算为真：
 
 \begin{cmake}
 set(CORGE "A VALUE")
@@ -110,10 +110,10 @@ if (CORGE)
 \end{cmake}
 
 \begin{myNotic}{Note}
-如果你认为未加引号的if()参数的递归求值令人困惑，可以将变量引用用引号括起来：if(“\$\{CORGE\}”)。这将导致在提供的参数传递到if()命令之前对其进行求值，并且其行为将与字符串的求值一致。
+如果认为未加引号的if()参数的递归求值令人困惑，可以将变量引用用引号括起来：if(“\$\{CORGE\}”)。这将导致在提供的参数传递到if()命令之前对其进行求值，其行为与字符串一致。
 \end{myNotic}
 
-换句话说，CMake假定传递变量名给if()命令的用户是在询问该变量是否定义了不等于布尔假的值。为了明确检查变量是否已定义（忽略其值），我们可以使用以下方法：
+换句话说，CMake假定传递变量名给if()命令的用户，是在询问该变量是否定义了不等于“假”的值。为了明确检查变量是否已定义（忽略其值），可以使用以下方法：
 
 \begin{cmake}
 if(DEFINED <name>)
@@ -125,90 +125,89 @@ if(DEFINED ENV{<name>})
 
 支持以下操作符进行比较操作：
 
-EQUAL, LESS, LESS\_EQUAL, GREATER, 和 GREATER\_EQUAL
+EQUAL, LESS, LESS\_EQUAL, GREATER 和 GREATER\_EQUAL
 
-在其他语言中常见的比较操作符在 CMake 中不起作用：==, >, <, != 等等。
+其他语言中常见的比较操作符，在 CMake 中不起作用。
 
-它们可以用来比较数值，如下所示：
+它们可以用来比较数值：
 
 \begin{cmake}
 if (1 LESS 2)
 \end{cmake}
 
-您可以通过在任一操作符前加上 VERSION\_ 前缀来按照 [major[.minor[.patch[.tweak]]]] 的格式比较软件版本：
+可以通过在操作符前加上 VERSION\_ 前缀来按照 [major[.minor[.patch[.tweak]]]] 的格式比较软件版本：
 
 \begin{cmake}
 if (1.3.4 VERSION_LESS_EQUAL 1.4)
 \end{cmake}
 
-省略的组件被视为零，非整数的版本组件将在此点截断比较的字符串。
+省略的组件视为零，非整数的版本组件将在此点截断比较字符串。
 
-对于字典序字符串比较，我们需要在操作符前加上 STR 前缀（注意没有下划线）：
+对于字典序字符串比较，需要在操作符前加上 STR 前缀（没有下划线）：
 
 \begin{cmake}
 if ("A" STREQUAL "${B}")
 \end{cmake}
 
-我们经常需要比简单相等比较更高级的机制。幸运的是，CMake 也支持 POSIX 正则表达式匹配（CMake 文档暗示支持扩展正则表达式（ERE）风格，但未提到对特定正则字符类的支持）。我们可以按以下方式使用 MATCHES 操作符：
+我们经常需要比简单相等更高级的比较机制，CMake 支持 POSIX 正则表达式匹配（CMake 文档暗示支持扩展正则表达式（ERE）风格，但未提到对特定正则字符类的支持）。可以按以下方式使用 MATCHES 操作符：
 
 \begin{shell}
 <VARIABLE|STRING> MATCHES <regex>
 \end{shell}
 
-任何匹配的组会被捕获在CMAKE\_MATCH\_<n>变量中。
+匹配组会被捕获到CMAKE\_MATCH\_<n>变量中。
 
 \mySamllsubsection{简单检查}
 
-我们之前提到了一个简单检查，DEFINED，但还有其他的检查，如果满足条件则返回真。
+之前提到了一个简单检查，DEFINED。也还有其他的检查，如果满足条件则返回真。
 
-我们可以检查以下内容：
+还可以检查以下内容：
 
 \begin{itemize}
 \item
-一个值是否在列表中：<VARIABLE|STRING> IN\_LIST <VARIABLE>
+值是否在列表中：<VARIABLE|STRING> IN\_LIST <VARIABLE>
 
 \item
-在此版本的CMake中是否可以调用一个命令： COMMAND <command-name>
+此版本的CMake中是否可以调用某个命令： COMMAND <command-name>
 
 \item
-是否存在一个CMake策略： POLICY <policy-id> (这将在第4章，设置您的第一个CMake项目中介绍)
+是否存在一个CMake策略： POLICY <policy-id>
 
 \item
-是否使用add\_test()添加了CTest测试： TEST <test-name>
+是否使用add\_test()添加了CTest测试：TEST <test-name>
 
 \item
 是否定义了一个构建目标： TARGET <target-name>
 \end{itemize}
 
-我们将在第5章，使用目标中探讨构建目标，但现在，让我们说目标是通过add\_executable()，add\_library()或add\_custom\_target()命令创建的项目构建过程的基本单元。
+我们将在第5章，使用目标中探讨构建目标。现在，让我们简单的认为，目标是通过add\_executable()，add\_library()或add\_custom\_target()命令创建的基本项目单元(构建过程的)。
 
 \mySamllsubsection{检查文件系统}
 
-CMake提供了许多处理文件的方法。我们很少需要直接操作它们，通常更愿意使用高级方法。作为参考，本书将在附录中提供与文件相关的命令的简短列表。但最常需要以下操作符（仅对绝对路径行为有明确定义）：
+CMake提供了许多处理文件的方法。我们很少需要直接操作，通常会使用高级方法。作为参考，本书将在附录中提供与文件相关的命令的简短列表。以下操作符会经常使用（仅对绝对路径有明确的行为定义）：
 
 \begin{itemize}
 \item
 EXISTS <path-to-file-or-directory>: 检查文件或目录是否存在。
 
-\item
- 这将解析符号链接（如果符号链接的目标存在，则返回真）。
+也会符号链接进行解析（如果符号链接的目标存在，则返回真）。
 
 \item
-<file1> IS\_NEWER\_THAN <file2>: 检查哪个文件更新。
+<file1> IS\_NEWER\_THAN <file2>: 检查哪个文件修改时间更晚。
 
-如果文件1比文件2新（或等于）或者两个文件中有一个不存在，则返回真。
-
-\item
-IS\_DIRECTORY path-to-directory: 检查路径是否为目录。
+如果文件1比文件2修改时间更晚（或等于）或者两个文件中有一个不存在，则返回真。
 
 \item
-IS\_SYMLINK file-name: 检查路径是否为符号链接。
+IS\_DIRECTORY <path-to-directory>: 检查路径是否为目录。
 
 \item
-IS\_ABSOLUTE path: 检查路径是否为绝对路径。
+IS\_SYMLINK <file-name>: 检查路径是否为符号链接。
+
+\item
+IS\_ABSOLUTE <path>: 检查路径是否为绝对路径。
 \end{itemize}
 
-另外，从3.24版本开始，CMake支持简单的路径比较检查，这将折叠多个路径分隔符，但不会进行其他标准化：
+3.24版本开始，CMake支持简单的路径比较检查，这将折叠多个路径分隔符，但不会进行其他标准化：
 
 \begin{cmake}
 if ("/a////b/c" PATH_EQUAL "/a/b/c") # returns true
@@ -216,25 +215,25 @@ if ("/a////b/c" PATH_EQUAL "/a/b/c") # returns true
 
 对于更高级的路径操作，请参阅cmake\_path()命令的文档。
 
-这完成了条件命令的语法；接下来我们将讨论的控制结构是循环。
+完成了条件命令的语法介绍，接下来我们将讨论的控制结构是——循环。
 
 \mySubsubsection{2.5.2}{循环}
 
-在CMake中，循环相当直接——我们可以使用while()循环或foreach()循环来重复执行同一组命令。这两个命令都支持循环控制机制：
+CMake中，循环很简单——可以使用while()循环或foreach()循环，来重复执行同一组命令。这两个命令都支持循环控制机制：
 
 \begin{itemize}
 \item
-break()循环将停止执行剩余的块并跳出包围的循环。
+break()循环将停止执行剩余的块，并跳出包围的循环。
 
 \item
 continue()循环将停止当前迭代的执行，并从下一个迭代的开头开始。
 \end{itemize}
 
-请注意，在任何循环块中都不会创建局部变量作用域。
+注意，循环块中不会创建局部作用域。
 
 \mySamllsection{while()}
 
-循环块使用while()命令打开，并使用endwhile()命令关闭。只要while()中提供的<条件>表达式为真，任何封闭的命令都将被执行。表述条件的语法与if()命令相同：
+循环块使用while()命令开启，并使用endwhile()命令关闭。只要while()中提供的<condition>表达式为真，封闭的命令都将会执行。条件部分的语法与if()命令相同：
 
 \begin{shell}
 while(<condition>)
@@ -242,13 +241,13 @@ while(<condition>)
 endwhile()
 \end{shell}
 
-你可能已经猜到了——通过一些额外的变量——while循环可以替代for循环。实际上，使用foreach()循环来做这个要容易得多——让我们来看看。
+通过一些变量——while循环可以替代for循环。实际上，使用foreach()循环会更容易。
 
-\mySamllsection{foreach() 循环}
+\mySamllsection{foreach()}
 
-foreach()块有几种变体，它们为给定列表中的每个值执行封闭的命令。像其他块一样，它有打开和关闭命令：foreach()和endforeach()。
+foreach()块有几种变体，为给定列表中的每个值执行封闭的命令。像其他块一样，有打开和关闭命令：foreach()和endforeach()。
 
-foreach()的最简单形式旨在提供类似C++的for循环：
+foreach()的最简单形式类似C++的for循环：
 
 \begin{shell}
 foreach(<loop_var> RANGE <max>)
@@ -256,19 +255,19 @@ foreach(<loop_var> RANGE <max>)
 endforeach()
 \end{shell}
 
-CMake将从0迭代到<max>（包括）。如果我们需要更多控制，可以使用第二个变体，提供<min>，<max>，以及可选的<step>。所有参数都必须是非负整数，且<min>必须小于<max>：
+CMake将从0迭代到<max>（包括）。如果需要更多控制，可以使用第二个变体，提供<min>，<max>，以及可选的<step>。所有参数都必须是非负整数，且<min>必须小于<max>：
 
 \begin{shell}
 foreach(<loop_var> RANGE <min> <max> [<step>])
 \end{shell}
 
-然而，当foreach()处理列表时，它才真正显示出其特色：
+当foreach()处理列表时，才是彰显特色的时候：
 
 \begin{shell}
 foreach(<loop_variable> IN [LISTS <lists>] [ITEMS <items>])
 \end{shell}
 
-CMake将从一个或多个指定的<lists>列表变量中检索元素，以及一行定义的<项>值列表，并将它们放入<loop variable>中。然后，它将针对列表中的每个项执行所有命令。你可以选择只提供列表，只提供值，或者两者都提供：
+CMake将从一个或多个指定的<lists>列表变量中检索元素，以及一行定义的<items>值列表，将其放入<loop variable>中。然后，针对列表中的每个项执行所有命令,可以选择只提供列表或值(或者两者都提供)：
 
 \filename{ch02/06-loops/foreach.cmake}
 
@@ -279,7 +278,7 @@ foreach(VAR IN LISTS MyList ITEMS e f)
 endforeach()
 \end{cmake}
 
-前面的代码将打印以下内容：
+将输出以下内容：
 
 \begin{shell}
 1
@@ -289,19 +288,19 @@ e
 f
 \end{shell}
 
-或者，我们可以使用简短版本（跳过IN关键字）得到相同的结果：
+或者，可以使用简短版本（跳过IN关键字）得到相同的结果：
 
 \begin{cmake}
 foreach(VAR 1 2 3 e f)
 \end{cmake}
 
-自从3.17版本以来，foreach()学会了如何压缩列表（ZIP\_LISTS）：
+自从3.17版本以来，foreach()支持压缩列表（ZIP\_LISTS）：
 
 \begin{shell}
 foreach(<loop_var>... IN ZIP_LISTS <lists>)
 \end{shell}
 
-压缩列表的过程涉及迭代多个列表并对具有相同索引的对应项进行操作。让我们看一个例子：
+压缩列表的过程，涉及迭代多个列表，并对具有相同索引的对应项进行操作：
 
 \filename{ch02/06-loops/foreach.cmake}
 
@@ -313,9 +312,9 @@ foreach(num IN ZIP_LISTS L1 L2)
 endforeach()
 \end{cmake}
 
-CMake将为提供的每个列表创建一个num\_<N>变量，它将用每个列表中的项填充这些变量。
+CMake将为提供的每个列表创建一个num\_<N>变量，将用每个列表中的项填充这些变量。
 
-你可以传递多个变量名（每个列表一个），每个列表将使用单独的变量来存储其项：
+可以传递多个变量名（每个列表一个），每个列表将使用单独的变量来存储其项：
 
 \begin{cmake}
 foreach(word num IN ZIP_LISTS L1 L2)
@@ -331,38 +330,41 @@ word=three, num=3
 word=four, num=4
 \end{shell}
 
-如果列表之间的项数不同，较短的列表的变量将保持为空。
+如果列表之间的项数不同，较短的列表的变量将为空。
 
-值得注意的是，自从3.21版本以来，foreach()中的循环变量被限制在循环的局部作用域内。这结束了我们对循环的讨论。
+自从3.21版本以来，foreach()中的循环变量会限制在循环的局部作用域内使用。
 
-\mySubsubsection{2.5.3}{命令定义}
+好了，到此为止，关于循环的讨论也就差不多了结束了。
 
-有两种方法可以定义您自己的命令：您可以使用macro()命令或function()命令。解释这两个命令之间差异的最简单方法是将其与C风格的预处理器宏和实际的C++函数进行比较：
+\mySubsubsection{2.5.3}{自定义命令}
 
-macro()命令更像是查找并替换指令，而不是像function()那样的实际子程序调用。与函数相反，宏不会在调用堆栈上创建单独的条目。 这意味着在宏中调用return()将返回到比函数调用高一级的调用语句（如果已经在顶级作用域中，可能会终止执行）。
+有两种方法可以自定义命令：可以使用macro()命令或function()命令。这两个命令相当于C语言中的预处理器宏和函数：
 
-function()命令为其变量创建局部作用域，这与在调用者变量作用域中工作的macro()命令不同。这可能会导致令人困惑的结果。让我们在下一节中讨论这些细节。
-这两种定义命令的方法都允许定义可以在定义命令的局部作用域中引用的命名参数。此外，CMake提供了以下变量来访问与调用相关的值：
+macro()命令更像是查找替换指令，而不是function()那样的函数调用，所以宏不会在调用堆栈上保留信息。 所以，宏中调用return()将返回到比使用点更高一层的调用语句（如果已经在顶层作用域中，可能会终止执行）。
+
+function()命令为变量创建局部作用域，这与macro()命令不同。我们会在下一节中，讨论这些细节。
+
+这两种定义方法都允许，在定义命令的局部作用域中，引用的命名参数。此外，CMake提供了以下变量来访问与调用相关的参数值：
 
 \begin{itemize}
 \item
 \$\{ARGC\}: 参数计数
 
 \item
-\$\{ARGV\}: 所有参数作为列表
+\$\{ARGV\}: 参数列表(所有参数)
 
 \item
-\$\{ARGV<index>\}: 特定索引（从0开始）处的参数值，无论此参数是否预期
+\$\{ARGV<index>\}: 特定索引（从0开始）处的参数值
 
 \item
-\$\{ARGN\}: 调用者在最后一个预期参数后传递的匿名参数列表
+\$\{ARGN\}: 调用者在最后一个参数后传递的匿名参数列表
 \end{itemize}
 
-使用超出ARGC范围的索引访问数字参数是未定义的行为。要处理高级场景（通常参数数量未知），您可能感兴趣的是在官方文档中阅读关于cmake\_parse\_arguments()的内容。如果您决定使用带有命名参数的命令，每次调用都必须传递所有这些参数，否则调用将无效。
+使用超出ARGC范围的索引访问数字参数，会导致未定义行为。要处理高级场景（通常参数数量未知），可以去阅读官方文档中，关于cmake\_parse\_arguments()的内容。如果决定使用带有命名参数的命令，每次调用都必须传递这些参数，否则调用将无效。
 
 \mySamllsection{宏}
 
-定义宏与定义其他块类似：
+宏与其他块定义类似：
 
 \begin{shell}
 macro(<name> [<argument>…])
@@ -370,9 +372,9 @@ macro(<name> [<argument>…])
 endmacro()
 \end{shell}
 
-在此声明之后，我们可以通过调用其名称来执行我们的宏（函数调用不区分大小写）。
+此声明之后，可以通过调用其名称来执行宏（函数调用不区分大小写）。
 
-众所周知，宏不会在调用堆栈或变量作用域上创建单独的条目。以下示例突出显示了宏行为相关的一些问题：
+宏不会在修改调用堆栈信息，或为变量添加新的作用域。以下示例展示了宏的这一行为：
 
 \filename{ch02/08-definitions/macro.cmake}
 
@@ -387,7 +389,7 @@ MyMacro("called value")
 message("myVar is now: ${myVar}")
 \end{cmake}
 
-以下是这个脚本的输出
+以下是脚本的输出
 
 \begin{shell}
 $ cmake -P ch02/08-definitions/macro.cmake
@@ -396,9 +398,9 @@ argument: called value
 myVar is now: new value
 \end{shell}
 
-发生了什么？尽管明确地将myVar设置为“新值”，但它并没有影响到message(“参数：\$\{myVar\}”)的输出！这是因为传递给宏的参数不是作为真正的变量处理，而是作为常量的查找并替换指令。
+发生了什么？尽管将myVar设置为“新值”，但它并没有影响到message(“argument：\$\{myVar\}”)的输出！因为传递给宏的参，数不是作为真正的变量处理，而是作为常量的查找替换指令。
 
-另一方面，全局作用域中的myVar变量从“初始值”更改为“新值”。这种行为是一种副作用，被认为是一种不良实践，因为如果不阅读宏，就无法知道哪些全局变量会被宏更改。建议尽可能使用函数，因为它们可能会防止许多问题。
+另一方面，全局作用域中的myVar变量从“初始值”修改为“新值”。这种行为有一定的副作用，被认为是一种不良实践。因为如果不阅读宏，就无法知道宏会修改哪些全局变量。建议尽可能使用函数，可能避免这种问题。
 
 \mySamllsection{函数}
 
@@ -410,9 +412,9 @@ function(<name> [<argument>...])
 endfunction()
 \end{shell}
 
-函数需要一个名称，并可以选择接受一系列预期的参数名称。如前所述，函数会创建自己的变量作用域。您可以使用set()，提供函数的一个命名参数，并且任何更改都将局限于函数内部（除非指定了PARENT\_SCOPE，正如我们在CMake中正确使用变量作用域部分讨论的那样）。
+函数需要一个名称，可以选择接受一系列参数名称。如前所述，函数会创建变量作用域。可以使用set()，提供函数的一个命名参数，并且任何更改都将局限于函数内部（除非指定了PARENT\_SCOPE）。
 
-函数遵循调用堆栈的规则，允许使用return()命令返回到调用作用域。从CMake 3.25开始，return()命令允许一个可选的PROPAGATE关键字，后跟一系列变量名称。其目的与block()命令中的类似——它将指定变量的值从局部作用域传递到调用作用域。
+函数遵循调用堆栈的规则，允许使用return()命令返回到调用作用域。从CMake 3.25开始，return()命令允许一个可选的PROPAGATE关键字，后跟一系列变量名称。其目的与block()命令类似——指定变量的值从局部作用域传递到调用作用域。
 
 CMake为每个函数设置了以下变量（这些变量自3.17版本起可用）：
 
@@ -430,7 +432,7 @@ CMAKE\_CURRENT\_FUNCTION\_LIST\_FILE
 CMAKE\_CURRENT\_FUNCTION\_LIST\_LINE
 \end{itemize}
 
-让我们看看这些函数变量在实际中的使用：
+来看看这些函数变量在实际中的使用：
 
 \filename{ch02/08-definitions/function.cmake}
 
@@ -448,7 +450,7 @@ MyFunction("Value1" "Value2")
 message("FirstArg in global scope: ${FirstArg}")
 \end{cmake}
 
-使用cmake -P function.cmake运行这个脚本将打印以下输出：
+使用cmake -P function.cmake运行这个脚本将输出以下输出：
 
 \begin{shell}
 Function: MyFunction
@@ -459,15 +461,15 @@ ARGV0: Value1 ARGV1: Value2 ARGC: 2
 FirstArg in global scope: first value
 \end{shell}
 
-如您所见，函数的总体语法和概念与宏非常相似，但不易受到隐式错误的影响。
+函数的总体语法和概念与宏非常相似，但不易受到隐式错误的影响。
 
 \mySamllsection{CMake中的过程范式}
 
-假设我们想要编写类似于在C++中编写程序的CMake代码。我们将创建一个CMakeLists.txt列表文件，该文件将调用三个定义的命令，这些命令可能还会调用它们自己的定义命令。图2.3展示了这一点：
+编写CMake代码，需要创建一个CMakeLists.txt列表文件，该文件将调用三个定义的命令，这些命令可能还会调用其自定义命令。图2.3对这种可能性，进行了展示：
 
 \myGraphic{0.8}{content/chapter2/images/3.png}{图2.3：过程调用图}
 
-在CMake中，以过程风格编写代码可能会出现问题，因为您必须在调用它们之前提供命令定义。CMake解析器不会接受其他方式。您的代码可能看起来像这样：
+在CMake中，以过程风格编写代码可能会出现问题，必须在调用之前提供定义。CMake解析器不接受其他方式，所以代码可能会写成这样：
 
 \begin{cmake}
 cmake_minimum_required(...)
@@ -486,9 +488,9 @@ setup_second_target()
 setup_tests()
 \end{cmake}
 
-真是噩梦！一切都颠倒了！由于最低抽象级别的代码位于文件开头，这将非常难以理解。一个结构正确的代码应该在第一个子程序中列出最一般的步骤，然后提供稍微详细一点的子程序，并将最详细的步骤放在文件的最后。
+真是噩梦！一切都颠倒了！由于最低抽象级别的代码位于文件开头，这将使整段代码难以理解。结构正确的代码，应该在第一个子程序中列出最一般的步骤，然后提供详细一点的子程序，并将最详细的步骤放在文件的最后。
 
-这个问题有解决方案，比如将命令定义移动到其他文件中，并在目录之间划分作用域（第4章“设置您的第一个CMake项目”将详细解释作用域目录）。但还有一个简单而优雅的方法——在文件顶部声明一个入口点宏，并在文件末尾调用它：
+这个问题有解决方案，比如将命令定义移动到其他文件中，并在目录之间划分作用域。但还有一个简单而优雅的方法——在文件顶部声明一个入口点宏，并在文件末尾调用：
 
 \begin{cmake}
 macro(main)
@@ -504,31 +506,33 @@ function(third_step)
 main()
 \end{cmake}
 
-这种方法使得我们的代码以逐渐缩小的作用域编写，并且因为我们在文件末尾才实际调用main()宏，所以CMake不会因为执行未定义的命令而抱怨。
+这种方法会逐渐缩小作用域，并且在文件末尾才实际调用main()宏，所以CMake不会因为执行未定义的命令而抱怨。
 
-在这种情况下，为什么使用宏而不是函数？能够不受限制地访问全局变量是很好的，而且由于我们不向main()传递任何参数，所以我们不需要担心通常的陷阱。
+那为什么使用宏而不是函数？能够不受限制地访问全局变量是很好的，而且由于无需向main()传递任何参数，所以不需要有任何的担心。
 
-您可以在本书的GitHub仓库中的ch02/09-procedural/CMakeLists.txt列表文件中找到这个概念的简单示例。
+可以在本书的GitHub库的ch02/09-procedural/CMakeLists.txt列表文件中，找到这个简单的示例。
 
-\mySamllsection{关于命名约定的几句话}
+\mySamllsection{关于命名约定}
 
-在软件开发中，命名众所周知是一项难题，但尽管如此，保持一个易于阅读和理解的解决方案仍然非常重要。对于CMake脚本和项目，我们应该遵循干净代码方法的规则，就像我们对任何软件开发解决方案所做的那样：
+软件开发中，命名是一项难题，并且保持一个易于阅读和理解的解决方案仍然非常重要。对于CMake脚本和项目，我们应该遵循干净代码的规则：
 
 \begin{itemize}
 \item
-遵循一致的命名风格（在CMake社区中，snake\_case是被接受的标准）。
+遵循一致的命名风格（在CMake社区中，snake\_case是可接受的标准）。
 
 \item
-使用简短但有意义的名称（例如，避免使用func()，f()等）。
+使用简短但有意义的名称（避免使用func()，f()等）。
 
 \item
- 避免在命名中使用双关语和过于聪明的东西。
+避免在命名中使用双关语和只有编写者知道的东西。
 
 \item
 使用可发音、可搜索的名称，不需要进行心智映射。
 \end{itemize}
 
-现在我们知道了如何使用正确的语法正确调用命令，让我们探讨一下哪些命令对我们来说最有益于开始使用。
+这样，我们结束了“如何使用正确的语法调用命令”。
+
+接下来，来探讨一下哪些命令比较适合于入门。
 
 
 
