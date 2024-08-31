@@ -1,12 +1,16 @@
-CMake提供了多种方式通过CMAKE\_变量、ENV变量和特殊命令来查询环境信息。例如，收集的信息可以用来支持跨平台的脚本。这些机制允许我们避免使用可能不易移植或在不同环境中命名不同的特定平台的shell命令。
+CMake提供了多种方式通过CMAKE\_变量、ENV变量和特殊命令来查询环境信息。例如，收集的信息可以用来支持跨平台的脚本。这些机制可以避免使用可能不易移植，或在不同环境中命名不同的特定平台的shell命令。
 
-对于性能关键型应用，了解构建平台的所有特性（例如，指令集、CPU核心数等）将非常有用。然后可以将这些信息传递给编译后的二进制文件，以便它们可以完美地调优（我们将在下一章学习如何传递）。让我们探索CMake提供的本地信息。
+对于性能敏感型应用，了解构建平台的所有特性（例如，指令集、CPU核心数等）将非常有用。然后，将这些信息传递给编译后的二进制文件，以便进行调优。
+
+现在，就来探索CMake可提供的本地信息。
 
 \mySubsubsection{4.5.1.}{检测操作系统}
 
-在许多情况下，知道目标操作系统是什么很有用。即使是像文件系统这样的普通事物，在Windows和Unix之间也有很大差异，比如大小写敏感性、文件路径结构、扩展名的存在、权限等等。一个系统上存在的命令在另一个系统上可能不可用；它们可能被命名为不同的（例如，Unix中的ifconfig和Windows中的ipconfig）或者输出完全不同的内容。
+了解目标操作系统是什么很有用。即使是像文件系统这样的事物，在Windows和Unix之间也有很大差异，比如：大小写敏感性、文件路径结构、扩展名、权限等。一个系统上存在的命令在另一个系统上可能不可用，可能命名不同（例如，Unix中的ifconfig和Windows中的ipconfig）或者输出不同的内容。
 
-如果你需要用单个CMake脚本来支持多个目标操作系统，只需检查CMAKE\_SYSTEM\_NAME变量，以便你可以相应地采取行动。以下是一个简单的例子：
+如果需要用单个CMake脚本来支持多个目标操作系统，只需检查CMAKE\_SYSTEM\_NAME变量，以便采取相应地行动。
+
+以下是一个简单的例子：
 
 \begin{cmake}
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
@@ -22,19 +26,19 @@ else()
 endif()
 \end{cmake}
 
-如果需要，有一个包含操作系统版本的变量：CMAKE\_SYSTEM\_VERSION。然而，我的建议是尽量使你的解决方案与系统无关，并使用CMake内置的跨平台功能。特别是对于文件系统的操作，你应该使用附录中描述的file()命令。
+如果需要，有一个包含操作系统版本的变量：CMAKE\_SYSTEM\_VERSION。然而，我的建议是尽量使解决方案与系统无关，并使用CMake内置的跨平台功能。特别是对于文件系统的操作，应该使用附录中描述的file()命令。
 
 \mySubsubsection{4.5.2.}{交叉编译——什么是主机和目标系统？}
 
-交叉编译是指在一个机器上编译代码以在另一个目标平台上执行的过程。例如，使用适当的工具集，可以在Windows机器上运行CMake来编译Android应用程序。尽管交叉编译超出了本书的范围，但了解它如何影响CMake的一些部分是很重要的。
+交叉编译是指在一个机器上编译代码以在另一个目标平台上执行的过程。例如，使用适当的工具集，可以在Windows机器上运行CMake来编译Android应用程序。尽管交叉编译超出了本书的范围，但了解它如何影响CMake也很重要。
 
-允许交叉编译的一个必要步骤是将CMAKE\_SYSTEM\_NAME和CMAKE\_SYSTEM\_VERSION变量设置为你要编译的操作系统的适当值（CMake文档中将其称为目标系统）。执行构建的操作系统称为主机系统。
+允许交叉编译的必要步骤是将CMAKE\_SYSTEM\_NAME和CMAKE\_SYSTEM\_VERSION变量设置为目标操作系统的适当值（CMake文档中将其称为目标系统）。执行构建的操作系统称为主机系统。
 
 无论配置如何，主机系统的信息总是可以在带有HOST关键字的变量名称中访问： CMAKE\_HOST\_SYSTEM, CMAKE\_HOST\_SYSTEM\_NAME, CMAKE\_HOST\_SYSTEM\_PROCESSOR 和 CMAKE\_HOST\_SYSTEM\_VERSION。
 
-还有一些带有HOST关键字的变量，所以请记住，它们明确地引用主机系统。否则，所有变量都引用目标系统（通常是主机系统，除非我们在进行交叉编译）。
+还有一些带有HOST关键字的变量，其明确地引用主机系统。否则，所有变量都引用目标系统（通常是主机系统，除非在进行交叉编译）。
 
-如果你对交叉编译感兴趣，我建议参考CMake文档：\url{https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html}。
+如果对交叉编译感兴趣，我建议参考CMake文档：\url{https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html}。
 
 \mySubsubsection{4.5.3.}{简写变量}
 
@@ -45,20 +49,20 @@ CMake将预定义一些变量，提供关于主机和目标系统的信息。如
 ANDROID, APPLE, CYGWIN, UNIX, IOS, WIN32, WINCE, WINDOWS\_PHONE
 
 \item
-CMAKE\_HOST\_APPLE, CMAKE\_HOST\_SOLARIS, CMAKE\_HOST\_UNIX, CMAKE\_HOST\_WIN32
+CMAKE\_HOST\_APPLE，CMAKE\_HOST\_SOLARIS，CMAKE\_HOST\_UNIX， CMAKE\_HOST\_WIN32
 \end{itemize}
 
-WIN32和CMAKE\_HOST\_WIN32变量对于32位和64位版本的Windows以及MSYS都将为真（这个值因历史原因而保留）。此外，UNIX对于Linux、macOS和Cygwin也将为真。
+WIN32和CMAKE\_HOST\_WIN32变量对于32位和64位版本的Windows，以及MSYS都将为真（这个值因历史原因而保留）。此外，UNIX对于Linux、macOS和Cygwin也将为真。
 
 \mySubsubsection{4.5.4.}{主机系统信息}
 
-CMake可以提供更多的变量，但为了节省时间，它不会查询环境中很少需要的信息，比如处理器是否支持MMX或者总物理内存是多少。这并不意味着这些信息不可用——你只需要使用以下命令明确地请求它：
+CMake可以提供更多的变量，为了节省时间，不会查询环境中很少需要的信息，比如处理器是否支持MMX，或者总物理内存是多少。但这些信息不可用——只需要使用以下命令明确地请求：
 
 \begin{shell}
 cmake_host_system_information(RESULT <VARIABLE> QUERY <KEY>...)
 \end{shell}
 
-我们需要提供一个目标变量和我们感兴趣的关键字列表。如果我们只提供一个关键字，变量将包含一个值；否则，它将是一个值列表。我们可以询问有关环境和操作系统的许多细节：
+需要提供一个目标变量和我们感兴趣的关键字列表。如果只提供一个关键字，变量将包含一个值；否则，它将是一个值列表。我们可以询问有关环境和操作系统的许多信息：
 
 % Please add the following required packages to your document preamble:
 % \usepackage{longtable}
@@ -70,7 +74,7 @@ cmake_host_system_information(RESULT <VARIABLE> QUERY <KEY>...)
 %
 \endhead
 %
-HOSTNAME                    & Hostname                                         \\ \hline
+HOSTNAME                    & 主机名                                         \\ \hline
 FQDN                        & 完全限定域名                      \\ \hline
 TOTAL\_VIRTUAL\_MEMORY      & 以MiB为单位的虚拟内存总量                      \\ \hline
 AVAILABLE\_VIRTUAL\_MEMORY  & 以MiB为单位的可用虚拟内存                  \\ \hline
@@ -82,7 +86,7 @@ OS\_VERSION                 & 操作系统构建ID                              
 OS\_PLATFORM & \begin{tabular}[c]{@{}l@{}}在Windows上和\$ENV\{PROCESSOR\_ARCHITECTURE\}\\的值一样. 在 Unix/macOS上和 uname -m 一样  \end{tabular}        \\ \hline
 \end{longtable}
 
-如果需要，我们甚至可以查询特定于处理器的信息:
+如果需要，甚至可以查询特定于处理器的信息:
 
 % Please add the following required packages to your document preamble:
 % \usepackage{longtable}
@@ -113,11 +117,11 @@ HAS\_AMD\_3DNOW\_PLUS       & 如果处理器支持3DNow+指令为1   \\ \hline
 HAS\_IA64                   & 如果IA64处理器模拟x86，则为1          \\ \hline
 \end{longtable}
 
-\mySubsubsection{4.5.5.}{平台是32位还是64位架构？}
+\mySubsubsection{4.5.5.}{平台是32位，还是64位架构？}
 
-在64位架构中，内存地址、处理器寄存器、处理器指令、地址总线和数据总线都是64位宽的。虽然这是一个简化的定义，但它给出了64位平台与32位平台不同的一个大致概念。
+64位架构中，内存地址、处理器寄存器、处理器指令、地址总线和数据总线都是64位宽的。虽然这是一个简化的定义，但它给出了64位平台与32位平台不同的一个大致概念。
 
-在C++中，不同的架构意味着一些基本数据类型（int和long）和指针有不同的位宽。CMake利用指针大小来收集有关目标机器的信息。这些信息可以通过CMAKE\_SIZEOF\_VOID\_P变量获得，对于64位，它将包含值为8（因为指针是8字节宽）和对于32位，它将包含值为4（4字节）：
+在C++中，不同的架构意味着一些基本数据类型（int和long）和指针有不同的位宽。CMake利用指针大小来收集有关目标机器的信息。这些信息可以通过CMAKE\_SIZEOF\_VOID\_P变量获得，对于64位，包含值为8（因为指针是8字节宽）；对于32位，包含值为4（4字节）：
 
 \begin{cmake}
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -127,11 +131,11 @@ endif()
 
 \mySubsubsection{4.5.6.}{系统的字节序是什么？}
 
-架构可以根据字内字节顺序或处理器的自然数据单位被分为大端序或小端序。在大端序系统中，最高有效字节存储在最低的内存地址，而最低有效字节存储在最高的内存地址。相反，在小端序系统中，字节顺序被反转，最低有效字节存储在最低的内存地址，而最高有效字节存储在最高的内存地址。
+架构可以根据字内字节顺序，或处理器的自然数据单位，分为大端序或小端序。在大端序系统中，最高有效字节存储在最低的内存地址，而最低有效字节存储在最高的内存地址。相反，在小端序系统中，字节顺序反转，最低有效字节存储在最低的内存地址，而最高有效字节存储在最高的内存地址。
 
-在大多数情况下，字节序并不重要，但是当你编写需要可移植性的位操作代码时，CMake将提供BIG\_ENDIAN或LITTLE\_ENDIAN值，这些值存储在CMAKE\_<LANG>\_BYTE\_ORDER变量中，其中<LANG>是C、CXX、OBJC或CUDA。
+大多数情况下，字节序并不重要，但是当编写需要可移植性的位操作代码时，CMake将提供BIG\_ENDIAN或LITTLE\_ENDIAN值，这些值存储在CMAKE\_<LANG>\_BYTE\_ORDER变量中，其中<LANG>是C、CXX、OBJC或CUDA。
 
-既然我们已经学会了如何查询环境，现在让我们将重点转移到项目的主要设置上。
+已经了解了如何查询环境，现在让我们将重点转移到项目的主要配置上。
 
 
 

@@ -1,5 +1,5 @@
 
-使用自定义目标有一个缺点——一旦你将它们添加到ALL目标或者开始依赖它们来构建其他目标，它们将每次都会被构建。有时候，这正是你想要的，但在某些情况下，需要自定义行为来生成不应该无故重新创建的文件：
+使用自定义目标有一个缺点——将它们添加到ALL目标或者依赖它们来构建其他目标，每次都会构建。有时候，这正是想要的，但需要自定义行为来生成不应该无故重新创建的文件：
 
 \begin{itemize}
 \item
@@ -9,7 +9,7 @@
 将另一种语言翻译成C++
 
 \item
-在另一个目标构建之前或之后立即执行自定义操作
+在另一个目标构建之前或之后，立即执行自定义操作
 \end{itemize}
 
 自定义命令有两个签名。第一个是add\_custom\_target()的扩展版本：
@@ -31,13 +31,13 @@ add_custom_command(OUTPUT output1 [output2 ...]
                    [COMMAND_EXPAND_LISTS])
 \end{shell}
 
-你可能已经猜到了，自定义命令并不创建逻辑目标，但与自定义目标一样，它必须被添加到依赖关系图中。有两种方法可以实现——将其输出工件作为可执行文件（或库）的源，或者显式地将其添加到自定义目标的DEPENDS列表中。
+自定义命令并不创建逻辑目标，但与自定义目标一样，必须添加到依赖关系图中。有两种方法可以实现——将其输出工件作为可执行文件（或库）的源，或者显式地将其添加到自定义目标的DEPENDS列表中。
 
 \mySubsubsection{5.3.1.}{将自定义命令用作生成器}
 
-诚然，并非每个项目都需要从其他文件生成C++代码。一个这样的情况可能是编译Google的Protocol Buffer（Protobuf）的.proto文件。如果你不熟悉这个库，Protobuf是一个用于结构化数据的平台无关的二进制序列化器。
+诚然，并非每个项目都需要从其他文件生成C++代码。这样的情况可能是编译Google的Protocol Buffer（Protobuf）的.proto文件。如果不熟悉这个库，Protobuf是一个用于结构化数据的平台无关的二进制序列化器。
 
-换句话说：它可以用来将对象编码和解码为二进制流：文件或网络连接。为了保持Protobuf跨平台并且在同时保持快速，Google的工程师们发明了自己的Protobuf语言，在.proto文件中定义模型，如下所示：
+可以用来将对象编码和解码为二进制流：文件或网络连接。为了保持Protobuf跨平台并且在同时保持快速，Google的工程师们发明了自己的Protobuf语言，在.proto文件中定义模型，如下所示：
 
 \begin{shell}
 message Person {
@@ -47,9 +47,9 @@ message Person {
 }
 \end{shell}
 
-这样的文件可以用来在多种语言中编码数据——C++、Ruby、Go、Python、Java等等。Google提供了一个编译器，protoc，它读取.proto文件并为所选语言输出有效的结构和序列化源代码（稍后需要编译或解释）。聪明的工程师不会将这些生成的源文件检入仓库，而是使用原始的Protobuf格式并在构建链中添加一个步骤来生成源文件。
+这样的文件可以用来在多种语言中编码数据——C++、Ruby、Go、Python、Java等等。Google提供了编译器——protoc，读取.proto文件并为所选语言输出有效的结构和序列化源代码（稍后需要编译或解释）。聪明的工程师不会将这些生成的源文件检入仓库，而是使用原始的Protobuf格式并在构建链中添加一个步骤来生成源文件。
 
-我们尚不知道如何检测目标主机上是否（以及在哪里）可用Protobuf编译器（我们将在第9章，CMake中的依赖管理中学习这一点）。所以，现在，让我们假设编译器的protoc命令位于系统已知的某个位置。我们已经准备好了person.proto文件，并且我们知道Protobuf编译器将输出person.pb.h和person.pb.cc文件。以下是如何定义一个自定义命令来编译它们的：
+我们尚不知道如何检测目标主机上是否（以及在哪里）可用Protobuf编译器（我们将在第9章中介绍）。现在，假设编译器的protoc命令位于系统已知的某个位置，已经准备好了person.proto文件，并且知道Protobuf编译器将输出person.pb.h和person.pb.cc文件。以下是如何定义一个自定义命令来编译它们的例子：
 
 \begin{cmake}
 add_custom_command(OUTPUT person.pb.h person.pb.cc
@@ -58,13 +58,13 @@ add_custom_command(OUTPUT person.pb.h person.pb.cc
 )
 \end{cmake}
 
-然后，为了允许我们的可执行文件进行序列化，我们可以简单地将输出文件添加到源文件中：
+然后，为了允许可执行文件进行序列化，可以简单地将输出文件添加到源文件中：
 
 \begin{cmake}
 add_executable(serializer serializer.cpp person.pb.cc)
 \end{cmake}
 
-假设我们正确处理了头文件的包含和Protobuf库的链接，当我们对.proto文件进行更改时，一切都会自动编译和更新。
+假设正确处理了头文件的包含和Protobuf库的链接，当对.proto文件进行更改时，一切都会自动编译和更新。
 
 一个简化的（实用性要小得多）示例是通过从另一个位置复制来创建必要的头文件：
 
@@ -77,7 +77,7 @@ add_custom_command(OUTPUT constants.h COMMAND cp
                    ARGS "${CMAKE_SOURCE_DIR}/template.xyz" constants.h)
 \end{cmake}
 
-在这种情况下，我们的“编译器”是cp命令。它通过从源树中复制到构建树根目录，创建一个constants.h文件，从而满足main目标的依赖。
+这时，“编译器”是cp命令。它通过从源树中复制到构建树根目录，创建一个constants.h文件，从而满足main目标的依赖。
 
 \mySubsubsection{5.3.2.}{将自定义命令用作目标钩子}
 
@@ -95,20 +95,20 @@ add_custom_command(TARGET <target>
                    [COMMAND_EXPAND_LISTS])
 \end{cmake}
 
-我们通过第一个参数指定我们想要用新行为“增强”的目标，并在以下条件下：
+通过第一个参数指定想要用新行为“增强”的目标，并在满足以下条件的情况下执行：
 
 \begin{itemize}
 \item
-PRE\_BUILD 将在此目标的所有其他规则之前运行（仅限Visual Studio生成器；对于其他生成器，它的行为类似于PRE\_LINK）。
+PRE\_BUILD 将在此目标的所有其他规则之前运行（仅限Visual Studio生成器；对于其他生成器，行为类似于PRE\_LINK）。
 
 \item
-PRE\_LINK 将命令绑定在所有源代码编译完成后，但在链接（或归档）目标之前运行。它不适用于自定义目标。
+PRE\_LINK 将命令绑定在所有源代码编译完成后，但在链接（或归档）目标之前运行。不适用于自定义目标。
 
 \item
 POST\_BUILD 将在此目标的所有其他规则执行完毕后运行。
 \end{itemize}
 
-使用这个版本的add\_custom\_command()，我们可以复现之前BankApp示例中的校验和生成：
+使用这个版本的add\_custom\_command()，可以复现之前BankApp示例中的校验和生成：
 
 \filename{ch05/04-command/CMakeLists.txt}
 
@@ -121,7 +121,7 @@ add_custom_command(TARGET main POST_BUILD
                    ARGS "$<TARGET_FILE:main>" > "main.ck")
 \end{cmake}
 
-在主可执行文件的构建完成后，CMake将使用提供的参数执行cksum。但是第一个参数中发生了什么？它不是一个变量，如果是变量，它会被大括号（\$\{\}）包裹，而不是尖括号（\$<>）。它是一个生成器表达式，计算结果为目标二进制文件的完整路径。这种机制在许多目标属性的上下文中非常有用，我们将在下一章中解释。
+主可执行文件的构建完成后，CMake将使用提供的参数执行cksum。但是第一个参数中发生了什么？它不是一个变量，如果是变量，它会被大括号（\$\{\}）包裹，而不是尖括号（\$<>）。它是一个生成器表达式，计算结果为目标二进制文件的完整路径。这种机制在许多目标属性的上下文中非常有用，我们将在下一章中详细解释。
 
 
 
