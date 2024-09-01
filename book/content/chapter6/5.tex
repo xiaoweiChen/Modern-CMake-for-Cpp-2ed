@@ -1,16 +1,18 @@
 
-有许多生成器表达式可用，但为了避免迷失在细节中，我们将重点关注最常见的表达式。我们从可用的数据的基本转换开始。
+有许多生成器表达式可用，但为了避免迷失在细节中，我们将重点关注最常见的表达式。
+
+先从可用的数据的基本转换开始。
 
 \mySubsubsection{6.5.1.}{处理字符串、列表和路径}
 
-生成器表达式只提供了最基本的操作来转换和查询数据结构。在生成器阶段处理字符串是可能的，使用以下表达式：
+生成器表达式只提供了最基本的操作来转换和查询数据结构。在生成器阶段处理字符串，使用以下表达式：
 
 \begin{itemize}
 \item
 \$<LOWER\_CASE:string>, \$<UPPER\_CASE:string>: 这会将字符串转换为所需的大小写。
 \end{itemize}
 
-直到最近，列表操作相当有限。从 CMake 3.15 开始，以下操作可用：
+从 CMake 3.15 开始，以下操作可用：
 
 \begin{itemize}
 \item
@@ -81,9 +83,9 @@ REVERSE
 SORT
 \end{itemize}
 
-在生成器表达式中处理列表的情况相当罕见，所以我们只是指出这是可能的。如果你发现自己处于这些情况之一，请在线手册中查找如何使用这些操作的说明。
+生成器表达式中处理列表相当罕见，所以只是了解其可能性。如果需要使用这些方式，请在线手册中查找如何使用这些操作的说明。
 
-最后，我们可以查询和转换系统路径。这对于跨不同操作系统的可移植性非常有用。自 CMake 3.24 以来，以下简单查询可用：
+最后，可以查询和转换系统路径，这对于可移植性敏感的项目非常有用。自 CMake 3.24 以来，以下简单查询可用：
 
 \begin{itemize}
 \item
@@ -117,10 +119,10 @@ SORT
 \$<PATH:IS\_RELATIVE,path>
 
 \item
-\$<PATH:IS\_PREFIX[,NORMALIZE],prefix,path>: 如果前缀是路径的前缀，则返回 true。
+\$<PATH:IS\_PREFIX[,NORMALIZE],prefix,path>: 如果前缀是路径的前缀，则返回 真。
 \end{itemize}
 
-相应地，我们可以检索我们能够检查的所有路径组件（自 CMake 3.27 以来，我们不仅可以提供单个路径，还可以提供路径列表）：
+相应地，可以检索能够检查的所有路径组件（自 CMake 3.27 起，不仅可以提供单个路径，还可以提供路径列表）：
 
 \begin{itemize}
 \item
@@ -151,7 +153,7 @@ SORT
 \$<PATH:ABSOLUTE\_PATH[,NORMALIZE],path...,base\_directory>
 \end{itemize}
 
-此外，在 3.24 版本中引入了一些转换操作；我们只是为了完整性而列出它们：
+此外，在 3.24 版本中引入了一些转换操作(只是为了完整性而列出它们)：
 
 \begin{itemize}
 \item
@@ -182,40 +184,39 @@ SORT
 \$<PATH:ABSOLUTE\_PATH[,NORMALIZE],path...,base\_directory>
 \end{itemize}
 
-还有一个路径操作，它将提供的路径格式化为主机shell支持的样式：\$<SHELL\_PATH:path…>。
+还有一个路径操作，提供的路径格式化为主机shell支持的样式：\$<SHELL\_PATH:path…>。
 
-再次，之前的表达式是为后续参考而引入的，而不是你需要现在就记住的信息。推荐的实用知识的大部分将在后续章节中详细介绍。
-
+再次，之前的表达式是为后续参考而引入的，而不是需要现在就记住。
 
 \mySubsubsection{6.5.2.}{配置和平台的参数化}
 
-CMake 用户在构建项目时通常会提供所需构建配置的关键信息。在大多数情况下，它将是 Debug 或 Release。我们可以使用生成器表达式通过以下语句访问这些值：
+CMake 用户在构建项目时通常会提供所需构建配置的关键信息。大多数情况下，是 Debug 或 Release。可以使用生成器表达式，通过以下语句访问这些值：
 
 \begin{itemize}
 \item
 \$<CONFIG>: 这将以字符串形式返回当前构建配置：Debug、Release 或另一个。
 
 \item
-\$<CONFIG:configs>: 如果 configs 包含当前构建配置（不区分大小写的比较），则返回 true。
+\$<CONFIG:configs>: 如果 configs 包含当前构建配置（不区分大小写的比较），则返回真。
 \end{itemize}
 
-我们在第四章《在第一个 CMake 项目中设置环境》的“理解构建环境”部分讨论了平台。我们可以以与配置相同的方式读取相关信息：
+第4章的“理解构建环境”部分讨论了平台，可以以与配置相同的方式读取相关信息：
 
 \begin{itemize}
 \item
-\$<PLATFORM\_ID>: 这将以字符串形式返回当前平台 ID：Linux、Windows 或 Darwin（macOS）。
+\$<PLATFORM\_ID>: 将以字符串形式返回当前平台 ID：Linux、Windows 或 Darwin（macOS）。
 
 \item
-\$<PLATFORM\_ID:platform>为真，如果 platform 包含当前平台 ID。
+\$<PLATFORM\_ID:platform>：如果 platform 包含当前平台 ID，则为真。
 \end{itemize}
 
-这样的配置或平台特定的参数化是我们工具箱中的强大补充。我们可以将其与之前讨论的条件展开一起使用：
+这样的配置或平台特定的参数化，可以将其与之前讨论的条件展开一起使用：
 
 \begin{shell}
 $<IF:condition,true_string,false_string>
 \end{shell}
 
-例如，我们可以为测试二进制文件和生产二进制文件应用不同的编译标志：
+例如，可以为测试二进制文件和生产二进制文件应用不同的编译标志：
 
 \begin{cmake}
 target_compile_definitions(my_target PRIVATE
@@ -223,40 +224,40 @@ target_compile_definitions(my_target PRIVATE
 )
 \end{cmake}
 
-但这只是开始。生成器表达式可以应对许多其他情况。当然，系统的工具集也是下一个重要方面。
+这只是开始，生成器表达式可以应对许多其他情况。
 
 \mySubsubsection{6.5.3.}{调整工具链}
 
-幸运的是（不幸的是？），工具链、工具包或简单地说，编译器和链接器在供应商之间并不一致。这带来了一系列后果。其中一些是积极的（在特殊情况下性能更好），其他则不那么积极（配置风味多样，标志命名不一致，等等）。
+工具链、工具包或简单地说，编译器和链接器在供应商之间并不一致。这带来了一系列后果。其中一些是积极的（特殊情况下性能更好），其他则不那么积极（配置多种多样，标志命名不一致等）。
 
-生成器表达式通过提供可以用来缓解问题并尽可能改进用户体验的查询集来帮助解决这个问题。
+生成器表达式通过提供可以用来缓解问题，并尽可能改进用户体验的查询集，来解决这个问题。
 
-与构建配置和平台类似，有一些表达式返回有关工具链的信息，既有字符串也有布尔值。但是，我们必须指定我们感兴趣的语言（将 \#LNG 替换为 C、CXX、CUDA、OBJC、OBJCXX、Fortran、HIP 或 ISPC）。HIP 的支持是在 3.21 版本中添加的。
-
-\begin{itemize}
-\item
-\$<\#LNG\_COMPILER\_ID>: 这返回用于 \#LNG 编译器的 CMake 编译器 ID。
-
-\item
-\$<\#LNG\_COMPILER\_VERSION>: 这返回用于 \#LNG 编译器的 CMake 编译器版本。
-\end{itemize}
-
-为了检查 C++ 编译时将使用哪个编译器，我们应该使用 \$<CXX\_COMPILER\_ID> 生成器表达式。返回的值，即 CMake 的编译器 ID，是为每个支持的编译器定义的常量。你可能会遇到如 AppleClang、ARMCC、Clang、GNU、Intel 和 MSVC 等值。完整的列表，请查看官方文档（"进一步阅读"部分中的 URL）。
-
-与前一个部分类似，我们也可以在条件表达式中利用工具链信息。有一些查询会返回 true，如果提供的任何参数与特定值匹配：
+与构建配置和平台类似，有一些表达式返回有关工具链的信息，既有字符串也有布尔值。但必须指定感兴趣的语言（将 \#LNG 替换为 C、CXX、CUDA、OBJC、OBJCXX、Fortran、HIP 或 ISPC）。在 3.21 版本中添加了对HIP 的支持。
 
 \begin{itemize}
 \item
-\$<\#LNG\_COMPILER\_ID:ids>: 如果 ids 包含 CMake 的 \#LNG 编译器 ID，则返回 true。
+\$<\#LNG\_COMPILER\_ID>: 返回 \#LNG 编译器的 CMake 编译器 ID。
 
 \item
-\$<\#LNG\_COMPILER\_VERSION:vers>: 如果 vers 包含 CMake 的 \#LNG 编译器版本，则返回 true。
-
-\item
-\$<COMPILE\_FEATURES:features>: 如果提供的所有 features 特征都由该目标的编译器支持，则返回 true。
+\$<\#LNG\_COMPILER\_VERSION>: 返回 \#LNG 编译器的 CMake 编译器版本。
 \end{itemize}
 
-在需要目标参数的命令中，例如 target\_compile\_definitions()，我们可以使用一个目标特定的表达式来获取字符串值：
+为了检查 C++ 编译时将使用哪个编译器，应该使用 \$<CXX\_COMPILER\_ID> 生成器表达式。返回的值，即 CMake 的编译器 ID，是为每个支持的编译器定义的常量。可能会遇到如 AppleClang、ARMCC、Clang、GNU、Intel 和 MSVC 等值。完整的列表，请查看官方文档。
+
+与前一个部分类似，也可以在条件表达式中利用工具链信息。如果提供的任何参数与特定值匹配，有一些查询会返回真：
+
+\begin{itemize}
+\item
+\$<\#LNG\_COMPILER\_ID:ids>: 如果 ids 包含 CMake 的 \#LNG 编译器 ID，则返回真。
+
+\item
+\$<\#LNG\_COMPILER\_VERSION:vers>: 如果 vers 包含 CMake 的 \#LNG 编译器版本，则返回真。
+
+\item
+\$<COMPILE\_FEATURES:features>: 如果提供的所有 features 特征都由该目标的编译器支持，则返回真。
+\end{itemize}
+
+需要目标参数的命令中，例如 target\_compile\_definitions()，可以使用一个目标特定的表达式来获取字符串值：
 
 \begin{itemize}
 \item
@@ -266,11 +267,11 @@ target_compile_definitions(my_target PRIVATE
 \$<LINK\_LANGUAGE>: 这返回链接步骤中源文件的编程语言。
 \end{itemize}
 
-为了评估一个简单的布尔查询：
+为了计算一个简单的布尔查询：
 
 \begin{itemize}
 \item
-\$<COMPILE\_LANGUAGE:langs>: 如果 langs 包含用于该目标编译的语言，则返回 true。这可以用来为编译器提供特定于语言的标志。例如，为了使用 -fno-exceptions 标志编译目标 C++ 源：
+\$<COMPILE\_LANGUAGE:langs>: 如果 langs 包含用于该目标编译的语言，则返回真。这可以用来为编译器提供特定于语言的标志。例如，为了使用 -fno-exceptions 标志编译目标 C++ 源：
 
 \begin{cmake}
 target_compile_options(myapp
@@ -279,14 +280,14 @@ target_compile_options(myapp
 \end{cmake}
 
 \item
-\$<LINK\_LANGUAGE:langs> – 它遵循与 COMPILE\_LANGUAGE 相同的规则，如果 langs 包含用于该目标链接的语言，则返回 true。
+\$<LINK\_LANGUAGE:langs> – 遵循与 COMPILE\_LANGUAGE 相同的规则，如果 langs 包含用于该目标链接的语言，则返回真。
 \end{itemize}
 
 或者，为了查询更复杂的情况：
 
 \begin{itemize}
 \item
-\$<COMPILE\_LANG\_AND\_ID:lang,compiler\_ids...>: 如果 lang 语言用于此目标，且编译器 ID 列表中的某个编译器将用于此编译，则返回 true。这个表达式可以用来为特定编译器指定编译定义：
+\$<COMPILE\_LANG\_AND\_ID:lang,compiler\_ids...>: 如果 lang 语言用于此目标，且编译器 ID 列表中的某个编译器将用于此编译，则返回真。这个表达式可以用来为特定编译器指定编译定义：
 
 \begin{cmake}
 target_compile_definitions(myapp PRIVATE
@@ -297,21 +298,19 @@ target_compile_definitions(myapp PRIVATE
 \end{cmake}
 
 \item
-在这个例子中，对于使用 AppleClang 或 Clang 编译的 C++ 源（CXX），将设置 -DCXX\_CLANG 定义。对于使用 Intel 编译器编译的 C++ 源，将设置 -DCXX\_INTEL 定义标志。最后，对于使用 Clang 编译的 C 源（C），我们将设置一个 -DC\_CLANG 定义。
+这个例子中，对于使用 AppleClang 或 Clang 编译的 C++ 源（CXX），将设置 -DCXX\_CLANG 定义。对于使用 Intel 编译器编译的 C++ 源，将设置 -DCXX\_INTEL 定义标志。对于使用 Clang 编译的 C 源（C），将设置一个 -DC\_CLANG 定义。
 
 \item
-\$<LINK\_LANG\_AND\_ID:lang,compiler\_ids...>: 这像 COMPILE\_LANG\_AND\_ID 一样工作，但检查链接步骤中使用的语言。使用这个表达式来指定特定语言和链接器组合的目标的链接库、链接选项、链接目录和链接依赖项。
+\$<LINK\_LANG\_AND\_ID:lang,compiler\_ids...>: 这像 COMPILE\_LANG\_AND\_ID 一样工作，但检查链接步骤中使用的语言。使用表达式来指定特定语言和链接器组合的目标的链接库、链接选项、链接目录和链接依赖项。
 \end{itemize}
 
-在这里需要强调的是，单个目标可以由多种语言的源文件组合而成。例如，可以链接 C 工件与 C++（但我们应该在 project() 命令中声明这两种语言）。因此，引用特定语言的生成器表达式将用于一些源文件，但不会用于其他源文件。
-
-让我们继续讨论下一个重要类别：与目标相关的生成器表达式。
+这里需要强调的是，单个目标可以由多种语言的源文件组合而成。例如，可以链接 C 工件与 C++（应该在 project() 命令中声明这两种语言）。因此，引用特定语言的生成器表达式将用于一些源文件，但不会用于其他源文件。
 
 \mySubsubsection{6.5.4.}{查询与目标相关的信息}
 
-有许多生成器表达式用于查询目标属性和检查与目标相关的信息。需要注意的是，直到 CMake 3.19 版本，许多引用另一个目标的生成器表达式被用来自动创建它们之间的依赖关系。在最新版本的 CMake 中，这种行为已经不再发生。
+有许多生成器表达式用于查询，目标属性和检查与目标相关的信息。需要注意的是，直到 CMake 3.19 版本，许多引用另一个目标的生成器表达式可用来自动创建它们之间的依赖关系。在最新版本的 CMake 中，这种行为已经不再发生。
 
-一些生成器表达式会从调用的命令中推断目标；最常用的是基本查询，它返回目标属性的值：
+一些生成器表达式会从调用的命令中推断目标；最常用的是基本查询，其返回目标属性的值：
 
 \begin{shell}
 $<TARGET_PROPERTY:prop>
@@ -319,30 +318,30 @@ $<TARGET_PROPERTY:prop>
 
 \begin{itemize}
 \item
-在 target\_link\_libraries() 命令中不太为人所知，但很有用的是 \$<LINK\_ONLY:deps> 生成器表达式。它允许我们存储 PRIVATE 链接依赖，这些依赖不会通过传递的使用要求传播；这些在接口库中使用，我们在第五章《与目标打交道》的“理解传递的使用要求”部分讨论过。
+target\_link\_libraries() 命令中不太为人所知，但很有用的是 \$<LINK\_ONLY:deps> 生成器表达式。允许存储 PRIVATE 链接依赖，这些依赖不会通过传递的使用要求传播；这些在接口库中使用。
 \end{itemize}
 
-此外，还有一组与安装和导出相关的表达式，它们从它们被使用的上下文中推断目标。我们将深入讨论它们，所以现在我们只需要一个快速的介绍：
+此外，还有一组与安装和导出相关的表达式，从它们使用的上下文中推断目标。后续我们将深入讨论它们，所以现在只给出一个快速的介绍：
 
 \begin{itemize}
 \item
 \$<INSTALL\_PREFIX>: 当目标使用 install(EXPORT) 导出或在内 INSTALL\_NAME\_DIR 评估时，返回安装前缀；否则，返回空。
 
 \item
-\$<INSTALL\_INTERFACE:string>: 当表达式使用 install(EXPORT) 导出时，返回 string。
+\$<INSTALL\_INTERFACE:string>: 使用 install(EXPORT) 导出时，返回 string。
 
 \item
-\$<BUILD\_INTERFACE:string>: 当表达式使用 export() 命令或同一构建系统中的另一个目标导出时，返回 string。
+\$<BUILD\_INTERFACE:string>: 使用 export() 命令或同一构建系统中的另一个目标导出时，返回 string。
 
 \item
-\$<BUILD\_LOCAL\_INTERFACE:string>: 当表达式被同一构建系统中的另一个目标导出时，返回 string。
+\$<BUILD\_LOCAL\_INTERFACE:string>: 同一构建系统中的另一个目标导出时，返回 string。
 \end{itemize}
 
 然而，大多数查询都需要明确提供目标名称作为第一个参数：
 
 \begin{itemize}
 \item
-\$<TARGET\_EXISTS:target>: 如果目标存在，则返回 true。
+\$<TARGET\_EXISTS:target>: 如果目标存在，则返回真。
 
 \item
 \$<TARGET\_NAME\_IF\_EXISTS:target>: 如果目标存在，则返回目标名称，否则返回空字符串。
@@ -354,7 +353,7 @@ $<TARGET_PROPERTY:prop>
 \$<TARGET\_OBJECTS:target>: 返回对象库目标的对象文件列表。
 \end{itemize}
 
-你可以查询目标工件的路径：
+可以查询目标工件的路径：
 
 \begin{itemize}
 \item
@@ -383,14 +382,13 @@ $<TARGET_PROPERTY:prop>
 
 \begin{itemize}
 \item
-TARGET\_LINKER\_FILE: 查询在链接到目标时使用的文件的路径。通常，这是目标产生的库（.a、.lib、.so）。然而，在具有动态链接库（DLL）的平台，它将是与目标 DLL 相关联的 .lib 导入库。
+TARGET\_LINKER\_FILE: 查询在链接到目标时使用的文件的路径。通常，这是目标产生的库（.a、.lib、.so）。然而，在具有动态链接库（DLL）的平台，将是与目标 DLL 相关联的 .lib 导入库。
 
 \item
 TARGET\_PDB\_FILE: 查询链接器生成的程序数据库文件（.pdb）的路径。
 \end{itemize}
 
-
-管理库是一个复杂的话题，CMake 提供了很多生成器表达式来帮助。然而，我们将推迟介绍它们，直到它们在第八章《链接可执行文件和库》中变得相关。
+管理库是一个复杂的话题，CMake 提供了很多生成器表达式来帮助，我们将在第8章中进行详细介绍。
 
 最后，还有一些针对 Apple 包的特定表达式：
 
@@ -399,29 +397,29 @@ TARGET\_PDB\_FILE: 查询链接器生成的程序数据库文件（.pdb）的路
 \$<TARGET\_BUNDLE\_DIR:target>: 这是目标（my.app、my.framework 或 my.bundle）的捆绑目录的完整路径。
 
 \item
-\$<TARGET\_BUNDLE\_CONTENT\_DIR:target>: 这是目标捆绑内容目录的完整路径。在 macOS 上，它是 my.app/Contents、my.framework 或 my.bundle/Contents。其他软件开发工具包（SDKs）（如 iOS）具有扁平的捆绑结构——my.app、my.framework 或 my.bundle。
+\$<TARGET\_BUNDLE\_CONTENT\_DIR:target>: 这是目标捆绑内容目录的完整路径。在 macOS 上，是 my.app/Contents、my.framework 或 my.bundle/Contents。其他软件开发工具包（SDKs）（如 iOS）具有扁平的捆绑结构——my.app、my.framework 或 my.bundle。
 \end{itemize}
 
-这些是与目标打交道的生成器表达式的主要内容。值得知道的是，还有更多的内容。我建议您参考官方文档以获取完整的列表。
+这些是与目标打交道的生成器表达式的主要内容。还有更多的内容，建议参考官方文档以获取完整的列表。
 
 \mySubsubsection{6.5.5.}{转义}
 
-在极少数情况下，您可能需要向生成器表达式传递一个具有特殊含义的字符。为了转义这种行为，请使用以下表达式：
+极少数情况下，可能需要向生成器表达式传递一个具有特殊含义的字符。为了转义这种行为，请使用以下表达式：
 
 \begin{itemize}
 \item
-\$<ANGLE-R>: 这是一个 > 符号。
+\$<ANGLE-R>: 一个 > 符号。
 
 \item
-\$<COMMA>: 这是一个逗号符号。
+\$<COMMA>: 一个逗号符号。
 
 \item
-\$<SEMICOLON>: 这是一个分号符号。
+\$<SEMICOLON>: 一个分号符号。
 \end{itemize}
 
-最后一个表达式在包含分号的参数被使用时，可以用来防止列表展开。
+最后一个表达式在包含分号的参数时使用，可以用来避免列表展开。
 
-现在我们已经介绍了所有的查询和转换，我们可以看到它们在实践中的工作方式。让我们通过一些应用示例来学习。
+现在已经介绍了所有的查询和转换，可以看到其在实践中的工作方式。让我们继续通过一些应用示例来进行学习吧！
 
 
 
