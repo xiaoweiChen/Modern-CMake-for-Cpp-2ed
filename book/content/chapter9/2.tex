@@ -1,42 +1,42 @@
 
-当我们的项目依赖于一个流行的库时，操作系统很可能已经安装了正确的包。我们只需要将其连接到我们项目的构建过程中。那么，我们该如何操作呢？我们需要找出系统中包的位置，以便CMake可以使用其文件。手动完成这个操作是可能的，但每个环境都有所不同。在一个系统上有效路径可能在另一个系统上无效。因此，在构建时，我们应该自动查找这些路径。有不同的方法可以实现这一点，但通常最好的方法是使用CMake内置的find\_package()命令，它知道如何找到许多常用的包。
+当项目依赖于一个很流行的库时，操作系统很可能已经安装了这个库的包。我们只需要将其连接到项目的构建过程中。那么，该如何操作呢？需要找出系统中包的位置，以便CMake可以使用其文件。可以手动完成这个操作，但每个环境都有所不同。在一个系统上有效路径可能在另一个系统上无效。因此，在构建时，应该自动查找这些路径。有不同的方法可以实现这一点，但最好的方法是使用CMake内置的find\_package()命令，它了解如何找到许多常用的包。
 
-如果我们的包不受支持，我们有两个选择：
+如果我们的包不受支持，那么有两个选择：
 
 \begin{itemize}
 \item
-我们可以编写一个名为find-module的小插件来帮助find\_package()
+可以编写一个名为find-module的插件来帮助find\_package()
 
 \item
-我们可以使用一种较老的方法，称为pkg-config
+可以使用一种较老的方法，称为pkg-config
 \end{itemize}
 
-让我们先从推荐选项开始。
+先从推荐选项开始。
 
 \mySubsubsection{9.2.1.}{使用CMake的find\_package()查找包}
 
-让我们从以下场景开始：您想要改进网络通信或数据存储的方式。简单的纯文本文件或像JSON和XML这样的开放文本格式在大小方面太冗长。使用二进制格式会有所帮助，而像Google的Protobuf这样的知名库似乎就是答案。
+先从以下场景开始：想要改进网络通信或数据存储的方式。简单的纯文本文件或像JSON和XML这样的开放文本格式在大小方面太冗长。使用二进制格式会有所帮助，而像Google的Protobuf这样的知名库就是答案。
 
-您已经阅读了说明并在您的系统上安装了所需的软件。现在怎么办？您如何让CMake的find\_package()找到并使用这个新库？
+已经阅读了说明，并在系统上安装了所需的软件。现在怎么办？如何让CMake的find\_package()找到并使用这个库呢？
 
-要执行此示例，我们必须安装我们想要使用的依赖项，因为find\_package()命令只查找已经存在于您系统上的包。它假定您已经安装了所有内容，或者如果被告知，用户知道如何安装所需的软件。如果您想处理其他情况，您需要备用计划。您可以在“使用系统中不存在的依赖项”部分中找到更多相关信息。
+要执行此示例，必须安装想要使用的依赖项，find\_package()命令只查找已经存在于系统上的包。假定已经安装了所有内容，或者用户知道如何安装所需的软件。如果想处理其他情况，需要备用计划。
 
-在Protobuf的情况下，情况相当简单：您可以自己从官方仓库（\url{https://github.com/protocolbuffers/protobuf}）下载、编译并安装库，或者使用操作系统的包管理器。如果您按照第1章“CMake入门”中提到的Docker镜像进行这些示例，您的依赖项已经安装好了，您不需要做任何事情。但是，如果您想自己尝试安装，以下是在Debian Linux上安装Protobuf库和编译器的命令：
+使用Protobuf时，情况相当简单：可以自己从官方仓库（\url{https://github.com/protocolbuffers/protobuf}）下载、编译并安装库，或者使用操作系统的包管理器。如果按照第1章中提到的Docker镜像进行这些示例，所有依赖项就是已经安装好了的，不需要做任何事情。但如果想自己尝试安装，以下是在Debian Linux上安装Protobuf库和编译器的命令：
 
 \begin{shell}
 $ apt update
 $ apt install protobuf-compiler libprotobuf-dev
 \end{shell}
 
-如今，许多项目选择支持CMake。它们通过创建配置文件并在安装过程中将其放入适当的系统目录来实现这一点。配置文件是选择支持CMake的项目的基本部分。
+如今，许多项目选择支持CMake，通过创建配置文件，并在安装过程中将其放入适当的系统目录来进行。配置文件是选择支持CMake的项目的基本部分。
 
-如果您想使用一个没有配置文件的库，请不要担心。CMake支持一种外部机制来查找此类库，称为find模块。与配置文件不同，find模块不是它们帮助定位的项目的一部分。实际上，CMake本身通常带有这些find模块，用于许多流行的库。
+如果想使用一个没有配置文件的库，请不要担心。CMake支持一种外部机制来查找此类库，称为find模块。与配置文件不同，find模块不是帮助定位的项目的一部分。实际上，CMake本身通常带有这些find模块，用于许多流行的库。
 
-如果您陷入困境，既没有配置文件也没有find模块，您还有其他选择：
+如果陷入困境，既没有配置文件也没有find模块，也还有其他选择：
 
 \begin{itemize}
 \item
-为特定包编写自己的find模块，并将它们包含在您的项目中
+为特定包编写自己的find模块，并将它们包含在项目中
 
 \item
 使用FindPkgConfig模块来利用传统的Unix包定义文件
@@ -45,9 +45,9 @@ $ apt install protobuf-compiler libprotobuf-dev
 编写配置文件，并要求包维护者将其包含在内
 \end{itemize}
 
-您可能认为您还没有准备好自己创建这样的合并请求。那没关系，因为您很可能不需要这样做。CMake自带了150多个find模块，可以找到如Boost、bzip2、curl、curses、GIF、GTK、iconv、ImageMagick、JPEG、Lua、OpenGL、OpenSSL、PNG、PostgreSQL、Qt、SDL、Threads、XML-RPC、X11和zlib等库，以及我们在此示例中将使用的Protobuf文件。完整的列表可以在CMake文档中找到（请参阅“进一步阅读”部分）。
+可能认为没有准备好自己创建这样的合并请求，很可能不需要这样做。CMake自带了150多个find模块，可以找到如Boost、bzip2、curl、curses、GIF、GTK、iconv、ImageMagick、JPEG、Lua、OpenGL、OpenSSL、PNG、PostgreSQL、Qt、SDL、Threads、XML-RPC、X11和zlib等库，以及在此示例中将使用的Protobuf文件。完整的列表可以在CMake文档中找到（请参阅“扩展阅读”）。
 
-find模块和配置文件都可以与CMake的find\_package()命令一起使用。CMake首先检查其内置的find模块。如果它找不到所需的模块，它会继续检查不同包提供的配置文件。CMake扫描通常安装包的路径（取决于操作系统）。它查找匹配以下模式的文件：
+find模块和配置文件都可以与CMake的find\_package()命令一起使用，CMake首先检查其内置的find模块。如果找不到所需的模块，会继续检查不同包提供的配置文件。CMake扫描通常安装包的路径（取决于操作系统），查找匹配以下模式的文件：
 
 \begin{itemize}
 \item
@@ -57,9 +57,9 @@ find模块和配置文件都可以与CMake的find\_package()命令一起使用�
 <kebab-case-package-name>-config.cmake
 \end{itemize}
 
-如果您想将外部find模块添加到您的项目中，请设置CMAKE\_MODULE\_PATH变量。CMake将首先扫描此目录。
+如果想将外部find模块添加到项目中，请设置CMAKE\_MODULE\_PATH变量。CMake将首先扫描此目录。
 
-回到我们的示例，目标很简单：我想展示我可以有效地构建一个使用Protobuf的项目。别担心，您不需要了解Protobuf来理解发生的事情。简单来说，Protobuf是一个将数据以特定二进制格式保存的库。这使得写入和从文件或网络读取C++对象变得容易。为了设置这个，我们使用一个.proto文件来给Protobuf数据结构：
+回到示例，目标很简单：我想展示可以有效地构建一个使用Protobuf的项目。别担心，不需要了解Protobuf来理解发生的事情。简单来说，Protobuf是一个将数据以特定二进制格式保存的库。这使得写入和从文件或网络读取C++对象变得容易。为了设置这个，我们使用一个.proto文件来给Protobuf数据结构：
 
 \filename{ch09/01-find-package-variables/message.proto}
 
@@ -70,7 +70,7 @@ message Message {
 }
 \end{shell}
 
-这段代码是一个简单的架构定义，包括一个32位整数。Protobuf包附带了一个二进制文件，可以将这些.proto文件编译成C++源文件和头文件，以便我们的应用程序可以使用。我们需要将这个编译步骤添加到我们的构建过程中，但稍后会回到这个话题。现在，让我们看看main.cpp文件是如何使用Protobuf生成的输出：
+这段代码是一个简单的架构定义，包括一个32位整数。Protobuf包附带了一个二进制文件，可以将这些.proto文件编译成C++源文件和头文件，以便应用程序可以使用。需要将这个编译步骤添加到构建过程中，但稍后会回到这个话题。现在，来看看main.cpp文件是如何使用Protobuf生成的输出：
 
 \filename{ch09/01-find-package-variables/main.cpp}
 
@@ -90,9 +90,9 @@ int main()
 }
 \end{cpp}
 
-我已经包含了预期的Protobuf生成的message.pb.h头文件。这个头文件将包含在message.proto中配置的Message对象的定义。在main()函数中，我创建了一个简单的Message对象。我将它的id字段设置为123作为一个随机示例，然后将其调试信息打印到标准输出。接下来，这个对象的二进制版本被写入文件流。这是像Protobuf这样的序列化库最基本的使用场景。
+已经包含了预期的Protobuf生成的message.pb.h头文件。这个头文件将包含在message.proto中配置的Message对象的定义。在main()函数中，创建了一个简单的Message对象。将它的id字段设置为123作为一个随机示例，然后将其调试信息打印到标准输出。接下来，这个对象的二进制版本可写入文件流。这是像Protobuf这样的序列化库最基本的使用场景。
 
-在编译main.cpp之前，必须生成message.pb.h头文件。这是由protoc，即Protobuf编译器完成的，它将message.proto作为输入。管理这个过程听起来很复杂，但实际上并不复杂！
+编译main.cpp之前，必须生成message.pb.h头文件。这是由protoc，即Protobuf编译器完成，将message.proto作为输入。管理这个过程听起来很复杂，但实际上并不复杂！
 
 这就是CMake魔法发生的地方：
 
@@ -111,23 +111,23 @@ target_include_directories(main PRIVATE
 )
 \end{cmake}
 
-让我们分解一下：
+我们分解一下：
 
 \begin{itemize}
 \item
-前两行很直接：它们设置项目并指定将使用C++语言。
+前两行很直接：设置项目并指定将使用C++语言。
 
 \item
-find\_package(Protobuf REQUIRED)告诉CMake找到Protobuf库（通过执行捆绑的FindProtobuf.cmake find模块）并为我们的项目准备使用。如果找不到库，构建将停止，因为我们使用了REQUIRED关键字。
+find\_package(Protobuf REQUIRED)告诉CMake找到Protobuf库（通过执行捆绑的FindProtobuf.cmake find模块）并为项目准备使用。因为我们使用了REQUIRED关键字，如果找不到库，构建将停止。
 
 \item
-protobuf\_generate\_cpp是Protobuf find模块中定义的自定义函数。它自动化调用protoc编译器的过程。成功编译后，它将生成的源文件路径存储在提供的前两个参数GENERATED\_SRC和GENERATED\_HEADER中。所有后续参数将被视为要编译的文件列表（message.proto）。
+protobuf\_generate\_cpp是Protobuf find模块中定义的自定义函数，自动化调用protoc编译器的过程。成功编译后，将生成的源文件路径存储在提供的前两个参数GENERATED\_SRC和GENERATED\_HEADER中。后续参数将视为要编译的文件列表（message.proto）。
 
 \item
-add\_executable使用main.cpp和Protobuf生成的文件创建我们的可执行文件。
+add\_executable使用main.cpp和Protobuf生成的文件创建可执行文件。
 
 \item
-target\_link\_libraries告诉CMake将Protobuf库链接到我们的可执行文件。
+target\_link\_libraries告诉CMake将Protobuf库链接到可执行文件。
 
 \item
 target\_include\_directories(将必要的INCLUDE\_DIRS提供的路径和CMAKE\_CURRENT\_BINARY\_DIR添加到包含路径中。后者告诉编译器在哪里找到message.pb.h头文件。
@@ -137,16 +137,16 @@ Protobuf find模块提供了以下功能：
 
 \begin{itemize}
 \item
-它找到Protobuf库及其编译器。
+找到Protobuf库及其编译器。
 
 \item
-它提供了帮助函数来编译.proto文件。
+提供了帮助函数来编译.proto文件。
 
 \item
-它设置了包含和链接的路径变量。
+设置了包含和链接的路径变量。
 \end{itemize}
 
-虽然不是每个模块都像Protobuf那样提供方便的帮助函数，但大多数模块确实为您设置了一些关键的变量。这些变量对于管理项目中的依赖项很有用。无论您是使用内置的find模块还是配置文件，在成功找到包之后，您可以期望设置以下全部或部分变量：
+虽然不是每个模块都像Protobuf那样提供方便的帮助函数，但大多数模块确实设置了一些关键的变量，这些变量对于管理项目中的依赖项很有用。无论使用内置的find模块还是配置文件，在成功找到包之后，可以期望设置以下全部或部分变量：
 
 \begin{itemize}
 \item
@@ -159,14 +159,14 @@ Protobuf find模块提供了以下功能：
 <PKG\_NAME>\_LIBRARIES 或 <PKG\_NAME>\_LIBS: 这些是要链接的库的列表。
 
 \item
-<PKG\_NAME>\_DEFINITIONS: 这包含包所需的编译器定义。
+<PKG\_NAME>\_DEFINITIONS: 包含包所需的编译器定义。
 \end{itemize}
 
-运行find\_package()后，您可以立即检查<PKG\_NAME>\_FOUND变量，以查看CMake是否成功找到包。
+运行find\_package()后，可以立即检查<PKG\_NAME>\_FOUND变量，以查看CMake是否成功找到包。
 
-如果包模块是为CMake 3.10或更高版本编写的，它还可能会提供目标定义。这些目标将被指定为IMPORTED目标，以区分它们源自外部依赖。
+如果包模块是为CMake 3.10或更高版本编写的，还可能会提供目标定义。这些目标将指定为IMPORTED目标，以区分其源自外部的依赖。
 
-Protobuf是学习CMake中依赖项时的一个很好的探索示例，因为它定义了特定于模块的变量和IMPORTED目标。这样的目标允许我们编写更简洁的代码：
+Protobuf是学习CMake中依赖项时的一个很好的探索示例，它定义了特定于模块的变量和IMPORTED目标。这样的目标允许我们编写更简洁的代码：
 
 \filename{ch09/02-find-package-targets/CMakeLists.txt}
 
@@ -182,28 +182,28 @@ target_include_directories(main PRIVATE
                                 ${CMAKE_CURRENT_BINARY_DIR})
 \end{cmake}
 
-看看这段高亮代码与之前示例版本的对比：不是使用列出文件和目录的变量，而是使用IMPORTED目标是一个好主意。这种方法简化了列表文件。它还自动处理瞬态使用要求或传播属性，如下面使用protobuf::libprotobuf目标所示。
+看看这段高亮代码与之前示例版本的对比：不是使用列出文件和目录的变量，而是使用IMPORTED目标是一个好主意。这种方法简化了列表文件。自动处理瞬态使用要求或传播属性，如下面使用protobuf::libprotobuf目标所示。
 
 \begin{myNotic}{Note}
-如果您想确切知道一个特定的find模块提供了什么，您最好的资源是它的在线文档。例如，您可以在CMake官方网站的这个链接上找到Protobuf的详细信息：\url{https://cmake.org/cmake/help/latest/module/FindProtobuf.html}。
+如果想确切知道一个特定的find模块提供了什么，最好的资源是在线文档。例如，可以在CMake官方网站的这个链接上找到Protobuf的详细信息：\url{https://cmake.org/cmake/help/latest/module/FindProtobuf.html}。
 \end{myNotic}
 
-为了保持简单，本节中的示例如果用户系统中没有找到Protobuf库将会直接失败。但是，一个真正健壮的解决方案应该验证Protobuf\_FOUND变量，并为用户呈现一个清晰的诊断信息（以便他们可以安装它），或者自动执行安装。我们将在本章后面学习如何做到这一点。
+为了保持简单，本节中的示例如果用户系统中没有找到Protobuf库将会直接失败。但真正健壮的解决方案，应该验证Protobuf\_FOUND变量，并为用户呈现一个清晰的诊断信息（以便可以安装），或者自动执行安装。我们将在本章后面学习如何做到这一点。
 
-find\_package()命令有几个可选参数可以使用。虽然有一个更长的参数列表，但这里我们将重点关注关键的几个。该命令的基本格式如下：
+find\_package()命令有几个可选参数可以使用。虽然有一个更长的参数列表，但这里将重点关注关键的几个。该命令的基本格式如下：
 
 \begin{shell}
 find_package(<Name> [version] [EXACT] [QUIET] [REQUIRED])
 \end{shell}
 
-让我们分解一下这些可选参数的含义：
+分解一下这些可选参数的含义：
 
 \begin{itemize}
 \item
-[version] 这指定了您需要的包的最小版本，格式为major.minor.patch.tweak（例如1.22）。您还可以指定一个范围，如1.22…1.40.1，使用三个点作为分隔符。
+[version] 这指定了需要的包的最小版本，格式为major.minor.patch.tweak（例如1.22）。还可以指定一个范围，如1.22…1.40.1，使用三个点作为分隔符。
 
 \item
-EXACT: 与非范围[version]一起使用，告诉CMake您需要确切的版本，而不是更新的版本。
+EXACT: 与非范围[version]一起使用，告诉CMake需要确切的版本，而不是更新的版本。
 
 \item
 QUIET: 这将抑制关于包是否被找到的所有消息。
@@ -212,29 +212,29 @@ QUIET: 这将抑制关于包是否被找到的所有消息。
 REQUIRED: 如果找不到包，这将停止构建，并且即使使用了QUIET，也会显示诊断信息。
 \end{itemize}
 
-如果您确信一个包应该存在于您的系统中，但find\_package()没有找到它，有一种方法可以进一步挖掘。从CMake 3.24开始，您可以在调试模式下运行配置阶段以获取更多信息。使用以下命令：
+如果确信一个包存在于系统中，但find\_package()没有找到它，有一种方法可以进一步挖掘。从CMake 3.24开始，可以在调试模式下运行配置阶段以获取更多信息。使用以下命令：
 
 \begin{shell}
 cmake -B <build tree> -S <source tree> --debug-find-pkg=<pkg>
 \end{shell}
 
-使用这个命令时要小心。确保您准确地输入包名，因为它对大小写敏感。
+使用这个命令时要小心。确保正确地输入包名，它对大小写敏感。
 
 关于find\_package()命令的更多信息可以在文档页面这里找到：\url{https://cmake.org/cmake/help/latest/command/find_package.html}。
 
-Find模块旨在作为一种非常方便的方式，为CMake提供有关已安装依赖项的信息。大多数流行的库在所有主要平台上都得到了CMake的广泛支持。但是，当我们想要使用一个尚未有专用find模块的第三方库时，我们应该怎么办呢？
+Find模块旨在作为一种非常方便的方式，为CMake提供有关已安装依赖项的信息。大多数流行的库在所有主要平台上都得到了CMake的广泛支持。但当我们想要使用一个尚未有专用find模块的第三方库时，应该怎么办呢？
 
 \mySamllsection{编写自己的find模块}
 
-在极少数情况下，您项目中真正想使用的库没有提供配置文件，CMake中也没有现成的find模块。在这种情况下，您可以为该库编写一个自定义的find模块，并将其与项目一起分发。这种情况并不理想，但在照顾到您项目的用户的情况下，必须这样做。
+极少数情况下，项目中真正想使用的库没有提供配置文件，CMake中也没有现成的find模块。这时，可以为该库编写一个自定义的find模块，并将其与项目一起分发。这种情况并不理想，但在照顾到项目用户的情况下，必须这样做。
 
-我们可以尝试为libpqxx库编写一个自定义的find模块，这是一个PostgreSQL数据库的客户端。libpqxx在本书的Docker镜像中预安装，所以如果您使用那个镜像，就不用担心了。Debian用户可以使用libpqxx-dev包来安装它（其他操作系统可能需要不同的命令）：
+我们可以尝试为libpqxx库编写一个自定义的find模块，这是一个PostgreSQL数据库的客户端。libpqxx在本书的Docker镜像中预安装，所以如果使用那个镜像，就不用担心了。Debian用户可以使用libpqxx-dev包来安装（其他操作系统可能需要不同的命令）：
 
 \begin{shell}
 apt-get install libpqxx-dev
 \end{shell}
 
-我们将从在项目的源树中的cmake/module目录中创建一个名为FindPQXX.cmake的新文件开始。为了确保当调用find\_package()时，CMake可以发现这个find模块，我们将它的路径添加到我们的CMakeLists.txt中的CMAKE\_MODULE\_PATH变量，使用list(APPEND)。这里有一个快速的提醒：在搜索其他位置之前，CMake会首先检查CMAKE\_MODULE\_PATH中列出的目录以查找find模块。您的完整列表文件应该看起来像这样：
+我们将从在项目的源树中的cmake/module目录中创建一个名为FindPQXX.cmake的新文件开始。为了确保调用find\_package()时，CMake可以发现这个find模块，我们将其路径使用list(APPEND)，添加到CMakeLists.txt中的CMAKE\_MODULE\_PATH变量中。注意，在搜索其他位置之前，CMake会首先检查CMAKE\_MODULE\_PATH中列出的目录以查找find模块。完整列表文件应该看起来像这样：
 
 \filename{ch09/03-find-package-custom/CMakeLists.txt}
 
@@ -248,29 +248,29 @@ add_executable(main main.cpp)
 target_link_libraries(main PRIVATE PQXX::PQXX)
 \end{cmake}
 
-有了这些设置，让我们继续编写实际的find模块。如果FindPQXX.cmake文件为空，即使您使用REQUIRED调用find\_package()，CMake也不会引发任何错误。find模块的作者有责任设置正确的变量并遵循最佳实践（例如引发错误）。根据CMake的指南，这里有一些关键点需要注意：
+有了这些设置，可以继续编写实际的find模块。如果FindPQXX.cmake文件为空，即使使用REQUIRED调用find\_package()，CMake也不会引发错误。find模块的作者有责任设置正确的变量，并遵循最佳实践（例如：引发错误）。根据CMake的指南，这里有一些关键点需要注意：
 
 \begin{itemize}
 \item
 当调用find\_package(<PKG\_NAME> REQUIRED)时，CMake会将<PKG\_NAME>\_FIND\_REQUIRED变量设置为1。find模块应该在找不到库时使用message(FATAL\_ERROR)。
 
 \item
-当使用find\_package(<PKG\_NAME> QUIET)时，CMake会将<PKG\_NAME>\_FIND\_QUIETLY设置为1。find模块应避免显示任何额外的消息。
+当使用find\_package(<PKG\_NAME> QUIET)时，CMake会将<PKG\_NAME>\_FIND\_QUIETLY设置为1。find模块应避免显示任何其他消息。
 
 \item
-CMake会将<PKG\_NAME>\_FIND\_VERSION变量设置为在列表文件中指定的版本。如果find模块无法定位正确的版本，它应该引发一个FATAL\_ERROR。
+CMake会将<PKG\_NAME>\_FIND\_VERSION变量设置为在列表文件中指定的版本。如果find模块无法定位正确的版本，应该引发一个FATAL\_ERROR。
 \end{itemize}
 
 当然，最好遵循上述规则，以便与其他find模块保持一致。
 
-为了为PQXX创建一个优雅的find模块，让我们遵循以下步骤：
+为了为PQXX创建一个优雅的find模块，可以遵循以下步骤：
 
 \begin{enumerate}
 \item
-如果库和头文件的路径已经知道（由用户提供或从之前的运行的缓存中检索），使用这些路径来创建一个IMPORTED目标。如果这样做，您可以停止。
+如果库和头文件的路径已经知道（由用户提供或从之前的运行的缓存中检索），使用这些路径来创建一个IMPORTED目标。如果这样做，可以停止。
 
 \item
-如果路径未知，首先找到底层依赖项（在这种情况下是PostgreSQL）的库和头文件。
+如果路径未知，首先找到底层依赖项（这种情况下是PostgreSQL）的库和头文件。
 
 \item
 接下来，搜索已知路径以定位PostgreSQL客户端库的二进制版本。
@@ -282,19 +282,19 @@ CMake会将<PKG\_NAME>\_FIND\_VERSION变量设置为在列表文件中指定的�
 最后，确认是否同时找到了库和头文件。如果是，创建一个IMPORTED目标。
 \end{enumerate}
 
-为了为PQXX创建一个健壮的find模块，我们将关注几个重要任务。首先，创建IMPORTED目标可以在两种情况下发生——用户指定库的路径或路径自动检测。为了保持代码整洁并避免重复，我们将编写一个函数来管理我们的搜索过程的结果。
+为了为PQXX创建一个健壮的find模块，我们将关注几个重要任务。首先，创建IMPORTED目标可以在两种情况下发生——用户指定库的路径或路径自动检测。为了保持代码整洁并避免重复，将编写一个函数来管理搜索过程的结果。
 
 \mySamllsubsection{定义IMPORTED目标}
 
-要设置一个IMPORTED目标，我们实际上只需要用IMPORTED关键字定义一个库。这将允许我们在调用CMakeLists.txt列表文件时使用target\_link\_libraries()命令。我们需要指定库的类型，为了简化，我们将它标记为UNKNOWN。这意味着我们不关心库是静态还是动态的；我们只是想向链接器传递一个参数。
+要设置一个IMPORTED目标，实际上只需要用IMPORTED关键字定义一个库。这允许在调用CMakeLists.txt列表文件时使用target\_link\_libraries()命令。我们需要指定库的类型，为了简化，将其标记为UNKNOWN。所以，我们不关心库是静态还是动态的，只是想向链接器传递一个参数。
 
-接下来，我们需要为我们的目标设置一些基本属性——即IMPORTED\_LOCATION和INTERFACE\_INCLUDE\_DIRECTORIES。我们使用函数提供的参数来设置这些属性。可以指定额外的属性，如COMPILE\_DEFINITIONS，但对于PQXX来说是不必要的。
+接下来，需要为目标设置一些基本属性——即IMPORTED\_LOCATION和INTERFACE\_INCLUDE\_DIRECTORIES。使用函数提供的参数来设置这些属性，可以指定其他属性，如COMPILE\_DEFINITIONS，但对于PQXX来说没有必要。
 
-然后，为了使我们的find模块更高效，我们将找到的路径存储在缓存变量中。
+然后，为了使find模块更高效，将找到的路径存储在缓存变量中。
 
-这样，我们就不必在未来的运行中重复搜索了。值得注意的是，我们明确地将PQXX\_FOUND设置为缓存，使其全局可用，并允许用户的CMakeLists.txt引用它。
+这样，就不必在未来的运行中重复搜索了。值得注意的是，需要明确地将PQXX\_FOUND设置为缓存，使其全局可用，并允许用户的CMakeLists.txt引用它。
 
-最后，我们将这些缓存变量标记为高级，除非激活高级选项，否则在CMake GUI中隐藏它们。这是我们也将采用的常见最佳实践。
+最后，将这些缓存变量标记为高级，除非激活高级选项，否则在CMake GUI中会隐藏它们。这是我们也将采用的常见最佳实践。
 
 以下是这些操作的代码：
 
@@ -318,11 +318,11 @@ function(define_imported_target library headers)
 endfunction()
 \end{cmake}
 
-现在，我们将讨论如何使用自定义或之前存储的路径来进行更快的设置。
+现在，我们将讨论如何使用自定义或之前存储的路径来进行快速设置。
 
 \mySamllsubsection{接受用户提供的路径并重用缓存值}
 
-让我们考虑一种情况，即用户在非标准位置安装了PQXX，并通过命令行参数使用-D提供了所需的路径。如果是这样，我们立即调用我们之前定义的函数并使用return()停止搜索。我们假设用户已经提供了库及其依赖项（如PostgreSQL）的准确路径：
+考虑一种情况，即用户在非标准位置安装了PQXX，并通过命令行参数使用-D提供了所需的路径。如果是这样，我们立即调用我们之前定义的函数并使用return()停止搜索。假设用户已经提供了库，及其依赖项（如PostgreSQL）的准确路径：
 
 \filename{ch09/03-find-package-custom/cmake/module/FindPQXX.cmake (continued)}
 
@@ -336,13 +336,13 @@ if (PQXX_LIBRARIES AND PQXX_INCLUDES)
 endif()
 \end{cmake}
 
-如果配置之前已经进行过，那么这个条件将成立，因为变量PQXX\_LIBRARIES和PQXX\_INCLUDES被存储在缓存中。
+如果配置之前已经进行过，因为变量PQXX\_LIBRARIES和PQXX\_INCLUDES存储在缓存中，这个条件将成立。
 
-现在是处理PQXX依赖的其他库的时候了。
+现在，是处理PQXX依赖的其他库的时候了。
 
 \mySamllsubsection{搜索嵌套依赖项}
 
-为了使用PQXX，主机系统也必须安装了PostgreSQL。虽然在我们的当前find模块中使用另一个find模块是完全可行的，但我们应该传递REQUIRED和QUIET标志，以确保嵌套搜索和主搜索之间的行为一致。为此，我们将设置两个辅助变量来存储我们需要传递的关键词，并根据CMake接收到的参数来填充它们：PQXX\_FIND\_QUIETLY和PQXX\_FIND\_REQUIRED。
+为了使用PQXX，主机系统也必须安装了PostgreSQL。虽然在当前find模块中使用另一个find模块是可行的，但应该传递REQUIRED和QUIET标志，以确保嵌套搜索和主搜索之间的行为一致。为此，将设置两个辅助变量来存储需要传递的关键词，并根据CMake接收到的参数来对其进行填充：PQXX\_FIND\_QUIETLY和PQXX\_FIND\_REQUIRED。
 
 \begin{cmake}
 # Searching for nested dependencies
@@ -368,9 +368,9 @@ CMake提供了find\_library()命令来帮助查找库文件。这个命令将接
 find_library(<VAR_NAME> NAMES <NAMES> PATHS <PATHS> <...>)
 \end{shell}
 
-<VAR\_NAME>将作为存储命令输出的变量的名称。如果找到匹配的文件，其路径将存储在<VAR\_NAME>变量中。否则，<VAR\_NAME>-NOTFOUND变量将被设置为1。我们将使用PQXX\_LIBRARY\_PATH作为我们的VAR\_NAME，所以我们将得到PQXX\_LIBRARY\_PATH中的路径或者PQXX\_LIBRARY\_PATH-NOTFOUND中的1。
+<VAR\_NAME>将作为存储命令输出的变量的名称。如果找到匹配的文件，其路径将存储在<VAR\_NAME>变量中。否则，<VAR\_NAME>-NOTFOUND变量将设置为1。我们将使用PQXX\_LIBRARY\_PATH作为我们的VAR\_NAME，所以将得到PQXX\_LIBRARY\_PATH中的路径，或者PQXX\_LIBRARY\_PATH-NOTFOUND中的1。
 
-PQXX库通常将其位置导出到\$ENV\{PQXX\_DIR\}环境变量，这意味着系统可能已经知道它的位置。我们可以通过首先使用file(TO\_CMAKE\_PATH)格式化这个路径来包括这个路径：
+PQXX库通常将其位置导出到\$ENV\{PQXX\_DIR\}环境变量，所以系统可能已经知道其位置。可以包含file(TO\_CMAKE\_PATH)这个格式化的路径：
 
 \filename{ch09/03-find-package-custom/cmake/module/FindPQXX.cmake (continued)}
 
@@ -388,19 +388,19 @@ find_library(PQXX_LIBRARY_PATH NAMES libpqxx pqxx
 )
 \end{cmake}
 
-NO\_DEFAULT\_PATH关键字指示CMake跳过其标准搜索路径列表。 虽然你通常不想这样做（因为默认路径通常是正确的），但使用NO\_DEFAULT\_PATH允许你在必要时明确指定自己的搜索位置。
+NO\_DEFAULT\_PATH关键字指示CMake跳过其标准搜索路径列表。虽然不想这样做（默认路径通常正确），但使用NO\_DEFAULT\_PATH允许在必要时明确指定相应的搜索位置。
 
-接下来，我们将查找库所需的头文件，这些头文件可以被库的用户包含。
+接下来，我们将查找库所需的头文件，库的用户可以包含这些头文件。
 
 \mySamllsubsection{搜索头文件}
 
-为了搜索所有已知的头文件，我们将使用find\_path()命令，它与find\_library()命令非常相似。主要区别在于find\_library()会自动添加系统特定的库扩展名，而使用find\_path()时，我们需要指定确切的名称。
+为了搜索所有已知的头文件，将使用find\_path()命令，其与find\_library()命令非常相似。主要区别在于find\_library()会自动添加系统特定的库扩展名，而使用find\_path()时，需要指定确切的名称。
 
-此外，不要在这里混淆pqxx/pqxx。这是一个实际的头文件，但其扩展名被库创建者故意省略，以与C++ \#include指令保持一致。这使得它可以用尖括号使用，如下所示：\#include <pqxx/pqxx>。
+此外，不要在这里混淆pqxx/pqxx。这是一个实际的头文件，但库创建者会故意省略其扩展名，以与C++ \#include指令保持一致。这使得它可以用尖括号使用，如下所示：\#include <pqxx/pqxx>。
 
 以下是片段：
 
-\filename{ch09/03-find-package-custom/cmake/module/FindPQXX.cmake (continued)}
+\filename{ch09/03-find-package-custom/cmake/module/FindPQXX.cmake (续)}
 
 \begin{cmake}
 ...
@@ -414,13 +414,13 @@ find_path(PQXX_HEADER_PATH NAMES pqxx/pqxx
 )
 \end{cmake}
 
-接下来，我们将探讨如何完成搜索过程，处理任何缺失的路径，并调用定义导入目标的函数。
+接下来，我们将探讨如何完成搜索过程，处理缺失的路径，并调用定义导入目标的函数。
 
 \mySamllsubsection{返回最终结果}
 
-现在，是时候检查我们是否设置了任何PQXX\_LIBRARY\_PATH-NOTFOUND或PQXX\_HEADER\_PATHNOTFOUND变量。我们可以手动打印诊断消息并停止构建，或者使用CMake的find\_package\_handle\_standard\_args()辅助函数。这个函数如果路径变量被正确填充，则将<PKG\_NAME>\_FOUND变量设置为1。它还提供适当的诊断消息（它会尊重QUIET关键字），并在find\_package()调用中提供REQUIRED关键字时，如果路径变量未找到，则会以FATAL\_ERROR停止执行。
+现在，检查是否设置了PQXX\_LIBRARY\_PATH-NOTFOUND或PQXX\_HEADER\_PATHNOTFOUND变量。可以手动打印诊断消息并停止构建，或者使用CMake的find\_package\_handle\_standard\_args()辅助函数。如果这个函数的路径变量正确填充，则将<PKG\_NAME>\_FOUND变量设置为1。它还提供适当的诊断消息（会尊重QUIET关键字），并在find\_package()调用中提供REQUIRED关键字时，如果路径变量未找到，则会以FATAL\_ERROR停止执行。
 
-如果找到了库，我们将调用我们之前编写的函数来定义IMPORTED目标，并将路径存储在缓存中：
+如果找到了库，将调用之前编写的函数来定义IMPORTED目标，并将路径存储在缓存中：
 
 \filename{ch09/03-find-package-custom/cmake/module/FindPQXX.cmake (continued)}
 
@@ -444,34 +444,34 @@ endif()
 
 就是这样！这个find模块将找到PQXX并创建适当的PQXX::PQXX目标。完整的文件可以在本书的示例存储库中找到。
 
-对于那些得到良好支持且很可能已经安装的库，这种方法非常有效。但是，如果你处理的是较旧的、不太受支持的包怎么办？类Unix系统有一个名为pkg-config的工具，CMake也有一个有用的包装模块来支持它。
+对于那些得到良好支持，且很可能已经安装的库，这种方法非常有效。但如果处理的是较旧的、不太受支持的包怎么办？类Unix系统有一个名为pkg-config的工具，CMake也有一个有用的包装模块来支持它。
 
 \mySubsubsection{9.2.2.}{使用FindPkgConfig发现遗留包}
 
-管理依赖项并找出必要的编译标志，这和C++库本身一样古老。为了应对这个问题，已经开发了各种工具，从简单的机制到集成了构建系统和IDE的综合解决方案。PkgConfig（\url{freedesktop.org/wiki/Software/pkg-config}）就是这样一个工具，它曾经非常流行，在类Unix系统中非常常见，尽管它也适用于macOS和Windows。
+管理依赖项并找出必要的编译标志，这和C++库本身一样古老。为了应对这个问题，已经开发了各种工具，从简单的机制到集成了构建系统和IDE的综合解决方案。PkgConfig（\url{freedesktop.org/wiki/Software/pkg-config}）就是这样一个工具，它曾经非常流行，在类Unix系统中非常常见，也适用于macOS和Windows。
 
-然而，PkgConfig正逐渐被更现代的解决方案所取代。那么，你仍然需要考虑支持它吗？可能性不大，原因如下：
+然而，更现代的解决方案正逐渐取代PkgConfig。那么，仍然需要考虑支持它吗？可能性不大，原因如下：
 
 \begin{itemize}
 \item
-如果你的库没有提供.pc PkgConfig文件，为一种过时的工具编写定义文件就没有多大价值；选择新的替代方案。
+如果库没有提供.pc PkgConfig文件，为一种过时的工具编写定义文件就没有多大价值
 
 \item
-如果你可以选择一个支持CMake的库的新版本（我们将在本章稍后讨论如何从互联网上下载依赖项）
+可以选择一个支持CMake的库的新版本（将在本章稍后讨论如何从互联网上下载依赖项）
 
 \item
-如果该包被广泛使用，CMake的最新版本可能已经包含了它的find模块
+该包广泛使用，CMake的最新版本可能已经包含了它的find模块
 
 \item
-如果在线有社区创建的find模块可用，并且其许可证允许你使用它，那也是另一个不错的选择
+在线有社区创建的find模块可用，并且其许可证允许你使用它，也是另一个不错的选择
 
 \item
-如果你能编写和维护自己的find模块
+能编写和维护自己的find模块
 \end{itemize}
 
-只有在你正在使用一个已经提供PkgConfig .pc文件的库版本，并且没有可用的配置模块或find模块时，才使用PkgConfig。另外，创建自己的find模块不是一个可行的选项时，应该有充分的理由。如果你确信不需要PkgConfig，可以跳过这个部分。
+只有正在使用一个已经提供PkgConfig .pc文件的库版本，并且没有可用的配置模块或find模块时，才考虑使用PkgConfig。另外，创建自己的find模块不是一个可行的选项时，应该有充分的理由。如果确信不需要PkgConfig，可以跳过这个部分。
 
-不幸的是，并不是所有环境都可以快速更新到库的最新版本。许多公司仍在生产中使用遗留系统，这些系统不再接收最新包。如果你在你的系统中有一个特定库的.pc文件，它看起来就像这里显示的foobar文件一样：
+但并不是所有环境都可以快速更新到库的最新版本。许多公司仍在生产中使用遗留系统，这些系统不再接收最新包。如果在系统中有一个特定库的.pc文件，看起来就像这里显示的foobar文件一样：
 
 \begin{shell}
 prefix=/usr/local
@@ -485,11 +485,11 @@ Cflags: -I${includedir}/foobar
 Libs: -L${libdir} -lfoobar
 \end{shell}
 
-PkgConfig的格式很简单，许多熟悉这个工具的开发者出于习惯而使用它，而不是学习更高级的系统如CMake。尽管它的简单性，PkgConfig可以检查特定库及其版本是否可用，并且它还可以获取库的链接标志和目录信息。
+PkgConfig的格式很简单，许多熟悉这个工具的开发者出于习惯而使用，而不是学习更高级的系统如CMake。尽管很简单，PkgConfig可以检查特定库，及其版本是否可用，并且还可以获取库的链接标志和目录信息。
 
-要与CMake一起使用它，你需要找到你系统上的pkg-config工具，运行特定的命令，然后将结果存储起来，供编译器以后使用。每次使用PkgConfig时都进行这些步骤可能会觉得很多工作。幸运的是，CMake提供了一个FindPkgConfig find模块。如果找到了pkg-config，PKG\_CONFIG\_FOUND将被设置。然后我们可以使用pkg\_check\_modules()来查找我们需要的包。
+要与CMake一起使用它，需要找到你系统上的pkg-config工具，运行特定的命令，然后将结果存储起来，供编译器以后使用。每次使用PkgConfig时都进行这些步骤可能会觉得很多工作。幸运的是，CMake提供了一个FindPkgConfig find模块。如果找到了pkg-config，将设置PKG\_CONFIG\_FOUND。然后可以使用pkg\_check\_modules()来查找需要的包。
 
-在之前的章节中，我们已经熟悉了libpqxx，因为它提供了.pc文件，让我们尝试使用PkgConfig来找到它。为了实际操作，让我们写一个简单的main.cpp文件，它使用一个占位符连接类：
+之前的章节中，已经熟悉了libpqxx，它提供了.pc文件，我们尝试使用PkgConfig来找到它。为了实际操作，我们写一个简单的main.cpp文件：
 
 \filename{ch09/04-find-pkg-config/main.cpp}
 
@@ -503,7 +503,7 @@ int main()
 }
 \end{cpp}
 
-在一个典型的列表文件中，我们通常从find\_package()函数开始，如果找不到库，就切换到PkgConfig。这种方法在环境更新时很有用，因为我们可以不修改代码就继续使用主要方法。为了保持这个示例简洁，我们省略了这一部分。
+在列表文件中，通常从find\_package()函数开始，如果找不到库，就切换到PkgConfig。这种方法在环境更新时很有用，可以不修改代码就继续使用。为了保持这个示例简洁，我们省略了这一部分。
 
 \filename{ch09/04-find-pkg-config/CMakeLists.txt}
 
@@ -517,28 +517,28 @@ add_executable(main main.cpp)
 target_link_libraries(main PRIVATE PkgConfig::PQXX)
 \end{cmake}
 
-让我们分解一下发生了什么：
+分解一下发生了什么：
 
 \begin{enumerate}
 \item
 使用find\_package()命令来定位PkgConfig。如果pkg-config缺失，则由于REQUIRED关键字，过程将停止。
 
 \item
-FindPkgConfig find模块中的pkg\_check\_modules()自定义宏设置了一个名为PQXX的新IMPORTED目标。find模块寻找libpqxx依赖项，如果找不到，将再次因为REQUIRED关键字而失败。IMPORTED\_TARGET关键字至关重要；否则，我们可能需要手动定义目标。
+FindPkgConfig find模块中的pkg\_check\_modules()，自定义宏设置了一个名为PQXX的新IMPORTED目标。find模块寻找libpqxx依赖项，如果找不到，将再次因为REQUIRED关键字而失败。IMPORTED\_TARGET关键字至关重要；否则，需要手动定义目标。
 
 \item
-我们使用message()函数验证设置，显示PQXX\_FOUND。如果我们之前没有使用REQUIRED，这里我们可能需要检查变量是否设置，以激活其他备选方案。
+使用message()函数验证设置，显示PQXX\_FOUND。如果之前没有使用REQUIRED，这里需要检查变量是否设置，以激活其他备选方案。
 
 \item
 使用add\_executable()声明主可执行文件。
 
 \item
-最后，我们使用target\_link\_libraries()将PkgConfig::PQXX目标链接起来，这个目标是由pkg\_check\_modules()导入的。注意，PkgConfig::是一个固定的前缀，PQXX是从我们传递给宏的第一个参数派生出来的。
+最后，使用target\_link\_libraries()将PkgConfig::PQXX目标链接起来，这个目标是由pkg\_check\_modules()导入的。注意，PkgConfig::是一个固定的前缀，PQXX从传递给宏的第一个参数派生出来。
 \end{enumerate}
 
-使用这个选项比为没有CMake支持的依赖项创建find模块更快。然而，它也有一些缺点。一个问题是它依赖于较旧的pkg-config工具，这可能在构建项目的操作系统中不可用。此外，这种方法创建了一个特殊案例，需要以与其它方法不同的方式进行维护。
+使用这个选项比为没有CMake支持的依赖项创建find模块更快，但也有一些缺点。一它依赖于较旧的pkg-config工具，这可能在构建项目的操作系统中不可用。此外，这种方法创建了一个特殊案例，需要以与其它方法不同的方式进行维护。
 
-我们已经讨论了如何与计算机上已安装的依赖项一起工作。然而，这只是故事的一部分。很多时候，你的项目将发送给可能没有所有所需依赖项的用户。让我们看看如何处理这种情况。
+我们讨论了如何与计算机上已安装的依赖项一起工作。然而，这只是故事的一部分。很多时候，项目将发送给可能没有所有所需依赖项的用户。让我们看看如何处理这种情况。
 
 
 
