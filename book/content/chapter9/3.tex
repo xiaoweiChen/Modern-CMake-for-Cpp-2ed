@@ -1,5 +1,5 @@
 
-CMake 在管理依赖项方面表现出色，尤其是在系统尚未安装这些依赖项时。你可以采取几种方法。如果你使用的是 CMake 3.14 或更高版本，FetchContent 模块是管理依赖项的最佳选择。本质上，FetchContent 是另一个名为 ExternalProject 的模块的用户友好包装。它不仅简化了流程，还增加了一些额外功能。我们将在本章后面深入探讨 ExternalProject。现在，只需知道两者之间的主要区别在于执行顺序：
+CMake 在管理依赖项方面表现出色。若在系统尚未安装某些依赖项时，可以采取几种方法。如果使用的是 CMake 3.14 或更高版本，FetchContent 模块是管理依赖项的最佳选择。本质上，FetchContent 是 ExternalProject 的包装。不仅简化了流程，还增加了一些功能。我们将在本章后面深入探讨 ExternalProject。现在，只需知道两者之间的主要区别在于执行顺序就好：
 
 \begin{itemize}
 \item
@@ -9,13 +9,13 @@ FetchContent在配置阶段引入依赖项。
 ExternalProject在构建阶段引入依赖项。
 \end{itemize}
 
-这个顺序很重要，因为在配置阶段由 FetchContent 定义的靶标将位于同一个命名空间中，因此可以轻松被我们的项目使用。我们可以将它们与其他靶标链接，就像是我们自己定义的一样。但在极少数情况下，这不是我们所希望的，这时就需要选择 ExternalProject。
+顺序很重要，因为在配置阶段由 FetchContent 定义的目标将位于同一个命名空间中，因此可以轻松在项目中使用。我们可以将它们与其他目标链接，就像是我们自定义的目标一样。但在极少数情况下，这不是我们所希望的，这时就需要使用 ExternalProject。
 
-让我们首先了解如何处理大多数情况。
+首先，了解如何处理大多数情况。
 
 \mySubsubsection{9.3.1.}{FetchContent}
 
-FetchContent 模块非常有用，它提供以下功能：
+FetchContent 模块非常有用，提供以下功能：
 
 \begin{itemize}
 \item
@@ -41,24 +41,24 @@ FetchContent 模块非常有用，它提供以下功能：
 
 \begin{enumerate}
 \item
-使用 include(FetchContent) 将模块添加到你的项目中。
+使用 include(FetchContent) 将模块添加到项目中。
 
 \item
-使用 FetchContent\_Declare() 命令配置依赖项。这将告诉 FetchContent 依赖项的位置以及应该使用哪个版本。
+使用 FetchContent\_Declare() 命令配置依赖项。告知 FetchContent 依赖项的位置，以及应该使用哪个版本。
 
 \item
-使用 FetchContent\_MakeAvailable() 命令完成依赖项设置。这将下载、构建、安装，并将列表文件添加到你的主项目以供解析。
+使用 FetchContent\_MakeAvailable() 命令完成依赖项设置。这将下载、构建、安装，并将列表文件添加到主项目以供解析。
 \end{enumerate}
 
-你可能会想知道为什么步骤 2 和 3 是分开的。原因是为了允许在多层项目中进行配置覆盖。例如，考虑一个依赖于外部库 A 和 B 的项目。库 A 也依赖于 B，但其作者使用的是一个与父项目版本不同的旧版本（图 9.1）：
+为什么步骤 2 和 3 是分开的？是为了允许在多层项目中进行配置覆盖。例如，一个依赖于外部库 A 和 B 的项目。库 A 也依赖于 B，但其作者使用的是一个与父项目版本不同的旧版本（图 9.1）：
 
 \myGraphic{0.5}{content/chapter9/images/1.png}{图 9.1：层次化项目结构}
 
-如果配置和下载发生在同一个命令中，即使新版本向后兼容，父项目也无法使用新版本，因为依赖项已经为旧版本配置了导入的靶标，这会引入库的目标名称和文件冲突。
+如果配置和下载发生在同一个命令中，即使新版本向后兼容，父项目也无法使用新版本，因为依赖项已经为旧版本配置了导入的目标，这会引入库的目标名称和文件冲突。
 
-为了指定所需的版本，最顶层的项目必须在库 A 完全设置之前调用 FetchContent\_Declare() 命令，并为 B 提供覆盖配置。随后在 A 中调用 FetchContent\_Declare() 将被忽略，因为 B 依赖项已经配置。
+为了指定所需的版本，最顶层的项目必须在库 A 完全设置之前调用 FetchContent\_Declare() 命令，并为 B 提供覆盖配置。因为 B 依赖项已经配置，所以将忽略随后在 A 中调用的 FetchContent\_Declare() 。
 
-让我们看看 FetchContent\_Declare() 命令的签名：
+来看看 FetchContent\_Declare() 命令的签名：
 
 \begin{shell}
 FetchContent_Declare(<depName> <contentOptions>...)
@@ -66,13 +66,13 @@ FetchContent_Declare(<depName> <contentOptions>...)
 
 depName 是依赖项的唯一标识符，稍后将由 FetchContent\_MakeAvailable() 命令使用。
 
-contentOptions 提供了依赖项的详细配置，这可能相当复杂。重要的是要意识到，在底层，FetchContent\_Declare() 使用较旧的 ExternalProject\_Add() 命令。事实上，提供给 FetchContent\_Declare 的大多数参数都会直接转发给内部调用。在详细解释所有参数之前，让我们先看一个从 GitHub 下载依赖项的工作示例。
+contentOptions 提供了依赖项的详细配置，这可能相当复杂。重要的是，在底层，FetchContent\_Declare() 使用较旧的 ExternalProject\_Add() 命令。事实上，提供给 FetchContent\_Declare 的大多数参数都会直接转发给内部调用。在详细解释所有参数之前，先看一个从 GitHub 下载依赖项的工作示例。
 
 \mySamllsection{基本的 YAML 读取器示例}
 
-我编写了一个小程序，它从 YAML 文件中读取用户名并在欢迎消息中打印出来。YAML 是一种很好的、简单的格式，用于存储人类可读的配置，但对于机器来说解析起来相当复杂。我找到了一个整洁的小项目，名为 yaml-cpp，由 Jesse Beder 创建（\url{https://github.com/jbeder/yaml-cpp}），它解决了这个问题。
+我编写了一个小程序，它从 YAML 文件中读取用户名并在欢迎消息中打印出来。YAML 是一种很好的、简单的格式，用于存储人类可读的配置，但对于机器来说解析起来相当复杂。我找到了一个整洁的小项目，名为 yaml-cpp，由 Jesse Beder 创建（\url{https://github.com/jbeder/yaml-cpp}），解决了这个问题。
 
-这个例子相当简单。它是一个打印欢迎 消息的问候程序。name 的默认值将是 Guest，但我们可以通过 YAML 配置文件指定不同的名称。以下是 C++ 代码：
+这个例子相当简单。它是一个输出欢迎消息的问候程序。name 的默认值将是 Guest，但可以通过 YAML 配置文件指定不同的名称。以下是 C++ 代码：
 
 \filename{ch09/05-fetch-content/main.cpp}
 
@@ -102,7 +102,7 @@ int main() {
 name: Rafal
 \end{shell}
 
-我们将在其他部分重用这个示例，所以花点时间理解它是如何工作的。现在我们已经准备好了代码，让我们看看如何构建它并获取依赖：
+我们将在其他部分重用这个示例，所以花点时间理解其是如何工作的。现在已经准备好了代码，来看看如何构建并获取依赖：
 
 \filename{ch09/05-fetch-content/CMakeLists.txt}
 
@@ -120,7 +120,7 @@ FetchContent_MakeAvailable(external-yaml-cpp)
 target_link_libraries(welcome PRIVATE yaml-cpp::yaml-cpp)
 \end{cmake}
 
-我们可以显式访问由 yaml-cpp 库创建的目标。为了证明这一点，我们将使用 CMakePrintHelpers 帮助模块：
+可以显式访问由 yaml-cpp 库创建的目标，我们将使用 CMakePrintHelpers 帮助模块：
 
 \begin{cmake}
 include(CMakePrintHelpers)
@@ -128,7 +128,7 @@ cmake_print_properties(TARGETS yaml-cpp::yaml-cpp
                        PROPERTIES TYPE SOURCE_DIR)
 \end{cmake}
 
-当我们构建这样的项目时，配置阶段将打印以下输出：
+当构建项目时，配置阶段将打印以下输出：
 
 \begin{shell}
 Properties for TARGET yaml-cpp::yaml-cpp:
@@ -136,7 +136,7 @@ Properties for TARGET yaml-cpp::yaml-cpp:
     yaml-cpp.SOURCE_DIR = "/tmp/b/_deps/external-yaml-cpp-src"
 \end{shell}
 
-这告诉我们由 external-yaml-cpp 依赖定义的目标存在；它是一个静态库，其源目录位于构建树内。这个打印输出对于实际项目来说不是必需的，但如果你不确定如何正确包含导入的目标，它可以帮助调试。
+这告诉我们由 external-yaml-cpp 依赖定义的目标存在；它是一个静态库，其源目录位于构建树内。这个打印输出对于实际项目来说不是必需的，但如果不确定如何正确包含导入的目标，它可以帮助调试。
 
 由于我们已经使用 configure\_file() 命令将 .yaml 文件复制到输出，我们可以运行程序：
 
@@ -145,19 +145,19 @@ Properties for TARGET yaml-cpp::yaml-cpp:
 Welcome Rafal
 \end{shell}
 
-一切运行顺利！几乎不费吹灰之力，我们就引入了一个外部依赖并在我们的项目中使用了它。
+一切运行顺利！不费吹灰之力，就引入了一个外部依赖，并在我们的项目中使用了它。
 
-如果我们需要多个依赖，我们应该编写多个对 FetchContent\_Declare() 命令的调用，每次选择一个唯一的标识符。但我们不需要多次调用 FetchContent\_MakeAvailable()，因为它支持多个标识符（这些标识符不区分大小写）：
+如果需要多个依赖，应该编写多个对 FetchContent\_Declare() 命令的调用，每次选择一个唯一的标识符。但不需要多次调用 FetchContent\_MakeAvailable()，它支持多个标识符（这些标识符不区分大小写）：
 
 \begin{cmake}
 FetchContent_MakeAvailable(lib-A lib-B lib-C)
 \end{cmake}
 
-现在，我们将学习如何编写依赖声明。
+现在，再来了解一下如何编写依赖声明。
 
 \mySamllsection{下载依赖项}
 
-FetchContent\_Declare() 命令提供了广泛的选择，这些选择来自 ExternalProject 模块。本质上，你可以执行三个主要操作：
+FetchContent\_Declare() 命令提供了广泛的选择，这些选择来自 ExternalProject 模块。可以执行三个操作：
 
 \begin{itemize}
 \item
@@ -170,7 +170,7 @@ FetchContent\_Declare() 命令提供了广泛的选择，这些选择来自 Exte
 补丁依赖项
 \end{itemize}
 
-让我们首先看看最常见的场景：从互联网上获取文件。
+首先，看看最常见的场景：从互联网上获取文件。
 
 CMake 支持多种下载源：
 
@@ -191,11 +191,11 @@ Mercurial
 CVS
 \end{itemize}
 
-从列表顶部开始，我们将首先探索如何从 URL 下载依赖项，并自定义流程以满足我们的需求。
+从列表顶部开始，首先探索如何从 URL 下载依赖项，并自定义流程以满足我们的需求。
 
 \mySamllsection{更新和打补丁}
 
-我们可以提供一个 URL 列表，按顺序扫描，直到下载成功。CMake 将识别下载的文件是否是存档，并默认解压它。
+可以提供一个 URL 列表，按顺序扫描，直到下载成功。CMake 将识别下载的文件是否是存档，并默认解压它。
 
 基本声明：
 
@@ -205,14 +205,14 @@ FetchContent_Declare(dependency-id
 )
 \end{shell}
 
-以下是一些额外的选项，用于进一步自定义此方法：
+以下是一些其他选项，用于进一步自定义此方法：
 
 \begin{itemize}
 \item
-URL\_HASH <algo>=<hashValue>: 这会检查通过 生成的下载文件的校验和是否与提供的 <hashValue>匹配。推荐使用此选项以保证下载的完整性。以下算法受支持：: MD5, SHA1, SHA224, SHA256, SHA384, SHA512, SHA3\_224, SHA3\_256, SHA3\_384和SHA3\_512
+URL\_HASH <algo>=<hashValue>: 检查会通过，生成的下载文件的校验和是否与提供的 <hashValue>匹配。推荐使用此选项以保证下载的完整性。以下算法受支持：: MD5, SHA1, SHA224, SHA256, SHA384, SHA512, SHA3\_224, SHA3\_256, SHA3\_384和SHA3\_512
 
 \item
-DOWNLOAD\_NO\_EXTRACT <bool>: 这会显式禁用下载后的解压。我们可以在后续步骤中通过访问 <DOWNLOADED\_FILE> 变量来使用下载文件的文件名。
+DOWNLOAD\_NO\_EXTRACT <bool>: 这会显式禁用下载后的解压，可以在后续步骤中通过访问 <DOWNLOADED\_FILE> 变量来使用下载文件的文件名。
 
 \item
 DOWNLOAD\_NO\_PROGRESS <bool>: 这会显式禁用下载进度的日志记录。
@@ -224,20 +224,20 @@ TIMEOUT <seconds> 和 INACTIVITY\_TIMEOUT <seconds>: 这些选项设置超时，
 HTTP\_USERNAME <username> 和 HTTP\_PASSWORD <password>: 这些选项配置 HTTP 认证。请注意不要硬编码凭据。
 
 \item
-HTTP\_HEADER <header1> [<header2>...]: 这会向你的 HTTP 请求添加额外的头部，这对于 AWS 或自定义令牌很有用。
+HTTP\_HEADER <header1> [<header2>...]: 这会向 HTTP 请求添加头部信息，这对于 AWS 或自定义令牌很有用。
 
 \item
 TLS\_VERIFY <bool>: 这会验证 SSL 证书。如果未设置，CMake 将从 CMAKE\_TLS\_VERIFY 变量中读取此设置，该变量默认设置为 false。跳过 TLS 验证是一种不安全的、不良的做法，尤其是在生产环境中应避免。
 
 \item
-TLS\_CAINFO <file>: 这提供了到权威文件的路径；如果未指定，CMake 将从 CMAKE\_TLS\_CAINFO 变量中读取此设置。如果你的公司颁发自签名 SSL 证书，这很有用。
+TLS\_CAINFO <file>: 这提供了到权威文件的路径；如果未指定，CMake 将从 CMAKE\_TLS\_CAINFO 变量中读取此设置。如果你的公司有颁发自签名 SSL 证书，这就很有用了。
 \end{itemize}
 
-大多数程序员会参考像 GitHub 这样的在线仓库来获取最新版本的库。以下是操作方法。
+大多数开发者会参考像 GitHub 这样的在线仓库，来获取最新版本的库。以下是操作方法。
 
 \mySamllsubsection{从 Git 下载}
 
-要从 Git 下载依赖项，请确保宿主系统安装了 Git 1.6.5 或更高版本。以下选项对于从 Git 克隆项目至关重要：
+要从 Git 下载依赖项，请确保系统安装了 Git 1.6.5 或更高版本。以下选项对于从 Git 克隆项目至关重要：
 
 \begin{shell}
 FetchContent_Declare(dependency-id
@@ -246,7 +246,7 @@ FetchContent_Declare(dependency-id
 )
 \end{shell}
 
-<url>和<tag>应与 git 命令兼容。在生产环境中，建议使用特定的 git 哈希（而不是标签）以确保生成二进制文件的可追溯性，并避免不必要的 git fetch 操作。如果你更喜欢使用分支，请坚持使用 origin/main 这样的远程名称。这确保了本地克隆的正确同步。
+<url>和<tag>应与 git 命令兼容。生产环境中，建议使用特定的 git 哈希（而不是标签）以确保生成二进制文件的可追溯性，并避免不必要的 git fetch 操作。如果更喜欢使用分支，请坚持使用 origin/main 这样的远程名称。这确保了本地克隆的正确同步。
 
 其他选项包括：
 
@@ -267,7 +267,7 @@ GIT\_SHALLOW 1: 这执行浅克隆，由于跳过下载历史提交，因此速�
 TLS\_VERIFY <bool>: 这会验证 SSL 证书。如果未设置，CMake 将从 CMAKE\_TLS\_VERIFY 变量中读取此设置，该变量默认设置为 false；跳过 TLS 验证是一种不安全的、不良的做法，尤其是在生产环境中应避免。
 \end{itemize}
 
-如果你的依赖项存储在 Subversion 中，你也可以使用 CMake 获取它。
+如果依赖项存储在 Subversion 中，也可以使用 CMake 获取。
 
 \mySamllsubsection{从 Subversion 下载}
 
@@ -278,21 +278,21 @@ FetchContent_Declare(dependency-id
 )
 \end{shell}
 
-此外，我们可以提供以下内容：
+此外，可以提供以下内容：
 
 \begin{itemize}
 \item
-SVN\_USERNAME <user> 和 SVN\_PASSWORD <password>: 这些提供检出和更新的凭据。避免在项目中硬编码这些。
+SVN\_USERNAME <user> 和 SVN\_PASSWORD <password>: 这些提供检出和更新的凭据，避免在项目中硬编码这些。
 
 \item
-SVN\_TRUST\_CERT <bool>: 这会跳过对 Subversion 服务器站点证书的验证。只有当服务器的网络路径及其完整性是可信的时候才使用此选项。
+SVN\_TRUST\_CERT <bool>: 这会跳过对 Subversion 服务器站点证书的验证。只有当服务器的网络路径，及其完整性是可信的时，才使用此选项。
 \end{itemize}
 
 Subversion 与 CMake 配合使用非常简单。Mercurial 也是如此。
 
 \mySamllsubsection{从 Mercurial 下载}
 
-这种模式非常直接。我们需要提供两个参数就完成了：
+这种模式非常直接，需要提供两个参数就可以了：
 
 \begin{shell}
 FetchContent_Declare(dependency-id
@@ -301,11 +301,11 @@ FetchContent_Declare(dependency-id
 )
 \end{shell}
 
-最后，我们可以使用 CVS 来提供依赖项。
+最后，可以使用 CVS 来提供依赖项。
 
 \mySamllsubsection{从 CVS 下载}
 
-要从 CVS 检出模块，我们需要提供以下三个参数：
+要从 CVS 检出模块，需要提供以下三个参数：
 
 \begin{shell}
 FetchContent_Declare(dependency-id
@@ -315,11 +315,11 @@ FetchContent_Declare(dependency-id
 )
 \end{shell}
 
-这样，我们就涵盖了 FetchContent\_Declare() 的所有下载选项。CMake 支持在成功下载后执行的额外步骤。
+这样，我们就了解了 FetchContent\_Declare() 的所有下载选项。CMake 支持在成功下载后执行的其他步骤。
 
 \mySamllsection{尽可能使用已安装的依赖项}
 
-默认情况下，更新步骤将重新下载外部项目的文件，如果下载方法支持更新，例如，如果我们配置了指向主或 master 分支的 Git 依赖项。我们可以通过以下两种方式覆盖此行为：
+默认情况下，更新步骤将重新下载外部项目的文件，如果下载方法支持更新，例如：配置了指向main或 master 分支的 Git 依赖项。可以通过以下两种方式覆盖此行为：
 
 \begin{itemize}
 \item
@@ -329,11 +329,11 @@ FetchContent_Declare(dependency-id
 完全禁用更新步骤（以允许在没有网络连接的情况下构建） – UPDATE\_DISCONNECTED <bool>。请注意，依赖项仍然会在第一次构建时下载。
 \end{itemize}
 
-另一方面，补丁是一个可选步骤，将在更新获取后执行。要启用它，我们需要指定要执行的确切命令，使用 PATCH\_COMMAND <cmd>。
+另一方面，补丁是一个可选步骤，将在更新获取后执行。要启用它，需要指定要执行的确切命令，使用 PATCH\_COMMAND <cmd>。
 
-CMake 文档警告，某些补丁可能比其他补丁更“粘性”。例如，在 Git 中，更改的文件在更新期间不会恢复到原始状态，我们需要小心避免对文件进行两次错误补丁。理想情况下，补丁命令应该是健壮且幂等的。
+CMake 文档警告，某些补丁可能比其他补丁更“粘”。例如，在 Git 中，更改的文件在更新期间不会恢复到原始状态，需要避免对文件进行两次补丁。理想情况下，补丁命令应该是健壮且幂等(任意多次执行所产生的影响均与一次执行的影响相同)的。
 
-你可以链接更新和补丁命令：
+可以链接更新和补丁命令：
 
 \begin{shell}
 FetchContent_Declare(dependency-id
@@ -344,11 +344,11 @@ FetchContent_Declare(dependency-id
 )
 \end{shell}
 
-下载依赖项在它们尚未在系统上时很有帮助。但是，如果它们已经在了呢？我们如何使用本地版本？
+下载依赖项在尚未在系统上时很有帮助，但它们已经在了呢？如何使用本地版本？
 
 \mySamllsection{尽可能使用已安装的依赖项}
 
-从版本 3.24 开始，CMake 引入了一个特性，允许 FetchContent 在依赖项已经本地可用时跳过下载。要启用此功能，只需在你的声明中添加 FIND\_PACKAGE\_ARGS 关键字：
+从版本 3.24 开始，CMake 引入了一个特性，允许 FetchContent 在依赖项已经本地可用时跳过下载。要启用此功能，只需在声明中添加 FIND\_PACKAGE\_ARGS 关键字：
 
 \begin{shell}
 FetchContent_Declare(dependency-id
@@ -358,7 +358,7 @@ FetchContent_Declare(dependency-id
 )
 \end{shell}
 
-如你所料，这个关键字指示 FetchContent 模块在启动任何下载之前使用 find\_package() 函数。如果本地找到包，它将使用该包，不会发生下载或构建。请注意，这个关键字应该是命令中的最后一个，因为它将消耗所有后续参数。
+这个关键字指示 FetchContent 模块在启动下载之前使用 find\_package() 函数。如果本地找到包，就将使用该包，不会发生下载或构建。注意，这个关键字将消耗所有后续参数，所以应该是命令中的最后一个。
 
 这里是更新先前示例的方法：
 
@@ -390,13 +390,13 @@ cmake_print_properties(TARGETS yaml-cpp::yaml-cpp
 
 \begin{enumerate}
 \item
-我们添加了 FIND\_PACKAGE\_ARGS 和 NAMES 关键字，以指定我们正在寻找 yaml-cpp 包。如果没有 NAMES，CMake 会默认使用 dependency-id，在本例中为 external-yaml-cpp。
+添加了 FIND\_PACKAGE\_ARGS 和 NAMES 关键字，以指定正在寻找 yaml-cpp 包。如果没有 NAMES，CMake 会默认使用 dependency-id，在本例中为 external-yaml-cpp。
 
 \item
-我们在打印属性中添加了 INTERFACE\_INCLUDE\_DIRECTORIES。这是一次性检查，我们可以手动验证我们是否在使用已安装的包，或者是否下载了一个新的包。
+打印属性中添加了 INTERFACE\_INCLUDE\_DIRECTORIES。这是一次性检查，可以手动验证是否在使用已安装的包，或者是否下载了一个新的包。
 \end{enumerate}
 
-在测试之前，请确保包实际上已经安装在你的系统上。如果没有安装，你可以使用以下命令安装它：
+测试之前，请确保包实际上已经安装在系统上。如果没有安装，可以使用以下命令安装：
 
 \begin{shell}
 git clone https://github.com/jbeder/yaml-cpp.git
@@ -405,7 +405,7 @@ cmake --build build-dir
 cmake --install build-dir
 \end{shell}
 
-有了这个设置，我们现在可以构建我们的项目。如果一切顺利，你应该会看到来自 cmake\_print\_properties() 命令的调试输出。这将表明我们正在使用本地版本，如 INTERFACE\_INCLUDE\_DIRECTORIES 属性所示。请记住，这个输出是特定于你的环境的，你的结果可能会有所不同。
+有了这个设置，就可以构建我们的项目。如果一切顺利，应该会看到来自 cmake\_print\_properties() 命令的调试输出。这将表明我们正在使用本地版本，如 INTERFACE\_INCLUDE\_DIRECTORIES 属性所示。记住，这个输出是特定于环境，其结果可能会有所不同。
 
 \begin{shell}
 --
@@ -415,7 +415,7 @@ cmake --install build-dir
                                                     "/usr/local/include
 \end{shell}
 
-如果你不使用 CMake 3.24，或者如果你想支持使用旧版本的用户，你可能会考虑手动运行 find\_package() 命令。这样，你只会下载尚未安装的包：
+如果不使用 CMake 3.24，或者想支持使用旧版本的用户，请考虑手动运行 find\_package() 命令。这样，就只会下载尚未安装的包：
 
 \begin{cmake}
 find_package(yaml-cpp QUIET)
@@ -424,17 +424,17 @@ if (NOT TARGET yaml-cpp::yaml-cpp)
 endif()
 \end{cmake}
 
-无论你选择哪种方法，首先尝试使用本地版本，只有在依赖项找不到时才下载，这是一个体贴的方法，可以提供最佳的用户体验。
+无论选择哪种方法，首先尝试使用本地版本，只有在依赖项找不到时才下载，可以提供最佳的用户体验。
 
-在 FetchContent 引入之前，CMake 有一个更简单的模块称为 ExternalProject。尽管 FetchContent 在大多数情况下是推荐的选择，但 ExternalProject 仍然有其自身的
+在 FetchContent 引入之前，CMake 有一个更简单的模块称为 ExternalProject。尽管 FetchContent 在大多数情况下是推荐的选择，但 ExternalProject 仍然有其自身的用处。
 
 \mySubsubsection{9.3.2.}{ExternalProject}
 
-如前所述，在 FetchContent 引入 CMake 之前，有一个模块执行类似的功能：ExternalProject（在 3.0.0 版本中添加）。如你所料，它用于从在线仓库获取外部项目。多年来，该模块逐渐扩展以满足不同的需求，导致命令变得相当复杂：ExternalProject\_Add()。
+如前所述，在 FetchContent 引入 CMake 之前，有一个模块执行类似的功能：ExternalProject（在 3.0.0 版本中添加），用于从在线仓库获取外部项目。多年来，该模块逐渐扩展以满足不同的需求，导致ExternalProject\_Add()命令变得相当复杂。
 
-ExternalProject 模块在构建阶段填充依赖项。这与 FetchContent 不同，后者在配置阶段执行。由于这个区别，ExternalProject 不能像 FetchContent 那样将目标导入项目。另一方面，ExternalProject 可以直接将依赖项安装到系统中，执行它们的测试，以及其他有趣的事情，例如覆盖配置和构建所使用的命令。
+ExternalProject 模块在构建阶段填充依赖项。这与 FetchContent 不同，后者在配置阶段执行。由于这个区别，ExternalProject 不能像 FetchContent 那样将目标导入项目。另一方面，ExternalProject 可以直接将依赖项安装到系统中，执行测试，以及其他事情，例如：覆盖配置和构建所使用的命令。
 
-在某些情况下，这可能是必要的。由于使用这个遗留模块需要大量开销，将其视为一种好奇心。我们主要在这里介绍它，以展示当前方法是如何从它演变而来的。
+某些情况下，由于使用这个遗留模块需要大量开销，可将其视为一种好奇心。我们主要在这里介绍它，以展示当前方法是如何从它演变而来的。
 
 ExternalProject 提供了一个 ExternalProject\_Add 命令来配置依赖项。
 
@@ -450,7 +450,7 @@ ExternalProject_Add(external-yaml-cpp
 )
 \end{cmake}
 
-如前所述，它与 FetchContent\_Declare 非常相似。你会注意到示例中有两个额外的关键字：INSTALL\_COMMAND 和 TEST\_COMMAND。在这个例子中，它们用于抑制依赖项的安装和测试，因为它们通常在构建期间执行。ExternalProject 执行许多步骤，这些步骤都可以进行深入的配置，并且它们按以下顺序执行：
+它与 FetchContent\_Declare 非常相似。示例中有两个关键字：INSTALL\_COMMAND 和 TEST\_COMMAND。这个例子中，用于抑制依赖项的安装和测试，它们通常在构建期间执行。ExternalProject 执行许多步骤，这些步骤都可以进行深入的配置，并且按以下顺序执行：
 
 \begin{enumerate}
 \item
@@ -478,11 +478,11 @@ install: 安装 CMake 项目。
 test: 执行测试。
 \end{enumerate}
 
-对于每个步骤（除了 mkdir），你可以通过添加<STEP>\_COMMAND 关键字来覆盖默认行为。还有许多其他选项——请参阅在线文档以获取完整的参考。如果你出于某种原因想使用这种方法而不是推荐的 FetchContent，可以通过在 CMake 内部执行 CMake 来应用一种丑陋的技巧，以导入目标。有关更多详细信息，请查看本书存储库中的 ch09/05-external-project 代码示例。
+对于每个步骤（除了 mkdir），可以通过添加<STEP>\_COMMAND 关键字来覆盖默认行为。还有许多其他选项——请参阅在线文档以获取完整的参考。如果出于某种原因想使用这种方法，而非推荐的 FetchContent，可以通过在 CMake 内部执行 CMake 来应用一种技巧，以导入目标。有关更多详细信息，请查看本书存储库中的 ch09/05-external-project 代码示例。
 
-通常，我们会依赖库在系统中的可用性。如果它不可用，我们会求助于 FetchContent，这种方法特别适合于那些小且快速编译的依赖项。
+通常，我们会依赖库在系统中的可用性。如果不可用，会求助于 FetchContent，这种方法特别适合于那些小且快速编译的依赖项。
 
-然而，对于更重要的库，如 Qt，这种方法可能会很耗时。在这种情况下，提供预编译库的包管理器更适合用户的环境。虽然像 Apt 或 Conan 这样的工具提供了解决方案，但它们要么太系统特定，要么复杂，不适合本书涵盖。好消息是，大多数用户可以安装项目可能需要的依赖项，只要提供了清晰的安装说明。
+对于更重要的库(如 Qt)，这种方法可能会很耗时。这时，提供预编译库的包管理器更适合用户的环境。虽然像 Apt 或 Conan 这样的工具提供了解决方案，但这要么太系统特定，要么复杂，不适合本书介绍。好消息是，只要提供了清晰的安装说明，大多数用户可以安装项目可能需要的依赖项。
 
 
 
