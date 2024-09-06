@@ -1,47 +1,47 @@
 
-向这么小的解决方案中添加测试并不具有极大的挑战性。真正的困难出现在更高级和更长的程序中。多年来，我发现当我的代码行数接近1,000行时，逐渐难以追踪哪些行和分支在测试中被执行，哪些没有。超过3,000行后，几乎变得不可能。大多数专业应用程序的代码量都会超过这个数量。更重要的是，许多经理用来协商解决技术债务的关键指标之一是代码覆盖率百分比，因此知道如何生成有用的报告对于获取这些讨论的实际数据是有帮助的。为了解决这个问题，我们可以使用一个工具来理解哪些代码行被测试用例“覆盖”。这样的代码覆盖率工具会连接到被测试系统（SUT），在测试期间收集每行代码的执行信息，并以方便的报告形式展示，如下所示：
+向小解决方案中添加测试很简单，真正的困难出现在更高级和更长的程序中。多年来，我发现当我的代码行数接近1,000行时，逐渐难以追踪哪些行和分支在测试中执行。超过3,000行后，几乎变得不可能。大多数专业应用程序的代码量都会超过这个数量，许多经理用来协商解决技术债务的关键指标就是代码覆盖率，因此知道如何生成有用的报告，对于获取这些讨论的实际数据是有帮助的。为了解决这个问题，可以使用一个工具来理解，测试用例“覆盖”哪些代码行。这样的代码覆盖率工具会连接到测试系统（SUT），在测试期间收集每行代码的执行信息，并以方便的报告形式展示：
 
 \myGraphic{0.95}{content/chapter11/images/2.png}{图11.2：由LCOV生成的代码覆盖率报告}
 
-这些报告将向您展示哪些文件被测试覆盖，哪些没有。不仅如此，您还可以深入查看每个文件的详细信息，准确了解哪些代码行被执行以及执行次数。在以下屏幕截图中，行数据列显示Calc构造函数运行了4次，每次测试运行一次：
+这些报告将展示哪些文件被测试覆盖到，哪些没有。不仅如此，还可以深入查看每个文件的详细信息，准确了解哪些代码行被执行以及执行次数。以下屏幕截图中，行数据列显示Calc构造函数运行了4次，每次测试运行一次：
 
 \myGraphic{0.95}{content/chapter11/images/3.png}{图11.3：代码覆盖率报告的详细视图}
 
-生成类似报告的方法有很多，它们因平台和编译器而异，但通常遵循相同的流程：准备要测量的SUT并获取基线，测量，报告。
+生成类似报告的方法有很多，因平台和编译器而异，但通常遵循相同的流程：准备要测量的SUT并获取基线，测量，报告。
 
-最简单的工具是LCOV。它不是一个缩写，而是gcov的图形前端，gcov是GNU编译器集合（GCC）中的一个覆盖率工具。让我们看看如何实际使用它。
+最简单的工具是LCOV，是gcov的图形前端，gcov是GNU编译器集合（GCC）中的一个覆盖率工具。来看看如何使用它。
 
 \mySubsubsection{11.7.1.}{使用LCOV生成覆盖率报告}
 
-LCOV将生成HTML覆盖率报告，并在内部使用gcov来测量覆盖率。如果您使用的是Clang，也不用担心——Clang支持以这种格式生成度量。您可以从Linux测试项目（Linux Test Project）维护的官方仓库（\url{https://github.com/linuxtest-project/lcov}）获取LCOV，或者简单地使用包管理器。顾名思义，这是一个面向Linux的工具。
+LCOV将生成HTML覆盖率报告，并在内部使用gcov来测量覆盖率。如果使用的是Clang，也不用担心——Clang支持以这种格式生成度量。可以从Linux测试项目（Linux Test Project）维护的官方仓库（\url{https://github.com/linuxtest-project/lcov}）获取LCOV，或者简单地使用包管理器，这是一个面向Linux的工具。
 
-在macOS上运行它是可能的，但Windows平台不支持。最终用户通常不关心测试覆盖率，所以通常可以在您自己的构建环境中手动安装LCOV，而不是将其纳入项目。
+可以在macOS上运行，但不支持Windows平台。最终用户通常不关心测试覆盖率，所以可以在自己的构建环境中手动安装LCOV，而不是将其纳入项目。
 
-要测量覆盖率，我们需要执行以下操作：
+要测量覆盖率，需要执行以下操作：
 
 \begin{itemize}
 \item
-在启用代码覆盖率的编译器标志下，以Debug配置编译。这将生成覆盖率注释（.gcno）文件。
+启用代码覆盖率的编译器标志下，以Debug配置编译。这将生成覆盖率注释（.gcno）文件。
 
 \item
-将测试可执行文件与gcov库链接。
+测试可执行文件与gcov库链接。
 
 \item
-收集基线的覆盖率度量，不运行任何测试。
+收集基线的覆盖率度量，不运行测试。
 
 \item
-运行测试。这将创建覆盖率数据（.gcda）文件。
+运行测试，这将创建覆盖率数据（.gcda）文件。
 
 \item
-将度量收集到聚合信息文件中。
+将信息收集到聚合信息文件中。
 
 \item
 生成（.html）报告。
 \end{itemize}
 
-我们应该首先解释为什么代码必须以Debug配置编译。最重要的原因是，通常，Debug配置会使用-O0标志禁用所有优化。CMake默认在CMAKE\_CXX\_FLAGS\_DEBUG变量中这样做（尽管在文档中的任何地方都没有说明这一点）。除非您决定覆盖这个变量，否则您的Debug构建应该是未优化的。这是为了防止内联和其他类型的隐式代码简化。否则，将难以追踪哪个机器指令来自源代码的哪一行。
+应该首先解释为什么代码必须以Debug配置编译。最重要的原因是，Debug配置会使用-O0标志禁用所有优化。CMake默认在CMAKE\_CXX\_FLAGS\_DEBUG变量中这样做（在文档中都没有说明这一点）。除非决定覆盖这个变量，否则Debug构建应该是未优化的。这是为了防止内联和其他类型的隐式代码简化。否则，将难以追踪哪个机器指令来自源代码的哪一行。
 
-在第一步中，我们需要指示编译器向我们的SUT添加必要的检测。要添加的确切标志是编译器特定的；然而，两个主要编译器（GCC和Clang）提供了相同的–{}-coverage标志来启用覆盖率检测，以生成与GCC兼容的gcov格式的数据。
+第一步中，需要指示编译器向SUT添加必要的检测。要添加的确切标志是编译器特定的；然而，两个主要编译器（GCC和Clang）提供了相同的–{}-coverage标志来启用覆盖率检测，以生成与GCC兼容的gcov格式的数据。
 
 以下是如何将覆盖率检测添加到上一节的示例SUT：
 
@@ -61,11 +61,11 @@ add_executable(bootstrap bootstrap.cpp)
 target_link_libraries(bootstrap PRIVATE sut)
 \end{cmake}
 
-让我们逐步分解如下：
+逐步分解上面的代码：
 
 \begin{enumerate}
 \item
-使用if(STREQUAL)命令确保我们在Debug配置中运行。请记住，除非您使用-DCMAKE\_BUILD\_TYPE=Debug选项运行cmake，否则您将无法获得任何覆盖率。
+使用if(STREQUAL)命令确保在Debug配置中运行。除非使用-DCMAKE\_BUILD\_TYPE=Debug选项运行cmake，否则将无法获得覆盖率。
 
 \item
 将–{}-coverage添加到sut库所有目标文件的PRIVATE编译选项中。
@@ -74,12 +74,12 @@ target_link_libraries(bootstrap PRIVATE sut)
 将–{}-coverage添加到PUBLIC链接选项中：GCC和Clang都将此解释为将gcov（或兼容）库与所有依赖sut的目标链接的请求（由于传播属性）。
 
 \item
-引入add\_custom\_command()命令以清理任何过时的.gcda文件。在“避免SEGFAULT陷阱”部分中详细讨论了添加此命令的原因。
+引入add\_custom\_command()命令，以清理过时的.gcda文件。在“避免SEGFAULT陷阱”部分会详细讨论了添加此命令的原因。
 \end{enumerate}
 
-这样就足以生成代码覆盖率。如果您使用的是CLion等IDE，您将能够运行带有覆盖率的单元测试，并在内置报告视图中获取结果。然而，这在任何可能运行的CI/CD自动化管道中都不会起作用。要获取报告，我们需要使用LCOV自己生成。
+这样就足以生成代码覆盖率。如果使用的是CLion等IDE，也能够运行带有覆盖率的单元测试，并在内置报告视图中获取结果。然而，这可能运行的CI/CD中都不会起作用。要获取报告，需要使用LCOV生成。
 
-为此，最好定义一个名为coverage的新目标。为了保持整洁，我们将在另一个文件中定义一个单独的函数AddCoverage，以在测试列表文件中使用，如下所示：
+为此，最好定义一个名为coverage的新目标。为了保持整洁，将在另一个文件中定义一个单独的函数AddCoverage，以在测试列表文件中使用：
 
 \filename{ch11/06-coverage/cmake/Coverage.cmake}
 
@@ -102,20 +102,20 @@ function(AddCoverage target)
 endfunction()
 \end{cmake}
 
-在前面的代码片段中，我们首先检测lcov和genhtml的路径（LCOV包中的两个命令行工具）。REQUIRED关键字指示CMake在找不到它们时抛出错误。接下来，我们添加一个自定义的覆盖率目标，步骤如下：
+前面的代码中，首先检测lcov和genhtml的路径（LCOV包中的两个命令行工具）。REQUIRED关键字指示CMake在找不到它们时抛出错误。接下来，添加一个自定义的覆盖率目标，步骤如下：
 
 \begin{enumerate}
 \item
-清除任何先前运行的计数器。
+清除先前运行的计数器。
 
 \item
-运行目标可执行文件（使用生成器表达式获取其路径）。\$<TARGET\_FILE:target>是一个异常的生成器表达式，它将在此情况下隐式添加对目标的依赖，导致在执行所有命令之前构建它。我们将提供target作为此函数的参数。
+运行目标可执行文件（使用生成器表达式获取其路径）。\$<TARGET\_FILE:target>是一个异常的生成器表达式，将在此情况下隐式添加对目标的依赖，可在执行所有命令之前构建。我们将提供target作为此函数的参数。
 
 \item
 从当前目录（-d .）收集解决方案的度量，并输出到文件（-o coverage.info）。
 
 \item
- 移除（-r）系统头文件（‘/usr/include/*’）上的不需要的覆盖率数据，并输出到另一个文件（-o filtered.info）。
+移除（-r）系统头文件（‘/usr/include/*’）上的不需要的覆盖率数据，并输出到另一个文件（-o filtered.info）。
 
 \item
 在coverage目录中生成HTML报告，并添加–{}-legend颜色。
@@ -127,7 +127,7 @@ endfunction()
 指定WORKING\_DIRECTORY关键字将二进制树设置为所有命令的工作目录。
 \end{enumerate}
 
-这些是GCC和Clang的一般步骤。重要的是要知道gcov工具的版本必须与编译器的版本匹配：您不能对Clang编译的代码使用GCC的gcov工具。要将lcov指向Clang的gcov工具，我们可以使用–{}-gcov-tool参数。这里唯一的问题是它必须是一个单个可执行文件。为了解决这个问题，我们可以提供一个简单的包装脚本（记得使用chmod +x将其标记为可执行），如下所示：
+这些是GCC和Clang的一般步骤。重要的是gcov工具的版本必须与编译器的版本匹配：不能对Clang编译的代码使用GCC的gcov工具。要将lcov指向Clang的gcov工具，可以使用–{}-gcov-tool参数。这里唯一的问题是，其必须是一个单个可执行文件。为了解决这个问题，可以提供一个简单的包装脚本（需要使用chmod +x将其标记为可执行）：
 
 \begin{shell}
 # cmake/gcov-llvm-wrapper.sh
@@ -135,13 +135,13 @@ endfunction()
 exec llvm-cov gcov "$@"
 \end{shell}
 
-这样做意味着我们之前函数中所有对\$\{LCOV\_PATH\}的调用都将接收以下标志：
+这样，之前函数中所有对\$\{LCOV\_PATH\}的调用都将接收以下标志：
 
 \begin{shell}
 --gcov-tool ${CMAKE_SOURCE_DIR}/cmake/gcov-llvm-wrapper.sh
 \end{shell}
 
-确保这个函数可以在测试列表文件中包含。我们可以通过在主列表文件中扩展包含搜索路径来实现这一点，如下所示：
+确保这个函数可以在测试列表文件中包含，可以通过在主列表文件中扩展包含搜索路径来实现：
 
 \filename{ch11/06-coverage/CMakeLists.txt}
 
@@ -154,7 +154,7 @@ add_subdirectory(src bin)
 add_subdirectory(test)
 \end{cmake}
 
-突出显示的行允许我们包含cmake目录中的所有.cmake文件。现在我们可以在测试列表文件中使用Coverage.cmake，如下所示：
+突出显示的行允许包含cmake目录中的所有.cmake文件。现在，可以在测试列表文件中使用Coverage.cmake：
 
 \filename{ch11/06-coverage/test/CMakeLists.txt (fragment)}
 
@@ -166,14 +166,14 @@ include(GoogleTest)
 gtest_discover_tests(unit_tests)
 \end{cmake}
 
-要构建覆盖率目标，请使用以下命令（注意，第一个命令以-DCMAKE\_BUILD\_TYPE=Debug构建类型选择结束）：
+要构建覆盖率目标，请使用以下命令（第一个命令以-DCMAKE\_BUILD\_TYPE=Debug构建类型选择结束）：
 
 \begin{shell}
 # cmake -B <binary_tree> -S <source_tree> -DCMAKE_BUILD_TYPE=Debug
 # cmake --build <binary_tree> -t coverage
 \end{shell}
 
-完成所有上述步骤后，您将看到一个简短的摘要，如下所示：
+完成所有上述步骤后，将看到一个简短的摘要，如下所示：
 
 \begin{shell}
 Writing directory view page.
@@ -187,7 +187,7 @@ Overall coverage rate:
 
 \mySubsubsection{11.7.2.}{避免SEGFAULT陷阱}
 
-当我们开始编辑此类构建解决方案的源代码时，可能会陷入麻烦。这是因为覆盖信息被分割成两部分：
+开始编辑此类构建解决方案的源代码时，可能会陷入麻烦。这是因为覆盖信息分割成了两部分：
 
 \begin{itemize}
 \item
@@ -197,11 +197,11 @@ gcno文件，即GNU覆盖笔记，在SUT的编译过程中生成
 gcda文件，即GNU覆盖数据，在测试运行期间生成和更新
 \end{itemize}
 
-“更新”功能可能是段错误的一个潜在来源。在我们最初运行测试后，留下了一堆没有在任何时刻被移除的gcda文件。如果我们对源代码进行一些更改并重新编译对象文件，将创建新的gcno文件。但是，没有擦除步骤——之前的测试运行生成的gcda文件会跟随过时的源。当我们执行unit\_tests二进制文件（这在gtest\_discover\_tests宏中发生）时，覆盖信息文件将不匹配，我们将收到一个SEGFAULT（段错误）错误。
+“更新”功能可能是段错误的一个潜在来源，在最初运行测试后，留下了一堆没有移除的gcda文件。如果我们对源代码进行一些更改并重新编译对象文件，将创建新的gcno文件。但是，没有擦除步骤——之前的测试运行生成的gcda文件会跟随过时的源码。当执行unit\_tests二进制文件（这在gtest\_discover\_tests宏中发生）时，覆盖信息文件将不匹配，将会收到一个SEGFAULT（段错误）错误。
 
-为了避免这个问题，我们应该清除任何过时的gcda文件。由于我们的sut实例是一个STATIC库，我们可以将add\_custom\_command(TARGET)命令与构建事件挂钩。清理将在重新构建开始前执行。
+为了避免这个问题，我们应该清除任何过时的gcda文件。由于sut实例是一个STATIC库，可以将add\_custom\_command(TARGET)命令与构建事件挂钩，清理将在重新构建开始前执行。
 
-在“进一步阅读”部分找到更多信息的相关链接。
+在“扩展阅读”部分找到更多信息的相关链接。
 
 
 

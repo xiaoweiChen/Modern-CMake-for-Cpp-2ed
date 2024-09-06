@@ -1,18 +1,18 @@
-使用清新设计来记录你的项目是非常重要的。毕竟，如果我们投入大量工作来为我们的尖端项目编写高质量的文档，那么用户必须将其视为如此。尽管Doxygen功能丰富，但它并不以遵循最新的视觉趋势而闻名。然而，改造其外观并不需要大量的努力。
+使用清新的设计，来记录项目非常重要。毕竟，如果投入大量工作来为尖端项目编写高质量的文档，那么用户必须将其视为如此。尽管Doxygen功能丰富，但它并不以遵循最新的视觉趋势而闻名。然而，改造其外观并不需要大量的努力。
 
-幸运的是，一位名为jothepro的开发者创建了一个名为doxygen-awesome-css的主题，它提供了一个现代化、可定制的设计。以下截图展示了这个主题：
+幸运的是，一位名为jothepro的开发者创建了一个名为doxygen-awesome-css的主题，提供了一个现代化、可定制的设计。以下截图展示了这个主题：
 
 \myGraphic{0.8}{content/chapter13/images/4.png}{图13.4：使用doxygen-awesome-css主题的HTML文档}
 
-这个主题不需要任何额外的依赖，可以轻松地从其GitHub页面获取，网址为： \url{https://github.com/jothepro/doxygen-awesome-css}。
+这个主题不需要任何依赖，可以轻松地从其GitHub页面获取，网址为： \url{https://github.com/jothepro/doxygen-awesome-css}。
 
 \begin{myNotic}{Note}
 有些在线资源推荐使用应用程序组合，比如通过Sphinx的Breathe和Exhale扩展来转换Doxygen的输出，这种方法可能比较复杂且依赖较多（例如需要Python）。对于一个并非所有成员都深入了解CMake的团队来说，更简单的方法通常更实用。
 \end{myNotic}
 
-我们可以通过一个自动化过程高效地实现这个主题。让我们看看如何通过添加一个新的宏来扩展我们的Doxygen.cmake文件以使用它：
+我们可以通过一个自动化过程高效地实现这个主题。看看如何通过添加一个新的宏，来扩展Doxygen.cmake文件并使用：
 
-\filename{ch13/02-doxygen-nice/cmake/Doxygen.cmake (fragment)}
+\filename{ch13/02-doxygen-nice/cmake/Doxygen.cmake (片段)}
 
 \begin{cmake}
 macro(UseDoxygenAwesomeCss)
@@ -33,7 +33,7 @@ macro(UseDoxygenAwesomeCss)
 endmacro()
 \end{cmake}
 
-我们已经从本书的前几章中了解了所有这些命令，但为了完全清晰，让我们再次重申发生了什么：
+我们已经从本书的前几章中了解了所有这些命令，但为了完全清晰，再来看看发生了什么：
 
 \begin{enumerate}
 \item
@@ -46,7 +46,7 @@ endmacro()
 将主题的css文件复制到Doxygen的输出目录
 \end{enumerate}
 
-如你所想，最好在Doxygen函数中调用这个宏，正好在doxygen\_add\_docs()之前，如下所示：
+最好在Doxygen函数中调用这个宏，正好在doxygen\_add\_docs()之前：
 
 \filename{ch13/02-doxygen-nice/cmake/Doxygen.cmake (片段)}
 
@@ -62,9 +62,9 @@ macro(UseDoxygenAwesomeCss)
 endmacro()
 \end{cmake}
 
-请记住，宏中的所有变量都在调用函数的作用域内设置。 现在，我们可以享受生成的HTML文档中的现代风格，并且自豪地与世界分享。然而，我们的主题提供了一些JavaScript模块来增强体验。
+记住，宏中的所有变量都在调用函数的作用域内设置。现在，可以享受生成的HTML文档中的现代风格，并且自豪地与世界分享。然而，我们的演示主题提供了一些JavaScript模块来增强体验。
 
-我们如何包含它们？
+最后，我们要如何包含它们？
 
 
 

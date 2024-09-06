@@ -1,4 +1,4 @@
-Doxygen Awesome 提供了一些额外的功能，这些功能可以通过在文档头部的 HTML <head> 标签内包含几个 JavaScript 代码片段来启用。这些功能非常有用，因为它们允许用户在浅色和深色模式之间切换、为代码片段添加复制按钮、提供段落标题的永久链接以及创建交互式的目录。
+Doxygen Awesome 提供了一些额外的功能，这些功能可以通过在文档头部的 HTML <head> 标签内包含几个 JavaScript 代码片段来启用。这些功能非常有用，允许用户在浅色和深色模式之间切换、为代码片段添加复制按钮、提供段落标题的永久链接以及创建交互式的目录。
 
 然而，实现这些功能需要将额外的代码复制到输出目录，并将其包含在生成的 HTML 文件中。
 
@@ -20,23 +20,23 @@ Doxygen Awesome 提供了一些额外的功能，这些功能可以通过在文�
 </script>
 \end{minted}
 
-如你所见，这段代码首先会包含几个 JavaScript 文件，然后初始化不同的扩展。不幸的是，这段代码不能简单地添加到某个变量中。相反，我们需要用一个自定义文件覆盖默认的头部文件。这种覆盖可以通过向 Doxygen 的 HTML\_HEADER 配置变量提供该文件的路径来完成。
+这段代码首先会包含几个 JavaScript 文件，然后初始化不同的扩展。不幸的是，这段代码不能简单地添加到某个变量中。相反，需要用一个自定义文件覆盖默认的头部文件。这种覆盖可以通过向 Doxygen 的 HTML\_HEADER 配置变量提供该文件的路径来完成。
 
-为了创建一个自定义头部而无需硬编码全部内容，你可以使用 Doxygen 的命令行工具来生成一个默认的头部文件，并在生成文档之前编辑它：
+为了创建一个自定义头部而无需硬编码全部内容，可以使用 Doxygen 的命令行工具来生成一个默认的头部文件，并在生成文档之前编辑它：
 
 \begin{shell}
 doxygen -w html header.html footer.html style.css
 \end{shell}
 
-尽管我们不会使用或更改 footer.html 或 style.css，但它们是必需的参数，所以我们无论如何都需要创建它们。
+尽管我们不会使用或更改 footer.html 或 style.css，但它们是必需的参数，所以无论如何都需要创建它们。
 
-最后，我们需要自动在 </head> 标签前插入 ch13/cmake/extra\_headers 文件的内容以包含所需的 JavaScript。这可以通过 Unix 命令行工具 sed 来完成，它会就地编辑 header.html 文件：
+最后，需要自动在 </head> 标签前插入 ch13/cmake/extra\_headers 文件的内容以包含所需的 JavaScript。这可以通过 Unix 命令行工具 sed 来完成，其会就地编辑 header.html 文件：
 
 \begin{shell}
 sed -i '/<\/head>/r ch13/cmake/extra_headers' header.html
 \end{shell}
 
-现在我们需要用 CMake 语言来编写这些步骤。以下是一个实现这一目标的宏：
+现在需要用 CMake 语言来编写这些步骤。以下是实现这一目标的宏：
 
 \filename{ch13/02-doxygen-nice/cmake/Doxygen.cmake (片段)}
 
@@ -63,7 +63,7 @@ macro(UseDoxygenAwesomeExtensions)
 endmacro()
 \end{cmake}
 
-这段代码看起来很复杂，但仔细检查后你会发现它其实相当直接。
+这段代码看起来很复杂，但仔细看过后，会发现它其实相当简单。
 
 下面列出它的功能：
 
@@ -81,7 +81,7 @@ endmacro()
 用自定义版本覆盖默认的头部
 \end{enumerate}
 
-为了完成集成，你可以在启用基本样式表之后调用这个宏：
+为了完成集成，可以在启用基本样式表之后调用这个宏：
 
 \filename{ch13/02-doxygen-nice/cmake/Doxygen.cmake (fragment)}
 
@@ -94,17 +94,17 @@ function(Doxygen input output)
 endfunction()
 \end{cmake}
 
-本例的完整代码以及实际示例可以在本书的在线仓库中找到。一如既往，我建议你在实际环境中审查和探索这些示例。
+本例的完整代码以及实际示例可以在本书的在线仓库中找到，我建议你在实际环境中阅读和探索这些示例。
 
 \begin{myNotic}{其他文档生成工具}
-有许多其他工具没有在这本书中涵盖，因为我们主要关注由 CMake 支持的项目。不过，其中一些可能更适合你的具体情况。如果你愿意尝试新事物，可以访问两个我觉得有趣的项目的网站：
+有许多其他工具没有在这本书中涵盖，我们主要关注由 CMake 支持的项目。不过，其中一些可能更适合各位的具体情况。如果愿意尝试新事物，可以访问两个我觉得有趣的项目的网站：
 
 \begin{itemize}
 \item
-Adobe 的 Hyde (\url{https://github.com/adobe/hyde})：针对 Clang 编译器设计，Hyde 生成 Markdown 文件，这些文件可以被像 Jekyll（https://jekyllrb.com/）这样的静态页面生成器消费，Jekyll 是 GitHub 支持的工具
+Adobe 的 Hyde (\url{https://github.com/adobe/hyde})：针对 Clang 编译器设计，Hyde 生成 Markdown 文件，这些文件可以像 Jekyll（https://jekyllrb.com/）这样的静态页面生成器消费，Jekyll 是 GitHub 支持的工具
 
 \item
-Standardese (\url{https://github.com/standardese/standardese})：使用 libclang 编译你的代码，并提供 HTML、Markdown、LaTeX 和手册页格式的输出。它雄心勃勃地希望成为下一个 Doxygen。
+Standardese (\url{https://github.com/standardese/standardese})：使用 libclang 编译代码，并提供 HTML、Markdown、LaTeX 和手册页格式的输出，有望成为下一个 Doxygen。
 \end{itemize}
 \end{myNotic}
 
