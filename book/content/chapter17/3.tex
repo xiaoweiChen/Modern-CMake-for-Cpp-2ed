@@ -1,6 +1,6 @@
 
 
-此命令提供了基本的列表操作：读取、查找、修改及排序。某些模式会改变列表（即修改原始值）。如果你稍后还需要原始值，请确保先复制一份。
+此命令提供了基本的列表操作：读取、查找、修改及排序。某些模式会改变列表（即修改原始值）。如果稍后还需要原始值，请确保先复制一份。
 
 完整详情可以在在线文档中找到：
 
@@ -41,6 +41,7 @@ list(FIND <list> <needle> <out>)
 \begin{itemize}
 \item
 list(APPEND <list> <element>...) ：将一个或多个 <element> 值添加到 <list> 变量的末尾。
+
 \item
 list(PREPEND <list> [<element>...])：其作用类似于 APPEND，但将元素添加到 <list> 变量的开头。
 
@@ -66,7 +67,7 @@ list(REMOVE\_AT <list> <index>...)：从 <list> 中移除特定 <index> 的元�
 list(REMOVE\_DUPLICATES <list>)：从 <list> 中移除重复项。
 
 \item
-list(TRANSFORM <list> <action> [<selector>] [OUTPUT\_VARIABLE <out>]) ：对 <list> 元素应用特定的转换。默认情况下，操作应用于所有元素，但我们可以通过添加 <selector> 来限制其效果。除非提供 OUTPUT\_VARIABLE 关键词，在这种情况下结果将存储在 <out> 变量中，否则提供的列表将被修改（就地更改）。
+list(TRANSFORM <list> <action> [<selector>] [OUTPUT\_VARIABLE <out>]) ：对 <list> 元素应用特定的转换。默认情况下，操作应用于所有元素，但可以通过添加 <selector> 来限制其效果。除非提供 OUTPUT\_VARIABLE 关键词，结果将存储在 <out> 变量中，否则将修改提供的列表（就地更改）。
 \end{itemize}
 
 以下选择器可用：AT <index>，FOR <start> <stop> [<step>]，以及 REGEX <pattern>。

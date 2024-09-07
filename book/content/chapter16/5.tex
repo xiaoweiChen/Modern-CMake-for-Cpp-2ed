@@ -1,4 +1,4 @@
-工作流预设是我们项目的终极自动化解决方案。它们允许我们按照预定顺序自动执行多个特定阶段的预设。这样，我们实际上可以用一步完成端到端的构建。
+工作流预设是我们项目的终极自动化解决方案，允许我们按照预定顺序自动执行多个特定阶段的预设。这样，实际上可以用一步完成端到端的构建。
 
 要发现项目的可用工作流，我们可以执行以下命令：
 
@@ -9,12 +9,12 @@ cmake --workflow --list-presets
 要选择并应用一个预设，使用以下命令：
 
 \begin{shell}
-cmake –workflow --preset <preset-name>
+cmake --workflow --preset <preset-name>
 \end{shell}
 
-此外，使用 -{}-fresh 标志，我们可以清除构建树和缓存。
+此外，使用 -{}-fresh 标志，可以清除构建树和缓存。
 
-定义工作流预设非常简单；我们需要定义一个名称，并且可以像为特定阶段的预设那样可选地提供 displayName 和 description。之后，我们必须枚举出工作流应该执行的所有特定阶段的预设。这是通过提供一个 steps 数组来完成的，数组中的对象包含 type 和 name 属性，如下面所示：
+定义工作流预设非常简单；需要定义一个名称，并且可以像为特定阶段的预设那样可选地提供 displayName 和 description。之后，必须枚举出工作流应该执行的所有特定阶段的预设。这是通过提供一个 steps 数组来完成的，数组中的对象包含 type 和 name 属性：
 
 \filename{ch16/01-presets/CMakePresets.json (续)}
 
@@ -48,13 +48,13 @@ cmake –workflow --preset <preset-name>
 ...
 \end{json}
 
-steps 数组中的每个对象引用了我们在本章中早些时候定义的预设，指示其类型（configure, build, test, 或 package）和名称。这些预设一起执行所有必要的步骤，只需一条命令即可从头开始完全构建和安装项目：
+steps 数组中的每个对象引用了本章中早些时候定义的预设，指示其类型（configure, build, test, 或 package）和名称。这些预设一起执行所有必要的步骤，只需一条命令即可从头开始完全构建和安装项目：
 
 \begin{shell}
 cmake --workflow --preset myWorkflow
 \end{shell}
 
-工作流预设是用于自动化 C++ 构建、测试、打包和安装的终极解决方案。接下来，让我们探讨如何通过条件和宏来管理一些特殊情况。
+工作流预设是用于自动化 C++ 构建、测试、打包和安装的解决方案。接下来，让我们探讨如何通过条件和宏来管理一些特殊情况。
 
 
 

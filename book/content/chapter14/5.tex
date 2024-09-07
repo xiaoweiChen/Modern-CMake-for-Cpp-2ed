@@ -10,17 +10,17 @@ find_package(<PackageName>
 )
 \end{shell}
 
-重要的一点是不要将这里提到的组件与install()命令中使用的COMPONENT关键字混淆。尽管它们名称相同，但它们是不同的概念，必须分开理解。我们将在以下子节中进一步探讨这一点。
+重要的是不要将这里提到的组件，与install()命令中使用的COMPONENT关键字混淆。尽管它们名称相同，但是不同的概念，必须分开理解。我们将在以下子节中进一步探讨这一点。
 
 \mySubsubsection{14.5.1.}{如何在find\_package()中使用组件}
 
-当调用带有COMPONENTS或OPTIONAL\_COMPONENTS列表的find\_package()时，我们告诉CMake我们只对提供这些组件的包感兴趣。然而，理解验证这一要求是包的责任至关重要。如果包提供商没有在配置文件中实现必要的检查，如“创建高级配置文件”一节所述，则过程将不会按预期进行。
+当调用带有COMPONENTS或OPTIONAL\_COMPONENTS列表的find\_package()时，告诉CMake我们只对提供这些组件的包感兴趣。然而，理解验证这一要求是包的责任至关重要。如果包提供商没有在配置文件中实现必要的检查，则不会按预期进行。
 
-请求的组件通过<package>\_FIND\_COMPONENTS变量传递给配置文件（包括可选和不可选的）。对于每个不可选组件，都会设置一个<package>\_FIND\_REQUIRED\_<component>变量。包作者可以编写一个宏来扫描这个列表并验证所有必需组件的提供情况，但这不是必须的。check\_required\_components()函数就为此目的服务。当找到必要的组件时，配置文件应设置<package>\_<component>\_FOUND变量。文件末尾的一个宏将验证是否设置了所有必需的变量。
+请求的组件通过<package>\_FIND\_COMPONENTS变量传递给配置文件（包括可选和不可选的）。对于每个不可选组件，都会设置一个<package>\_FIND\_REQUIRED\_<component>变量。包作者可以编写宏来扫描这个列表，并验证所有必需组件的提供情况。check\_required\_components()函数就为此目的服务。当找到必要的组件时，配置文件应设置<package>\_<component>\_FOUND变量。文件末尾的一个宏将验证是否设置了所有必需的变量。
 
 \mySubsubsection{14.5.2.}{如何在install()命令中使用组件}
 
-并非在所有情况下都需要安装所有生成的工件。例如，一个项目可能为了开发而安装静态库和公共头文件，但默认情况下，它可能只需要为运行时安装一个共享库。为了启用这种双重行为，可以使用COMPONENT关键字将工件分组在install()命令下的一个通用名称下。有兴趣限制安装到特定组件的用户可以通过执行以下区分大小写的命令来实现：
+并非在所有情况下都需要安装所有生成的工件。例如，一个项目可能为了开发而安装静态库和公共头文件，但默认情况下，可能只需要为运行时安装一个共享库。为了启用这种双重行为，可以使用COMPONENT关键字将工件分组在install()命令下的一个通用名称下。有兴趣限制安装到特定组件的用户可以通过执行以下区分大小写的命令来实现：
 
 \begin{shell}
 cmake --install <build tree>
@@ -31,7 +31,7 @@ cmake --install <build tree>
 
 让我们在代码示例中探讨这个概念：
 
-\filename{ch14/13-components/CMakeLists.txt (fragment)}
+\filename{ch14/13-components/CMakeLists.txt (片段)}
 
 \begin{cmake}
 install(TARGETS calc EXPORT CalcTargets
@@ -77,28 +77,28 @@ cmake -{}-install -{}-component headers 将只安装公共头文件。
 cmake -{}-install -{}-component extra 将打印一个否则无法访问的消息（EXCLUDE\_FROM\_ALL关键字阻止了这一点）。
 \end{itemize}
 
-如果没有为安装的工件指定COMPONENT关键字，它默认为Unspecified，由CMAKE\_INSTALL\_DEFAULT\_COMPONENT\_NAME变量定义。
+如果没有为安装的工件指定COMPONENT关键字，它默认为未指定，由CMAKE\_INSTALL\_DEFAULT\_COMPONENT\_NAME变量定义。
 
 \begin{myNotic}{Note}
-由于无法从cmake命令行列出所有可用组件，因此彻底记录你的包的组件对于用户来说可能非常有帮助。安装"README"文件是放置这些信息的绝佳位置。
+由于无法从cmake命令行列出所有可用组件，因此彻底记录包组件对于用户来说可能非常有帮助。安装"README"文件是放置这些信息的绝佳位置。
 \end{myNotic}
 
 如果cmake使用-{}-component参数调用一个不存在的组件，命令将成功完成，不会有警告或错误，但不会安装任何东西。
 
-将我们的安装分区为组件允许用户选择性地安装包的部分。现在让我们来管理版本化共享库的符号链接，这是一个优化你的安装过程的有用功能。
+将我们的安装分区为组件，允许用户选择性地安装包的部分。现在来管理版本化共享库的符号链接，这是一个优化你的安装过程的有用功能。
 
 \mySubsubsection{14.5.3.}{管理版本化共享库的符号链接}
 
-安装的目标平台可以使用符号链接来帮助链接器发现共享库的当前安装版本。创建lib<name>后。所以符号链接到lib<name>。
+安装的目标平台可以使用符号链接，来帮助链接器发现共享库的当前安装版本。创建lib<name>后。所以符号链接到lib<name>。
 
-.so.1 文件是指共享库的一种符号链接形式，通常用于版本管理。可以通过向链接器传递 -l<name> 参数来链接这样的库。CMake 的 install(TARGETS <target> LIBRARY) 块处理了在必要时创建这类符号链接的工作。但是，我们可以选择将这一步骤移到另一个 install() 命令中，通过在这个块中添加 NAMELINK\_SKIP 来实现：
+.so.1 文件是指共享库的一种符号链接形式，通常用于版本管理。可以通过向链接器传递 -l<name> 参数来链接这样的库。CMake 的 install(TARGETS <target> LIBRARY) 块处理了在必要时创建这类符号链接的工作。可以选择将这一步骤移到另一个 install() 命令中，通过在这个块中添加 NAMELINK\_SKIP 来实现：
 
 \begin{shell}
 install(TARGETS <target> LIBRARY
         COMPONENT cmp NAMELINK_SKIP)
 \end{shell}
 
-如果我们要将符号链接分配给另一个组件而不是完全禁用它，可以再次使用 install() 命令对同一个目标进行安装，并指定不同的组件，后面跟上 NAMELINK\_ONLY 关键词：
+如果要将符号链接分配给另一个组件而不是完全禁用，可以再次使用 install() 命令对同一个目标进行安装，并指定不同的组件，后面跟上 NAMELINK\_ONLY 关键词：
 
 \begin{shell}
 install(TARGETS <target> LIBRARY
@@ -112,7 +112,7 @@ install(TARGETS <target> LIBRARY
         COMPONENT cmp NAMELINK_COMPONENT lnk)
 \end{shell}
 
-现在我们已经配置了自动安装过程，可以使用随 CMake 一起提供的 CPack 工具来为用户提供预构建的制品。
+现在我们已经配置了自动安装过程，可以使用随 CMake 一起提供的 CPack 工具来为用户提供预构建的工件。
 
 
 

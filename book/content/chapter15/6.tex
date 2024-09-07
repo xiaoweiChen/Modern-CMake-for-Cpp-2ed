@@ -1,9 +1,9 @@
 
-图15.6展示了我们将如何配置项目以便进行安装和打包：
+图15.6展示了如何配置项目以便进行安装和打包：
 
-\myGraphic{0.8}{content/chapter15/images/6.png}{图15.6: 配置安装和打包的文件}
+\myGraphic{1.0}{content/chapter15/images/6.png}{图15.6: 配置安装和打包的文件}
 
-顶级列表文件包含了Packaging实用模块：
+顶层列表文件包含了Packaging模块：
 
 \filename{ch15/01-full-project/CMakeLists�txt (片段)}
 
@@ -15,7 +15,7 @@
 include(Packaging)
 \end{cmake}
 
-Packaging模块详细说明了项目的包配置，这部分我们将在使用CPack进行打包的部分进行探讨。我们现在关注的是安装三个主要组件：
+Packaging模块详细说明了项目的包配置，这部分将在使用CPack进行打包的部分进行探讨。现在，关注的是安装三个主要组件：
 
 \begin{itemize}
 \item
@@ -28,11 +28,11 @@ Calc库的包定义配置文件
 Calc控制台可执行文件
 \end{itemize}
 
-一切已经计划好了，现在是时候配置库的安装了。
+一切已经计划好了，现在是时候安装库。
 
-\mySubsubsection{15.6.1.}{库的安装}
+\mySubsubsection{15.6.1.}{安装库}
 
-为了安装库，我们首先定义逻辑目标及其工件的目的地，利用GNUInstallDirs模块的默认值以避免手动指定路径。工件将被分组到组件中。默认安装会安装所有文件，但您可以选择只安装运行时组件并跳过开发工件：
+为了安装库，首先定义逻辑目标及其工件的目的地，利用GNUInstallDirs模块的默认值以避免手动指定路径。工件将分组到组件中，默认安装会安装所有文件，可以选择只安装运行时组件，并跳过开发工件：
 
 \filename{ch15/01-full-project/src/calc/CMakeLists.txt (续)}
 
@@ -62,7 +62,7 @@ if (UNIX)
 endif()
 \end{cmake}
 
-为了使其他CMake项目能够复用，我们将通过生成并安装一个目标导出文件和一个引用它的配置文件来打包库：
+为了使其他CMake项目能够复用，将通过生成并安装一个目标导出文件和一个引用它的配置文件来打包库：
 
 \filename{ch15/01-full-project/src/calc/CMakeLists.txt (续)}
 
@@ -86,13 +86,13 @@ install(FILES "CalcConfig.cmake"
 include("${CMAKE_CURRENT_LIST_DIR}/CalcLibrary.cmake")
 \end{cmake}
 
-这个文件位于src/calc目录下，因为它只包含了库目标。如果还有其他目录的目标定义，比如calc\_console，通常会把CalcConfig.cmake放在顶级目录或src目录下。
+这个文件位于src/calc目录下，它只包含了库目标。如果还有其他目录的目标定义，比如calc\_console，通常会把CalcConfig.cmake放在顶层目录或src目录下。
 
-现在，库已经准备好通过cmake -{}-install命令在构建项目后进行安装。不过，我们还需要配置可执行文件的安装。
+现在，库已经准备好通过cmake -{}-install命令在构建项目后进行安装。不过，还需要配置可执行文件的安装。
 
 \mySubsubsection{15.6.2.}{可执行文件的安装}
 
-当然，我们希望用户能够在他们的系统中使用可执行文件，因此我们将使用CMake来安装它。准备二进制可执行文件的安装很简单；为了实现这一点，我们只需要包含GNUInstallDirs并使用一个install()命令：
+当然，我们希望用户能够在他们的系统中使用可执行文件，因此需要使用CMake来安装。准备二进制可执行文件的安装很简单；为了实现这一点，只需要包含GNUInstallDirs并使用install()命令：
 
 \filename{ch15/01-full-project/src/calc\_console/CMakeLists.txt (续)}
 
@@ -108,11 +108,11 @@ install(TARGETS calc_console
 )
 \end{cmake}
 
-这样，可执行文件就设置好进行安装了。现在，我们继续进行打包。
+这样，可执行文件就设置好进行安装了。现在，继续进行打包。
 
-\mySubsubsection{15.6.3.}{使用CPack进行打包}
+\mySubsubsection{15.6.3.}{使用CPack打包}
 
-我们可以尽情配置大量的支持的包类型；然而，对于这个项目，基本配置就足够了：
+可以尽情配置大量的支持的包类型；但对于这个项目，基本配置就够了：
 
 \filename{ch15/01-full-project/cmake/Packaging.cmake}
 
@@ -136,7 +136,7 @@ CPack: Create package
 CPack: - package: .../packages/Calc-1.0.0-Linux.tar.gz generated.
 \end{shell}
 
-这就完成了安装和打包的过程；接下来的任务是文档。
+这就完成了安装和打包的过程；接下来的任务是提供文档。
 
 
 

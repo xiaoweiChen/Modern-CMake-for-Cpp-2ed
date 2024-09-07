@@ -1,15 +1,14 @@
 
 
-特定阶段的预设仅仅是配置各个 CMake 阶段的预设：配置、构建、测试、打包和安装。它们允许以精细和结构化的方式来定义构建配置。以下是所有预设阶段共有的特性概览，随后我们将介绍如何为各个阶段定义预设。
+特定阶段的预设仅仅是配置各个 CMake 阶段的预设：配置、构建、测试、打包和安装，允许以精细和结构化的方式来定义构建配置。以下是所有预设阶段共有的特性概览，随后将介绍如何为各个阶段定义预设。
 
 \mySubsubsection{16.4.1.}{各预设阶段的共同特性}
 
-无论 CMake 阶段如何，有三个特性用于配置预设。具体来说，这些特性包括独特的名称字段、可选字段以及与配置阶段预设的关联。接下来的各节将分别介绍这些特性
-
+无论 CMake 阶段如何，有三个特性用于配置预设，这些特性包括独特的名称字段、可选字段，以及与配置阶段预设的关联。
 
 \mySamllsection{独特的名称字段}
 
-每个预设在其所属阶段内必须有一个独特的名称字段。考虑到如果 CMakeUserPresets.json 存在，它会隐式地包含 CMakePresets.json（如果该文件也存在），这意味着两个文件共享命名空间，防止了名称重复。例如，你不能在两个文件中都有名为 myPreset 的打包阶段预设。
+每个预设在其所属阶段内必须有一个独特的名称字段。如果 CMakeUserPresets.json 存在，它会隐式地包含 CMakePresets.json（如果该文件也存在），所以两个文件共享命名空间，避免了名称重复。例如，不能在两个文件中都有名为 myPreset 的打包阶段预设。
 
 一个最小化的预设文件可能如下所示：
 
@@ -27,10 +26,9 @@
 }
 \end{json}
 
-
 \mySamllsection{可选字段}
 
-每个特定阶段的预设都可以使用相同的可选字段：
+每个特定阶段的预设都使用相同的可选字段：
 
 \begin{itemize}
 \item
@@ -59,15 +57,15 @@ vendor: 一个自定义对象，包含供应商特定的值，并遵循与根级
 
 \mySamllsection{与配置阶段预设的关联}
 
-所有特定阶段的预设都必须与一个配置预设相关联，因为它们必须知道构建树的位置。虽然配置预设本质上与自身关联，但构建、测试和打包预设需要明确地通过 configurePreset 字段定义这种关联。
+所有特定阶段的预设都必须与配置预设相关联，它们必须知道构建树的位置。虽然配置预设本质上与自身关联，但构建、测试和打包预设，需要明确地通过 configurePreset 字段定义这种关联。
 
-与你可能认为的不同，这种关联并不意味着当你决定运行任何后续预设时 CMake 将自动执行配置预设。你仍然需要手动执行每个预设，或者使用工作流预设（稍后我们会介绍这一点）。
+这种关联并不意味着当决定运行后续预设时，CMake 将自动执行配置预设。仍然需要手动执行每个预设，或者使用工作流预设（稍后会介绍这一点）。
 
-有了这些基础概念，我们可以继续深入探讨各个阶段的预设细节，从配置阶段开始。随着进展，我们将探索这些预设是如何相互作用的，以及它们如何被用来简化 CMake 中的项目配置和构建过程。
+有了这些基础概念，可以继续深入探讨各个阶段的预设细节，从配置阶段开始。随着进展，将探索这些预设如何相互作用，以及如何用来简化 CMake 中的项目配置和构建过程。
 
 \mySubsubsection{16.4.2.}{定义配置阶段预设}
 
-正如前面所述，配置预设位于 configurePresets 数组中。可以通过向命令行添加 -{}-list-presets 参数来列出它们，具体针对配置阶段：
+配置预设位于 configurePresets 数组中，可以通过向命令行添加 -{}-list-presets 参数来列出，具体针对配置阶段：
 
 \begin{shell}
 cmake --list-presets
@@ -95,14 +93,14 @@ binaryDir: 一个字符串，提供了构建树的相对或绝对路径；对于
 installDir: 一个字符串，提供了安装目录的相对或绝对路径；对于小于第 3 版的架构是必需的；支持宏。
 
 \item
-cacheVariables: 一个映射，定义了缓存变量；值支持宏。
+cacheVariables: 一个映射/map，定义了缓存变量；值支持宏。
 \end{itemize}
 
-在定义 cacheVariables 映射时，要记住项目中变量解析的顺序。如图 16.1 所示，通过命令行定义的任何缓存变量都会覆盖预设变量。任何缓存或环境预设变量都会覆盖来自缓存文件或主机环境的变量。
+定义 cacheVariables 映射时，要记住项目中变量解析的顺序。如图 16.1 所示，通过命令行定义的任何缓存变量都会覆盖预设变量。缓存或环境预设变量都会覆盖来自缓存文件或主机环境的变量。
 
 \myGraphic{0.4}{content/chapter16/images/1.png}{图16.1: 预设如何覆盖CMakeCache.txt和系统环境变量}
 
-让我们声明一个简单的 myConfigure 配置预设，它指定了生成器、构建树和安装路径：
+声明一个简单的 myConfigure 配置预设，其指定了生成器、构建树和安装路径：
 
 \filename{ch16/01-presets/CMakePresets.json (continued)}
 
@@ -121,11 +119,11 @@ cacheVariables: 一个映射，定义了缓存变量；值支持宏。
 ...
 \end{json}
 
-我们对配置预设的介绍已经完成，接下来是构建阶段预设。
+对配置预设的介绍已经完成，接下来是构建阶段预设。
 
 \mySubsubsection{16.4.3.}{定义构建阶段预设}
 
-你不会惊讶地发现构建预设位于 buildPresets 数组中。可以通过向命令行添加 -{}-list-presets 参数来列出它们，具体针对构建阶段：
+不会惊讶于发现构建预设位于 buildPresets 数组中。可以通过向命令行添加 -{}-list-presets 参数来列出它们，具体针对构建阶段：
 
 \begin{shell}
 cmake --build --list-presets
@@ -137,7 +135,7 @@ cmake --build --list-presets
 cmake --build --preset myBuildingPreset
 \end{shell}
 
-构建预设有像名称和描述这样的通用字段，它也有一套自己的可选字段。以下是最重要的几个字段的简化描述：
+构建预设有像名称和描述这样的通用字段，其也有一套自己的可选字段。以下是最重要的几个字段的简化描述：
 
 \begin{itemize}
 \item
@@ -153,7 +151,7 @@ configuration: 一个字符串，确定了多配置生成器的构建类型(Debu
 cleanFirst: 一个布尔值，确保在构建前总是清理项目。
 \end{itemize}
 
-现在，我们可以这样写一个构建预设：
+现在，可以这样写一个构建预设：
 
 \filename{ch16/01-presets/CMakePresets.json (续)}
 
@@ -171,7 +169,7 @@ cleanFirst: 一个布尔值，确保在构建前总是清理项目。
 ...
 \end{json}
 
-你会注意到必需的 configurePreset 字段设置为指向我们在上一节中定义的 myConfigure 预设。现在，我们可以继续介绍测试预设。
+必需的 configurePreset 字段设置为指向我们在上一节中定义的 myConfigure 预设。现在，可以继续介绍测试预设。
 
 \mySubsubsection{16.4.4.}{定义测试阶段预设}
 
@@ -203,7 +201,7 @@ filter: 一个对象，指定要运行哪些测试。
 execution: 一个对象，配置测试的执行。
 \end{itemize}
 
-每个对象将相应的命令行选项映射到配置值。我们将突出一些基本选项，但这并不是一个详尽的列表。请参阅“进一步阅读”部分获取完整的参考。
+每个对象将相应的命令行选项映射到配置值，但这并不是一个详尽的列表。请参阅“扩展阅读”部分获取完整的参考。
 
 output 对象的可选条目包括：
 
@@ -212,7 +210,7 @@ output 对象的可选条目包括：
 shortProgress: 布尔值；进度将在一行内报告。
 
 \item
-verbosity:  一个字符串，将输出的详细程度设置为以下级别之一：默认、详细或额外详细。
+verbosity:  一个字符串，将输出的详细程度设置为以下级别之一：默认、详细或其他信息。
 
 \item
 outputOnFailure: 布尔值；在测试失败时打印程序输出。
@@ -241,7 +239,7 @@ fixtures: 一个对象，确定要排除哪些测试夹具（参见官方文档�
 outputLogFile: 一个字符串，指定了输出日志文件的路径，并支持宏。
 \end{itemize}
 
-filter 对象接受 include 和 exclude 键来配置测试案例的筛选；这里是一个部分填充的结构以说明这一点
+filter 对象接受 include 和 exclude 键来配置测试案例的筛选；
 
 \begin{json}
     "testPresets": [
@@ -263,7 +261,7 @@ filter 对象接受 include 和 exclude 键来配置测试案例的筛选；这�
 
 每个键定义了自己的选项对象：
 
-对于 include，条目包括：
+对于 include：
 
 \begin{itemize}
 \item
@@ -273,7 +271,7 @@ name:  一个字符串，包含匹配正则表达式模式的测试名称，并�
 label: 一个字符串，包含匹配正则表达式模式的测试标签，并支持宏。
 
 \item
-index: 一个对象，通过接受起始、结束和步长整数以及一个特定测试的整数数组来选择要运行的测试；它支持宏。
+index: 一个对象，通过接受起始、结束和步长整数以及，一个特定测试的整数数组来选择要运行的测试，支持宏。
 
 \item
 useUnion: 一个布尔值，启用使用由 index 和 name 确定的测试的并集，而不是交集。
@@ -309,11 +307,11 @@ fixtures: 一个对象，确定要从测试中排除哪些夹具（参见官方�
 ...
 \end{json}
 
-它接受以下可选条目：
+接受以下可选条目：
 
 \begin{itemize}
 \item
-stopOnFailure: 一个布尔值，如果任何测试失败则停止测试。
+stopOnFailure: 一个布尔值，任何测试失败则停止测试。
 
 \item
 enableFailover: 一个布尔值，恢复之前中断的测试。
@@ -341,7 +339,7 @@ timeout: 一个整数，设置所有测试总执行时间的限制（秒）。
 noTestsAction: 一个字符串，定义如果没有找到测试时的动作，选项包括：default, error, 和 ignore。
 \end{itemize}
 
-尽管有许多配置选项，简单的预设也是可行的：
+尽管有许多配置选项，简单的预设也可行：
 
 \filename{ch16/01-presets/CMakePresets.json (续)}
 
@@ -361,11 +359,11 @@ noTestsAction: 一个字符串，定义如果没有找到测试时的动作，�
 ...
 \end{json}
 
-与构建预设一样，我们也为新的测试预设设置了必需的 configurePreset 字段，以便整洁地将它们联系起来。让我们看一下最后一个特定阶段的预设类型：打包预设。
+与构建预设一样，我们也为新的测试预设设置了必需的 configurePreset 字段，以便整洁地将它们联系起来。来看一下最后一个特定阶段的预设类型：打包预设。
 
 \mySubsubsection{16.4.5.}{定义打包阶段预设}
 
-打包预设是在第 6 版架构中引入的，这意味着你需要至少使用 CMake 3.25 才能利用它们。这些预设应该包含在 packagePresets 数组中。也可以通过向命令行追加 -{}-list-presets 参数来显示它们，具体针对打包阶段：
+打包预设是在第 6 版架构中引入的，所以需要至少使用 CMake 3.25 才能使用它们。这些预设应该包含在 packagePresets 数组中，也可以通过向命令行追加 -{}-list-presets 参数来显示，具体针对打包阶段：
 
 \begin{shell}
 cpack --list-presets
@@ -393,7 +391,7 @@ filter:  一个对象，指定了要运行的测试。
 packageName, packageVersion, packageDirectory 和 vendorName: 字符串，指定了创建的包的元数据。
 \end{itemize}
 
-让我们在预设文件中添加一个简洁的打包预设：
+在预设文件中添加一个简洁的打包预设：
 
 \filename{ch16/01-presets/CMakePresets.json (续)}
 
@@ -413,17 +411,17 @@ packageName, packageVersion, packageDirectory 和 vendorName: 字符串，指定
 ...
 \end{json}
 
-这样的配置将使我们能够简化项目包的创建，但我们还缺少一个关键成分：项目安装。让我们看看如何让它工作。
+这样的配置将简化项目包的创建，但还缺少一个关键成分：项目安装。
 
 \mySubsubsection{16.4.6.}{添加安装预设}
 
-你可能已经注意到 CMakePresets.json 对象不支持定义 "installPresets"。没有明确的方式通过预设安装你的项目，这似乎有些奇怪，因为配置预设提供了 installDir 字段！那么我们是否需要诉诸于手动安装命令？
+可能已经注意到 CMakePresets.json 对象不支持定义 "installPresets"。没有明确的方式通过预设安装项目，这似乎有些奇怪，因为配置预设提供了 installDir 字段！那么是否需要诉诸于手动安装命令？
 
 幸运的是，不需要。有一个变通方法可以让我们使用构建预设实现目标。
 
 来看一下：
 
-\filename{ch16/01-presets/CMakePresets.json (continued)}
+\filename{ch16/01-presets/CMakePresets.json (续)}
 
 \begin{json}
 ...
@@ -442,7 +440,7 @@ packageName, packageVersion, packageDirectory 和 vendorName: 字符串，指定
 ...
 \end{json}
 
-我们可以创建一个构建预设，其中 targets 字段设置为 install。当正确配置安装时，install 目标由项目隐式定义。使用这个预设构建将执行必要的步骤来安装项目到在关联的配置预设中指定的 installDir（如果 installDir 字段为空，则使用默认位置）：
+可以创建一个构建预设，其中 targets 字段设置为 install。当正确配置安装时，install 目标由项目隐式定义。使用这个预设构建将执行必要的步骤，来安装项目到在关联的配置预设中指定的 installDir（如果 installDir 字段为空，则使用默认位置）：
 
 \begin{shell}
 $ cmake --build --preset myInstall
@@ -459,5 +457,5 @@ $ cmake --build --preset myInstall
 console" to ""
 \end{shell}
 
-这个巧妙的方法可以帮助我们节省一些步骤。如果我们可以为最终用户提供一个单一命令，从配置到安装全部处理好，那就更好了。确实可以做到，通过工作流预设。让我们来看看。
+这个巧妙的方法可以帮助我们节省一些步骤。如果可以为最终用户提供一个单一命令，从配置到安装全部处理好，那就更好了。确实可以做到，通过工作流预设。
 

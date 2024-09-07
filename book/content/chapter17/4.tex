@@ -1,5 +1,5 @@
 
-此命令提供了与文件相关的各种操作：读取、传输、锁定及归档。它还提供了用于检查文件系统和对路径字符串进行操作的模式。
+此命令提供了与文件相关的各种操作：读取、传输、锁定及归档。还提供了用于检查文件系统和对路径字符串进行操作的模式。
 
 完整详情可以在在线文档中找到：
 
@@ -34,7 +34,7 @@ file(GET\_RUNTIME\_DEPENDENCIES [...])：获取指定文件的运行时依赖项
 
 \begin{itemize}
 \item
-file(\{WRITE | APPEND\} <filename> <content>...)：将所有 <content> 参数写入或追加到 <filename> 文件中。如果提供的系统路径不存在，它将会递归创建。
+file(\{WRITE | APPEND\} <filename> <content>...)：将所有 <content> 参数写入或追加到 <filename> 文件中。如果提供的系统路径不存在，将会递归创建。
 
 \item
 file(\{TOUCH | TOUCH\_NOCREATE\} [<filename>...])：更新 <filename> 的时间戳。如果文件不存在，则仅在 TOUCH 模式下创建。
@@ -114,7 +114,7 @@ file(UPLOAD <file> <url> [...])：将 <file> 上传到 URL。
 
 \mySubsubsection{A.4.6.}{锁定}
 
-锁定模式在 <path> 资源上放置了一个建议性锁
+锁定模式在 <path> 资源上放置了一个锁
 
 \begin{shell}
 file(LOCK <path> [DIRECTORY] [RELEASE]
@@ -147,7 +147,7 @@ file(ARCHIVE_EXTRACT INPUT <archive> [DESTINATION <dir>]
 )
 \end{shell}
 
-它从 <archive> 中提取匹配可选 <patterns> 值的文件到目的地 <dir>。如果提供了 LIST\_ONLY 关键词，则文件不会被提取，而只会列出。
+从 <archive> 中提取匹配可选 <patterns> 值的文件到目的地 <dir>。如果提供了 LIST\_ONLY 关键词，则文件不会提取，而只会列出。
 
 
 

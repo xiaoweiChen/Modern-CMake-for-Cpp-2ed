@@ -1,5 +1,5 @@
 
-程序分析和测试是确保解决方案质量的重要组成部分。例如，在运行测试代码时使用Valgrind会更加有效（因为它的一致性和覆盖范围）。因此，我们会在同一个地方配置测试和程序分析。图15.5展示了设置它们所需的执行流程和文件：
+程序分析和测试是确保解决方案质量的重要组成部分。例如，在运行测试代码时使用Valgrind会更加有效（一致性和覆盖范围）。因此，可同一个地方配置测试和程序分析。图15.5展示了设置它们所需的执行流程和文件：
 
 \myGraphic{0.8}{content/chapter15/images/5.png}{图15.5: 用于启用测试和程序分析的文件}
 
@@ -7,25 +7,25 @@
 
 \begin{itemize}
 \item
-在src目录中，包含Coverage、Format和CppCheck模块，并添加src/calc和src/calc\_console目录。
+src目录中，包含Coverage、Format和CppCheck模块，并添加src/calc和src/calc\_console目录。
 
 \item
-在src/calc目录中，定义目标并使用包含的模块进行配置。
+src/calc目录中，定义目标并使用包含的模块进行配置。
 
 \item
-在src/calc\_console目录中，定义目标并使用包含的模块进行配置。
+src/calc\_console目录中，定义目标并使用包含的模块进行配置。
 
 \item
-在test目录中，包含Testing（其中包含了Memcheck）并添加test/calc和test/calc\_console目录。
+test目录中，包含Testing（其中包含了Memcheck）并添加test/calc和test/calc\_console目录。
 
 \item
-在test/calc目录中，定义测试目标并使用包含的模块进行配置。
+test/calc目录中，定义测试目标并使用包含的模块进行配置。
 
 \item
-在test/calc\_console目录中，定义测试目标并使用包含的模块进行配置。
+test/calc\_console目录中，定义测试目标并使用包含的模块进行配置。
 \end{itemize}
 
-让我们检查test目录下的列表文件：
+检查test目录下的列表文件：
 
 \filename{ch15/01-full-project/test/CMakeLists.txt}
 
@@ -35,7 +35,7 @@ add_subdirectory(calc)
 add_subdirectory(calc_console)
 \end{cmake}
 
-在这个级别上，包含Testing实用程序模块以提供来自calc和calc\_console目录的目标组的功能：
+这个级别上，包含Testing实用程序模块以提供来自calc和calc\_console目录的目标组的功能：
 
 \filename{ch15/01-full-project/cmake/Testing.cmake (fragment)}
 
@@ -56,9 +56,9 @@ FetchContent_MakeAvailable(googletest)
 # ...
 \end{cmake}
 
-我们启用了测试，并包含了FetchContent模块以获取GTest和GMock。虽然GMock在这个项目中没有使用，但它与GTest在同一仓库中，所以我们同样配置它。关键的配置步骤是通过使用option()命令防止这些框架的安装影响我们的项目安装。
+我们启用了测试，并包含了FetchContent模块以获取GTest和GMock。虽然GMock在这个项目中没有使用，但它与GTest在同一仓库中，所以使用同样的配置。关键的配置步骤是通过使用option()命令防止这些框架的安装，影响到我们的项目的安装。
 
-在同一文件中，我们定义了一个AddTests()函数来方便地全面测试业务目标：
+同一文件中，我们定义了一个AddTests()函数来方便地全面测试业务目标：
 
 \filename{ch15/01-full-project/cmake/Testing.cmake (continued)}
 
@@ -76,11 +76,11 @@ macro(AddTests target)
 endmacro()
 \end{cmake}
 
-首先，我们包含了必要的模块：GoogleTest与CMake捆绑在一起，而Coverage和Memcheck是我们项目中包含的自定义实用程序模块。然后提供了AddTests宏来准备目标进行测试、应用覆盖率度量以及内存检查。AddCoverage()和AddMemcheck()函数分别定义在它们各自的实用程序模块中。现在，我们可以继续实现它们。
+首先，包含了必要的模块：GoogleTest与CMake捆绑在一起，而Coverage和Memcheck是项目中包含的自定义实用程序模块。然后提供了AddTests宏来准备目标进行测试、应用覆盖率度量，以及内存检查，AddCoverage()和AddMemcheck()函数分别定义在各自的程序模块中。现在，可以继续实现。
 
 \mySubsubsection{15.5.1.}{准备Coverage模块}
 
-在各种目标上添加覆盖率涉及几个步骤。Coverage模块提供了一个函数来为指定的目标定义覆盖率目标：
+各种目标上添加覆盖率涉及几个步骤，Coverage模块提供了一个函数来为指定的目标定义覆盖率目标：
 
 \filename{ch15/01-full-project/cmake/Coverage.cmake (片段)}
 
@@ -104,7 +104,7 @@ endfunction()
 # ...
 \end{cmake}
 
-此实现与第11章《测试框架》中介绍的略有不同，因为它现在包括目标名称作为输出路径的一部分，以防止名称冲突。接下来，我们需要一个函数来清除之前的覆盖率结果：
+此实现与第11章中介绍的略有不同，它现在包括目标名称作为输出路径的一部分，以避免名称冲突。接下来，需要一个函数来清除之前的覆盖率结果：
 
 \filename{ch15/01-full-project/cmake/Coverage.cmake (续)}
 
@@ -144,13 +144,13 @@ cmake --build <build-tree> -t coverage-calc_test
 cmake --build <build-tree> -t coverage-calc_console_test
 \end{shell}
 
-接下来，我们希望对我们定义的多个目标进行动态程序分析，所以为了应用在第12章《程序分析工具》中介绍的Memcheck模块，我们需要稍微调整它以扫描多个目标。
+接下来，我们希望对我们定义的多个目标进行动态程序分析，所以为了应用在第12章中介绍的Memcheck模块，需要稍微调整它以扫描多个目标。
 
 \mySubsubsection{15.5.2.}{准备Memcheck模块}
 
-由AddTests()发起的Valgrind内存管理报告的生成从Memcheck模块开始，我们从它的初始设置开始：
+由AddTests()发起的Valgrind内存管理报告的生成从Memcheck模块开始，从初始设置开始：
 
-\filename{ch15/01-full-project/cmake/Memcheck.cmake (fragment)}
+\filename{ch15/01-full-project/cmake/Memcheck.cmake (片段)}
 
 \begin{cmake}
 include(FetchContent)
@@ -162,7 +162,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(memcheck-cover)
 \end{cmake}
 
-这部分代码我们已经很熟悉了。现在，让我们看看创建生成报告所需目标的函数：
+这部分代码我们已经很熟悉了，来看看创建生成报告所需目标的函数：
 
 \filename{ch15/01-full-project/cmake/Memcheck.cmake (续)}
 
@@ -182,16 +182,16 @@ function(AddMemcheck target)
 endfunction()
 \end{cmake}
 
-我们稍微改进了第12章中的AddMemcheck()函数以处理多个目标。我们让REPORT\_PATH变量成为目标特定的。
+我们稍微改进了第12章中的AddMemcheck()函数以处理多个目标，让REPORT\_PATH变量成为目标特定的。
 
-为了生成Memcheck报告，请使用以下命令（请注意，当使用Debug构建类型进行配置时，生成报告更为有效）：
+为了生成Memcheck报告，请使用以下命令（使用Debug构建类型进行配置时，生成报告更为有效）：
 
 \begin{shell}
 cmake --build <build-tree> -t memcheck-calc_test
 cmake --build <build-tree> -t memcheck-calc_console_test
 \end{shell}
 
-好的，我们定义了Coverage和Memcheck模块（它们在Testing模块中使用），现在让我们看看实际的测试目标是如何配置的。
+好的，我们定义了Coverage和Memcheck模块（在Testing模块中使用），现在让我们看看如何配置实际的测试目标。
 
 \mySubsubsection{15.5.3.}{应用测试场景}
 
@@ -228,7 +228,7 @@ TEST(CalcTest, SubtractsTwoInts) {
 }
 \end{cmake}
 
-接着是针对控制台的测试——为此，我们将使用FXTUI库。再次，完全理解源代码并非必要；这些测试仅用于说明目的：
+接着是针对控制台的测试——为此，将使用FXTUI库。再次，完全理解源代码并非必要；这些测试仅用于说明目的：
 
 \filename{ch15/01-full-project/test/calc\_console/tui\_test.cpp}
 
@@ -254,7 +254,7 @@ TEST(ConsoleCalcTest, RunWorksWithDefaultValues) {
 
 此测试将UI渲染到静态Screen对象，并检查字符串输出是否包含预期的总和。这不是一个很好的测试，但至少它很短。
 
-现在，让我们使用两个嵌套的列表文件来配置我们的测试。首先，为库：
+现在，使用两个嵌套的列表文件来配置我们的测试，为生成库：
 
 \filename{ch15/01-full-project/test/calc/CMakeLists.txt}
 
@@ -264,7 +264,7 @@ target_link_libraries(calc_test PRIVATE calc_static)
 AddTests(calc_test)
 \end{cmake}
 
-然后，为可执行文件：
+为生成可执行文件：
 
 \filename{ch15/01-full-project/test/calc\_console/CMakeLists.txt}
 
@@ -275,9 +275,9 @@ target_link_libraries(calc_console_test
 AddTests(calc_console_test)
 \end{cmake}
 
-这些配置使得CTest可以执行测试。我们还需要为业务逻辑目标准备覆盖率分析，并确保覆盖率数据在构建之间得到刷新。
+这些配置使得CTest可以执行测试。还需要为业务逻辑目标准备覆盖率分析，并确保覆盖率数据在构建之间得到刷新。
 
-让我们向calc库目标添加必要的指令：
+向calc库目标添加必要的指令：
 
 \filename{ch15/01-full-project/src/calc/CMakeLists.txt (续)}
 
@@ -292,11 +292,11 @@ InstrumentForCoverage(calc_obj)
 CleanCoverage(calc_static)
 \end{cmake}
 
-为calc\_obj添加了InstrumentForCoverage，带有额外的-{}-coverage标志，但是CleanCoverage()是为calc\_static目标调用的。通常情况下，你会出于一致性考虑将其应用于calc\_obj，但我们在这里使用的是PRE\_BUILD关键字，而CMake不允许对对象库使用PRE\_BUILD、PRE\_LINK或POST\_BUILD钩子。
+为calc\_obj添加了InstrumentForCoverage，带有额外的-{}-coverage标志，但是CleanCoverage()是为calc\_static目标调用的。通常，会出于一致性考虑将其应用于calc\_obj，但在这里使用的是PRE\_BUILD关键字，而CMake不允许对对象库使用PRE\_BUILD、PRE\_LINK或POST\_BUILD钩子。
 
-最后，我们还将为控制台目标添加仪器化和清理指令：
+最后，还将为控制台目标添加仪器化和清理指令：
 
-\filename{ch15/01-full-project/src/calc\_console/CMakeLists.txt (continued)}
+\filename{ch15/01-full-project/src/calc\_console/CMakeLists.txt (续)}
 
 \begin{cmake}
 # ... calc_console_test target definition
@@ -306,11 +306,11 @@ InstrumentForCoverage(calc_console_static)
 CleanCoverage(calc_console_static)
 \end{cmake}
 
-通过这些步骤，CTest现在已经设置好来运行我们的测试和收集覆盖率。下一步，我们将添加指令以启用静态分析，因为我们希望我们的项目在首次构建和后续所有构建中都能达到高质量。
+通过这些步骤，CTest现在已经设置好来运行测试和收集覆盖率。下一步，将添加指令以启用静态分析，因为我们希望项目在首次构建和后续所有构建中都能保持高质量。
 
 \mySubsubsection{15.5.4.}{添加静态分析工具}
 
-我们正在接近为目标配置质量保证的完成阶段。最后一步涉及到启用自动格式化和集成CppCheck：
+我们正在接近为目标配置质量保证的完成阶段。最后一步，涉及到启用自动格式化和集成CppCheck：
 
 \filename{ch15/01-full-project/src/calc/CMakeLists.txt (续)}
 
@@ -323,7 +323,7 @@ Format(calc_static .)
 AddCppCheck(calc_obj)
 \end{cmake}
 
-这里我们遇到了一个小问题：calc\_obj不能有PRE\_BUILD钩子，所以我们改为对calc\_static应用格式化。我们还确保calc\_console\_static目标进行了格式化和检查：
+这里我们遇到了一个小问题：calc\_obj不能有PRE\_BUILD钩子，所以改为对calc\_static应用格式化。还需要确保calc\_console\_static目标进行了格式化和检查：
 
 \filename{ch15/01-full-project/src/calc\_console/CMakeLists.cmake (续)}
 
@@ -337,7 +337,7 @@ Format(calc_console_static .)
 AddCppCheck(calc_console_static)
 \end{cmake}
 
-我们还需要定义Format和CppCheck函数。从Format()开始，我们借用第12章《程序分析工具》中描述的代码：
+还需要定义Format和CppCheck函数。从Format()开始，我们借用第12章中的代码：
 
 \filename{ch15/01-full-project/cmake/Format.cmake}
 
@@ -369,19 +369,19 @@ function(AddCppCheck target)
 endfunction()
 \end{cmake}
 
-这是简单且方便的做法。您可能会发现这与Clang-Tidy模块（来自第12章《程序分析工具》）展示出CMake功能的一致性。
+这是简单且方便的做法。可能会发现这与Clang-Tidy模块（来自第12章）展示出CMake功能的一致性。
 
 cppcheck的参数如下：
 
 \begin{itemize}
 \item
--{}-enable=warning: 启用警告消息。要启用更多检查，请参阅Cppcheck手册（见进一步阅读部分）。
+-{}-enable=warning: 启用警告消息。要启用更多检查，请参阅Cppcheck手册（见扩展阅读部分）。
 
 \item
 -{}-error-exitcode=1: 设置cppcheck检测到问题时返回的错误码。这可以是1到255之间的任何数字（0表示成功），尽管有些数字可能被系统保留。
 \end{itemize}
 
-随着src和test目录中的所有文件创建完毕，我们的解决方案现在可以构建并进行全面测试。我们可以继续进行安装和打包步骤。
+随着src和test目录中的所有文件创建完毕，解决方案可以构建并进行全面测试。可以继续进行安装和打包步骤。
 
 
 

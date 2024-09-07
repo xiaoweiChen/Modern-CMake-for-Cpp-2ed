@@ -1,6 +1,6 @@
 虽然从源代码构建项目有其好处，但对于最终用户特别是非开发人员来说，这可能会既耗时又复杂。一种更方便的分发方法是使用二进制包，其中包含了编译后的制品和其他必要的静态文件。CMake 支持使用名为 cpack 的命令行工具来生成此类包。
 
-要生成一个包，你需要为你的目标平台和包类型选择一个合适的包生成器。不要将包生成器与像 Unix Makefiles 或 Visual Studio 这样的构建系统生成器混淆。
+要生成一个包，需要为目标平台和包类型选择一个合适的包生成器。不要将包生成器与像 Unix Makefiles 或 Visual Studio 这样的构建系统生成器混淆。
 
 下表列出了可用的包生成器：
 
@@ -16,7 +16,7 @@
 %
 Archive &
 \begin{tabular}[c]{@{}l@{}}7Z, 7zip - (.7z)\\ TBZ2 (.tar.bz2)\\ TGZ (.tar.gz)\\ TXZ (.tar.xz)\\ TZ (.tar.Z)\\ TZST (.tar.zst)\\ ZIP (.zip)\end{tabular} &
-Cross-platform \\ \hline
+跨平台 \\ \hline
 Bundle                  & macOs Bundle (.bundle)                    & macOS                 \\ \hline
 Cygwin                  & Cygwin packages                           & Cygwin                \\ \hline
 DEB                     & Debian packages (.deb)                    & Linux                 \\ \hline
@@ -34,9 +34,9 @@ WIX                     & Microsoft Installer (.msi)                & Windows   
 表 14.3: 可用的包生成器
 \end{center}
 
-大多数这些生成器都有广泛的配置选项。虽然本书不打算深入探讨所有细节，但你可以在“进一步阅读”部分找到更多信息。我们将专注于一个通用的使用案例。
+大多数这些生成器都有广泛的配置选项。本书不打算深入探讨所有细节，相应信息可以在“扩展阅读”部分找到更多信息。
 
-为了使用 CPack，你需要使用必要的 install() 命令来配置项目的安装，并构建你的项目。构建树中的 cmake\_install.cmake 文件会被 CPack 使用来根据 CPackConfig.cmake 文件准备二进制包。虽然你可以手动创建这个文件，但在项目的列表文件中使用 include(CPack) 更加简便。它会在构建树中生成配置文件并提供所需的默认值。
+为了使用 CPack，需要使用必要的 install() 命令来配置项目的安装，并构建项目。CPack 会根据构建树中的 CPackConfig.cmake 文件准备二进制包。虽然可以手动创建这个文件，但在项目的列表文件中使用 include(CPack) 更加简便，它会在构建树中生成配置文件并提供所需的默认值。
 
 让我们扩展 13-components 示例以供 CPack 使用：
 
@@ -75,7 +75,7 @@ The CPACK\_PACKAGE\_FILE\_NAME 存储了包名的结构：
 $CPACK_PACKAGE_NAME-$CPACK_PACKAGE_VERSION-$CPACK_SYSTEM_NAME
 \end{shell}
 
-这里，CPACK\_SYSTEM\_NAME 是目标操作系统的名称，例如 Linux 或 win32。例如，在 Debian 上执行 ZIP 生成器时，CPack 将生成一个名为 CPackPackage-1.2.3-Linux.zip 的文件。
+CPACK\_SYSTEM\_NAME 是目标操作系统的名称，例如 Linux 或 win32。例如，在 Debian 上执行 ZIP 生成器时，CPack 将生成一个名为 CPackPackage-1.2.3-Linux.zip 的文件。
 
 要在构建项目后生成包，请转到项目的构建树并运行：
 
@@ -83,7 +83,7 @@ $CPACK_PACKAGE_NAME-$CPACK_PACKAGE_VERSION-$CPACK_SYSTEM_NAME
 cpack [<options>]
 \end{shell}
 
-CPack 从 CPackConfig.cmake 文件读取选项，但你可以覆盖这些设置：
+CPack 从 CPackConfig.cmake 文件读取选项，可以覆盖这些设置：
 
 \begin{itemize}
 \item
@@ -121,7 +121,7 @@ cmake.
 cpack -G "ZIP;7Z;DEB" -B packages
 \end{shell}
 
-你应该得到以下这些包：
+应该会得到以下这些包：
 
 \begin{itemize}
 \item
@@ -134,4 +134,4 @@ CPackPackage-1.2.3-Linux.deb
 CPackPackage-1.2.3-Linux.zip
 \end{itemize}
 
-这些二进制包已准备好发布在你的项目网站上、GitHub 发布中或作为最终用户的包存储库。
+这些二进制包已准备好发布在项目网站上、GitHub Release页面中，或作为最终用户的包存储库。

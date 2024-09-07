@@ -1,15 +1,15 @@
-当我们讨论每个特定阶段预设的一般字段时，提到了 condition 字段。现在是回到这个话题的时候了。condition 字段可以启用或禁用一个预设，在与工作流集成时揭示其真正的潜力。本质上，它允许我们在某些条件下绕过不适合的预设，并创建替代的预设。
+当讨论每个特定阶段预设的一般字段时，提到了 condition 字段。现在是回到这个话题的时候了。condition 字段可以启用或禁用一个预设，在与工作流集成时揭示其真正的潜力，它允许在某些条件下绕过不适合的预设，并创建替代的预设。
 
 条件要求预设架构版本 3 或以上（在 CMake 3.22 中引入），并且是 JSON 对象，编码了一些简单的逻辑操作，可以根据所使用的操作系统、环境变量甚至选定的生成器等条件来判断预设是否适用。CMake 通过宏提供了这些数据，这些宏基本上是一组只读变量，可以在预设文件中使用。
 
-condition 对象的结构根据检查类型的不同而变化。每个条件都必须包含一个 type 字段，以及由该类型定义的其他字段。认可的基本类型包括：
+condition 对象的结构根据检查类型的不同而变化。每个条件都必须包含一个 type 字段，以及由该类型定义的其他字段。其基本类型包括：
 
 \begin{itemize}
 \item
 const: 这个检查 value 字段中提供的值是否为布尔真。
 
 \item
-equals, notEquals: 这个比较 lhs 字段的值与 rhs 字段的值。
+equals 和 notEquals: 比较 lhs 字段的值与 rhs 字段的值。
 
 \item
 inList 和 notInList: 这些检查 string 字段中提供的值是否存在于 list 字段的数组中。
@@ -28,9 +28,9 @@ matches 和 notMatches: 这些判断 string 字段的值是否符合 regex 字�
 }
 \end{json}
 
-const 条件的实际用途主要是为了在不从 JSON 文件中删除预设的情况下禁用它。除了 const 之外，所有基本条件都允许在其引入的字段 (lhs, rhs, string, list, regex) 中使用宏。
+const 条件的实际用途，主要是为了在不从 JSON 文件中删除预设的情况下禁用。除了 const 之外，所有基本条件都允许在其引入的字段 (lhs, rhs, string, list, regex) 中使用宏。
 
-高级条件类型，类似于“not”，“and”，和“or”操作，使用其他条件作为参数：
+高级条件类型，类似于“not”，“and”和“or”操作，使用其他条件作为参数：
 
 \begin{itemize}
 \item
@@ -60,37 +60,37 @@ anyOf 和 allOf: 这些检查 conditions 数组中的任意条件或所有条件
 }
 \end{json}
 
-这个条件在系统为 Linux 或 Windows 时评估为真。
+这个条件在系统为 Linux 或 Windows 时计算为真。
 
-通过这些示例，我们引入了第一个宏：\$\{hostSystemName\}。宏遵循简单的语法，并限于特定实例，例如：
+通过这些示例，引入了第一个宏：\$\{hostSystemName\}。宏遵循简单的语法，并限于特定实例：
 
 \begin{itemize}
 \item
-\$\{sourceDir\}: 这是源代码树的路径。
+\$\{sourceDir\}: 源代码树的路径。
 
 \item
-\$\{sourceParentDir\}: 这是源代码树父目录的路径。
+\$\{sourceParentDir\}: 源代码树父目录的路径。
 
 \item
-\$\{sourceDirName\}: 这是项目的目录名。
+\$\{sourceDirName\}: 项目的目录名。
 
 \item
-\$\{presetName\}: 这是预设的名称。
+\$\{presetName\}: 预设的名称。
 
 \item
-\$\{generator\}: 这是用于创建构建系统的生成器。
+\$\{generator\}: 用于创建构建系统的生成器。
 
 \item
-\$\{hostSystemName\}: 这是系统名称：Linux, Windows, 或 macOS 上的 Darwin。
+\$\{hostSystemName\}: 系统名称：Linux, Windows, 或 macOS 上的 Darwin。
 
 \item
-\$\{fileDir\}: 这是包含当前预设的文件名（当使用 include 数组导入外部预设时适用）。
+\$\{fileDir\}: 包含当前预设的文件名（当使用 include 数组导入外部预设时适用）。
 
 \item
-\$\{dollar\}:这是转义的美元符号 \$。
+\$\{dollar\}: 转义的美元符号 \$。
 
 \item
-\$\{pathListSep\}: 这是环境特定的路径分隔符。
+\$\{pathListSep\}: 、环境特定的路径分隔符。
 
 \item
 \$env\{<variable-name>\}: 如果预设指定了环境变量，则返回该环境变量（区分大小写），否则返回父环境中的值。

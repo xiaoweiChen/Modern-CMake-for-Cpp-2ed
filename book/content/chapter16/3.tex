@@ -1,4 +1,4 @@
-CMake 在项目的顶层目录中搜索 CMakePresets.json 和 CMakeUserPresets.json 文件。这两个文件使用相同的 JSON 结构来定义预设，因此它们之间的区别不大。其格式是一个 JSON 对象，包含以下键：
+CMake 在项目的顶层目录中搜索 CMakePresets.json 和 CMakeUserPresets.json 文件。这两个文件使用相同的 JSON 结构来定义预设，它们之间的区别不大。其格式是一个 JSON 对象，包含以下键：
 
 \begin{itemize}
 \item
@@ -8,7 +8,7 @@ version:  这是一个必需的整数，指定了预设 JSON 架构的版本。
 cmakeMinimumRequired: 这是一个对象，指定了所需的 CMake 版本。
 
 \item
-include:这是一个字符串数组，它从数组中提供的文件路径包含外部预设（自第 4 版架构开始）。
+include: 这是一个字符串数组，从数组中提供的文件路径包含外部预设（自第 4 版架构开始）。
 
 \item
 configurePresets: 这是一个对象数组，定义了配置阶段的预设。
@@ -29,7 +29,7 @@ workflowPresets: 这是一个对象数组，专门针对工作流模式的预设
 vendor: 这是一个对象，包含由 IDE 和其他供应商定义的自定义设置；CMake 不处理这个字段。
 \end{itemize}
 
-在编写预设时，CMake 要求存在 version 入口；其他值则是可选的。下面是一个预设文件的例子（实际的预设将在后续部分添加）：
+编写预设时，CMake 要求存在 version 入口；其他值则可选。下面是一个预设文件的例子（实际的预设将在后续部分添加）：
 
 \filename{ch16/01-presets/CMakePresets.json}
 
@@ -53,6 +53,6 @@ vendor: 这是一个对象，包含由 IDE 和其他供应商定义的自定义�
 }
 \end{json}
 
-在上述例子中，并不需要添加空数组；除了 version 以外的条目都是可选的。顺便说一下，对于 CMake 3.26 的适当架构版本是 6。
+上述例子中，并不需要添加空数组；除了 version 以外的条目都是可选的。顺便说一下，对于 CMake 3.26 的适当架构版本是 6。
 
-既然我们已经了解了预设文件的结构，接下来我们就学习如何实际定义这些预设。
+已经了解了预设文件的结构，接下来我们就学习如何实际定义这些预设。

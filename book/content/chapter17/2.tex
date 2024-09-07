@@ -1,6 +1,6 @@
 
 
-string() 命令用于处理字符串。它具有多种模式，可以对字符串执行不同的操作：搜索替换、操作、比较、哈希、生成以及 JSON 操作（最后一个自 CMake 3.19 开始可用）。
+string() 命令用于处理字符串。具有多种模式，可以对字符串执行不同的操作：搜索替换、操作、比较、哈希、生成，以及 JSON 操作（最后一个自 CMake 3.19 开始可用）。
 
 完整的详情可以在在线文档中找到: \url{https://cmake.org/cmake/help/latest/ command/string.html}
 
@@ -41,7 +41,7 @@ string(REGEX MATCHALL <pattern> <out> <input>)：使用正则表达式匹配 <in
 string(REGEX REPLACE <pattern> <replace> <out> <input>)：使用正则表达式替换 <input> 中所有 <pattern> 的出现，并将替换表达式的结果存储在 <out> 变量中。
 \end{itemize}
 
-正则表达式操作遵循 C++ 语法，如标准库中的 <regex> 头文件所定义。你可以使用捕获组将匹配添加到 <replace> 表达式中，使用数字占位符：\verb|\\|1, \verb|\\|2 ... （需要双反斜杠以正确解析参数）。
+正则表达式操作遵循 C++ 语法，如标准库中的 <regex> 头文件所定义。可以使用捕获组将匹配添加到 <replace> 表达式中，使用数字占位符：\verb|\\|1, \verb|\\|2 ... （需要双反斜杠以正确解析参数）。
 
 \mySubsubsection{A.2.2.}{操作}
 
@@ -90,7 +90,7 @@ string(REPEAT <string> <count> <out>)：生成包含 <count> 次重复的 <strin
 string(COMPARE <operation> <stringA> <stringB> <out>)
 \end{cmake}
 
-<operation> 参数是以下之一：
+<operation> 参数可为：
 
 \begin{itemize}
 \item
@@ -112,7 +112,7 @@ LESS\_EQUAL
 GREATER\_EQUAL
 \end{itemize}
 
-它将用于比较 <stringA> 和 <stringB>，并将结果（真或假）存储在 <out> 变量中。
+用于比较 <stringA> 和 <stringB>，并将结果（真或假）存储在 <out> 变量中。
 
 \mySubsubsection{A.2.4.}{哈希}
 
@@ -122,7 +122,7 @@ GREATER\_EQUAL
 string(<hashing-algorithm> <out> <string>)
 \end{cmake}
 
-它使用 <hashing-algorithm> 对 <string> 进行哈希处理，并将结果存储在 <out> 变量中。以下算法得到支持：
+使用 <hashing-algorithm> 对 <string> 进行哈希处理，并将结果存储在 <out> 变量中。支持以下算法：
 
 \begin{itemize}
 \item
@@ -180,7 +180,7 @@ string(RANDOM [LENGTH <len>] [ALPHABET <alphabet>] [RANDOM\_SEED <seed>] <out>)�
 string(TIMESTAMP <out> [<format>] [UTC])：生成代表当前日期和时间的字符串，并将其存储在 <out> 变量中。
 
 \item
-string(UUID <out> NAMESPACE <ns> NAME <name> TYPE <type>)：生成全局唯一标识符。此模式的应用稍微复杂，你需要提供一个命名空间（必须是一个 UUID）、一个名称（例如，域名）以及一个类型（MD5 或 SHA1）。
+string(UUID <out> NAMESPACE <ns> NAME <name> TYPE <type>)：生成全局唯一标识符。此模式的应用稍微复杂，需要提供一个命名空间（必须是一个 UUID）、一个名称（例如，域名）以及一个类型（MD5 或 SHA1）。
 \end{itemize}
 
 \mySubsubsection{A.2.6.}{JSON}
@@ -191,7 +191,7 @@ string(UUID <out> NAMESPACE <ns> NAME <name> TYPE <type>)：生成全局唯一�
 string(JSON <out> [ERROR_VARIABLE <error>] <operation + args>)
 \end{cmake}
 
-有几个操作可用。它们都将结果存储在 <out> 变量中，错误则存储在 <error> 变量中。操作及其参数如下：
+有几个操作可用。都将结果存储在 <out> 变量中，错误则存储在 <error> 变量中。操作及其参数如下：
 
 \begin{itemize}
 \item

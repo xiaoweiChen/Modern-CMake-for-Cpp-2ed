@@ -412,7 +412,13 @@ cmake --install <build tree>
 
 可以使用自选的前缀来预置安装路径（当对某些目录的写入权限有限时）。例如，如果 /usr/local 路径前缀为 /home/user，则变为 /home/user/usr/local。
 
-命令如下所示：
+命令如下所示:
+
+\begin{shell}
+cmake --install <build tree> --install-prefix <prefix>
+\end{shell}
+
+如果只用CMake 3.21或之前的版本，命令如下所示：
 
 \begin{shell}
 cmake --install <build tree> --prefix <prefix>

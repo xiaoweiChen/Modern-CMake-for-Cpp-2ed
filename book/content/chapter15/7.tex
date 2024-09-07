@@ -1,30 +1,30 @@
 
 
-专业项目的最后一环是文档。未经文档化的项目在团队合作或者与外部受众共享时很难理解和导航。我甚至可以说，程序员在离开某个特定文件一段时间后，经常会阅读他们自己的文档来理解其中的内容。
+专业项目的最后一环是文档。未经文档化的项目在团队合作或者与外部受众共享时很难理解和导航。我甚至可以说，开发者在离开某个特定文件一段时间后，经常会阅读自己的文档来理解其中的内容。
 
-文档对于法律和合规性方面也很重要，并且可以告知用户如何使用软件。如果时间允许的话，我们应该投入精力为我们的项目设置文档。
+文档对于法律和合规性方面也很重要，并且可以告知用户如何使用软件。如果时间允许的话，应该投入精力为项目设置文档。
 
 文档通常分为两类：
 
 \begin{itemize}
 \item
-技术文档（涵盖接口、设计、类和文件）
+技术性文档（涵盖接口、设计、类和文件）
 
 \item
-一般文档（包含所有其他非技术性文档）
+一般性文档（包含所有其他非技术性文档）
 \end{itemize}
 
-正如我们在第13章“生成文档”中所看到的那样，许多技术文档都可以使用CMake和Doxygen自动生成。
+正如在第13章中所看到的那样，许多技术文档都可以使用CMake和Doxygen自动生成。
 
 \mySubsubsection{15.7.1.}{生成技术文档}
 
-虽然有些项目会在构建阶段生成文档并将其包含在包中，但我们在这个项目中并没有这样做。但是，如果文档需要在线托管的话，可能会有正当的理由选择这样做。
+虽然有些项目会在构建阶段生成文档并将其包含在包中，但在这个项目中并没有这样做。但如果文档需要在线托管的话，可能会有正当的理由选择这样做。
 
 图15.7概述了文档生成的过程：
 
-\myGraphic{0.8}{content/chapter15/images/7.png}{图15.7: 用于生成文档的文件}
+\myGraphic{1.0}{content/chapter15/images/7.png}{图15.7: 用于生成文档的文件}
 
-为了生成文档，我们将创建另一个CMake实用模块——Doxygen。首先使用Doxygen找模块，并下载doxygen-awesome-css项目用于主题：
+为了生成文档，将创建另一个CMake实用模块——Doxygen。首先使用Doxygen找模块，并下载doxygen-awesome-css项目用于主题：
 
 \filename{ch15/01-full-project/cmake/Doxygen.cmake (片段)}
 
@@ -41,7 +41,7 @@ FetchContent_Declare(doxygen-awesome-css
 FetchContent_MakeAvailable(doxygen-awesome-css)
 \end{cmake}
 
-然后，我们需要一个函数来创建生成文档的目标。我们将修改第13章“生成文档”中介绍的代码，以支持多个目标：
+然后，需要一个函数来创建生成文档的目标。我们将修改第13章中的代码，以支持多个目标：
 
 \filename{ch15/01-full-project/cmake/Doxygen.cmake (续)}
 
@@ -67,7 +67,7 @@ endfunction()
 
 使用此函数为库目标调用：
 
-\filename{ch15/01-full-project/src/calc/CMakeLists.txt (fragment)}
+\filename{ch15/01-full-project/src/calc/CMakeLists.txt (片段)}
 
 \begin{cmake}
 # ... calc_static target definition
@@ -80,7 +80,7 @@ Doxygen(calc src/calc)
 
 以及为控制台可执行文件：
 
-\filename{ch15/01-full-project/src/calc\_console/CMakeLists.txt (fragment)}
+\filename{ch15/01-full-project/src/calc\_console/CMakeLists.txt (片段)}
 
 \begin{cmake}
 # ... calc_static target definition
@@ -90,11 +90,11 @@ Doxygen(calc_console src/calc_console)
 # ... file continues
 \end{cmake}
 
-这个设置为项目添加了两个目标：doxygen-calc 和 doxygen-calc\_console，允许按需生成技术文档。现在，让我们考虑应该包含哪些其他文档。
+这个设置为项目添加了两个目标：doxygen-calc 和 doxygen-calc\_console，按需生成技术文档。现在，考虑应该包含哪些其他文档。
 
 \mySubsubsection{15.7.2.}{为专业项目编写非技术性文档}
 
-专业项目应该包含一组存储在顶级目录中的非技术性文档，这对于全面理解和法律清晰度至关重要：
+专业项目应该包含一组存储在顶层目录中的非技术性文档，这对于全面理解和法律清晰度至关重要：
 
 \begin{itemize}
 \item
@@ -104,7 +104,7 @@ README: 提供项目的总体描述
 LICENSE: 详细说明项目使用的法律条款和发行细节
 \end{itemize}
 
-您可以考虑的其他文档包括：
+可以考虑的其他文档包括：
 
 \begin{itemize}
 \item
@@ -120,7 +120,7 @@ AUTHORS: 列出贡献者及其联系方式（如果有多个贡献者）
 BUGS: 提供已知问题的建议和报告新问题的详细信息
 \end{itemize}
 
-CMake不会直接与这些文件交互，因为它们不涉及自动化处理或脚本。然而，这些文件的存在对于一个文档完备的C++项目来说是至关重要的。下面是每个文档的一个简单示例：
+CMake不会直接与这些文件交互，它们不涉及自动化处理或脚本。然而，这些文件的存在对于一个文档完备的C++项目来说是至关重要的。下面是每个文档的一个简单示例：
 
 \filename{ch15/01-full-project/README.md}
 
@@ -138,9 +138,9 @@ This application is written in C++ and built with CMake.
 - License is in the LICENSE file
 \end{shell}
 
-这是一个简短的例子，可能看起来有点傻。注意.md扩展名——它代表Markdown，这是一种基于文本的格式化语言，易于阅读。像GitHub这样的网站和许多文本编辑器都会以丰富的格式渲染这些文件。
+这是一个简短的例子，可能看起来有点傻。注意.md扩展名——代表Markdown，这是一种基于文本的格式化语言，易于阅读。像GitHub这样的网站和许多文本编辑器，都会以丰富的格式渲染这些文件。
 
-我们的 INSTALL 文件将如下所示：
+INSTALL 文件将如下所示：
 
 \filename{ch15/01-full-project/INSTALL}
 
@@ -176,7 +176,7 @@ cmake --build <temporary-directory> -t doxygen-calc
 cmake --build <temporary-directory> -t doxygen-calc_console
 \end{shell}
 
-LICENSE 文件稍微有点棘手，因为它需要一些版权法的专业知识。而不是自己编写所有条款，我们可以像许多其他项目一样，使用现成可用的软件许可证。对于这个项目，我们将使用MIT许可证，这是一个极其宽容的许可。请查阅进一步阅读部分获取一些有用的参考资料：
+LICENSE 文件稍微有点棘手，因为需要一些版权法的专业知识。而不是自己编写所有条款，我们可以像许多其他项目一样，使用现成可用的软件许可证。对于这个项目，将使用MIT许可证，这是一个极其宽容的许可。请查阅扩展阅读部分获取一些有用的参考资料：
 
 \filename{ch15/01-full-project/LICENSE}
 
@@ -201,7 +201,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 \end{shell}
 
-最后，我们有 CHANGELOG。正如前面提到的，最好在文件中记录变更，以便使用您项目的开发者可以轻松找到他们所需的特性所在的版本。例如，可以说在0.8.2版本中向库中添加了乘法功能。像下面这样简单的记录就已经很有帮助了：
+最后，我们有 CHANGELOG。正如前面提到的，最好在文件中记录变更，以便使用项目的开发者可以轻松找到他们所需的特性所在的版本。例如，可以说在0.8.2版本中向库中添加了乘法功能。像下面这样简单的记录就已经很有帮助了：
 
 \filename{ch15/01-full-project/CHANGELOG}
 

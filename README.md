@@ -44,7 +44,7 @@
 
   * 使用xelatex编译时需要添加`-shell-escape`和`-8bit`选项，例如：
 
-    `xelatex -synctex=1 -interaction=nonstopmode -shell-escape -8bit "C++-Standard-Library".tex`
+    `xelatex -synctex=1 -interaction=nonstopmode -shell-escape -8bit "Modern-CMake-for-C++-2ed".tex`
 
   * 为了内容中表格和目录索引能正常生成，至少需要连续编译两次
 
