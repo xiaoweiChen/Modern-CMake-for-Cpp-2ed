@@ -48,7 +48,7 @@
 
   * 为了内容中表格和目录索引能正常生成，至少需要连续编译两次
 
-  * Latex中的中文字体([思源黑体](https://github.com/adobe-fonts/source-han-sans))和英文字体([Hack](https://github.com/source-foundry/Hack-windows-installer/releases/tag/v1.6.0))，需要安装后自行配置。如何配置请参考主.tex顶部关于字体的信息。
+  * Latex中的中文字体([思源黑体](https://github.com/adobe-fonts/source-han-sans))和英文字体([Hack](https://github.com/source-foundry/Hack-windows-installer/releases/tag/v1.6.0))，需要安装后自行配置。如何配置请参考主book/css.tex顶部关于字体的信息。
 
 * vscode中配置LaTeX：https://blog.csdn.net/Ruins_LEE/article/details/123555016
 
